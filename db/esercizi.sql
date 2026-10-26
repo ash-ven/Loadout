@@ -11,3 +11,34 @@ SELECT COUNT(*) FROM oggetto;
 SELECT COUNT(*) FROM viaggio;
 SELECT COUNT(*) FROM viaggio_oggetto;
 
+-- Esercizio 3: query di verifica dello schema
+
+-- 3a. Peso degli zaini
+-- Risultato: (n_oggetti dei due viaggi e perché diversi; perché peso_inserito del viaggio 2 è 0)
+SELECT * FROM v_zaino_peso;
+
+-- 3b. Checklist del viaggio 2
+-- Risultato: (quante righe, cosa fa WHERE, come si calcola peso_riga_g)
+SELECT * FROM v_zaino_dettaglio WHERE viaggio_id = 2 ORDER BY categoria, nome;
+
+-- 3c. Acqua consigliata: 2 giorni, 3 persone, 5 ore/giorno
+-- Risultato: (il tuo calcolo a mano: 5 + 1 = 6, x 3 persone = 18 litri)
+SELECT fn_acqua_consigliata(2, 3, 5);
+
+-- Esercizio 4: inserimento che viola un vincolo CHECK
+-- Risultato: ERROR: new row for relation "oggetto" violates check constraint "oggetto_peso_g_check"
+-- Il database rifiuta la riga perché lo schema impone CHECK (peso_g > 0) e il peso è 0.
+-- Nessuna riga viene inserita. Il DETAIL mostra la riga rifiutata: id 15 (consumato dalla
+-- sequenza anche se l'insert fallisce), categoria 'altro' e flag a false presi dai default.
+-- Nel backend questo errore ha codice 23514 e l'errorHandler (L5.7) lo trasforma in HTTP 422.
+INSERT INTO oggetto (utente_id, nome, peso_g)
+VALUES (1, 'Coltellino', 0);
+
+-- Esercizio 5 (consegna): violazione dei vincoli
+-- a) peso_g = 0 → vedi esercizio 4: violazione del CHECK "oggetto_peso_g_check"
+-- b) oggetto inesistente nello zaino:
+-- Risultato: ERROR: violates foreign key constraint "viaggio_oggetto_oggetto_id_fkey"
+-- DETAIL: Key (oggetto_id)=(999) is not present in table "oggetto".
+-- La chiave esterna impedisce di riferirsi a un oggetto che non esiste. Nel backend: codice 23503 → HTTP 422.
+INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id) VALUES (1, 999);
+
