@@ -46,4 +46,25 @@ INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id) VALUES (1, 999);
 -- Risultato: 6 righe, da Zaino 40L (1400 g) a Lampada frontale (90 g)
 SELECT * FROM oggetto WHERE utente_id = 1 AND is_indispensabile = TRUE ORDER BY peso_g DESC;
 
+-- L4.8 Esercizio 6 + Consegna Esercizio 2: peso dell'armadio dell'utente 1 per categoria
+-- Risultato: 6 righe, una per categoria presente nell'armadio di Asiha.
+-- WHERE tiene solo l'utente 1, GROUP BY fa un gruppo per categoria,
+-- COUNT(*) conta gli oggetti del gruppo, SUM(peso_g) somma i pesi.
+-- La più pesante è attrezzatura: 4 oggetti, 2980 g.
+SELECT categoria, COUNT(*) AS n, SUM(peso_g) AS peso_totale_g
+FROM oggetto
+WHERE utente_id = 1
+GROUP BY categoria
+ORDER BY peso_totale_g DESC;
+
+-- L4.8 Esercizio 7: transazione con ROLLBACK
+-- Risultato: peso degli Scarponi 1100 -> 1200 dentro la transazione (prompt loadout=*#)
+-- -> di nuovo 1100 dopo il ROLLBACK. ROLLBACK annulla tutto quello fatto dopo BEGIN.
+SELECT nome, peso_g FROM oggetto WHERE id = 4;
+BEGIN;
+UPDATE oggetto SET peso_g = 1200 WHERE id = 4;
+SELECT nome, peso_g FROM oggetto WHERE id = 4;
+ROLLBACK;
+SELECT nome, peso_g FROM oggetto WHERE id = 4;
+
 
