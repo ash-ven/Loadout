@@ -1,9 +1,8 @@
 ### Nome App: Loadout
 ### Scopo:
-## Scopo
-Loadout è una web app per escursionisti in cui ognuno registra la propria attrezzatura da montagna (l'armadio), con peso, categoria e indicazione di cosa è indispensabile o preferito.
-Per ogni uscita l'utente descrive il viaggio (attività, persone, giorni, pernotto, cucina) e con un click ottiene uno zaino proposto, composto dai suoi oggetti indispensabili e preferiti.
-Nella pagina del viaggio spunta la checklist, vede aggiornarsi in tempo reale il peso totale e quello già inserito, e consulta i consigli su acqua, alba e tramonto.
+- Loadout è una web app per escursionisti in cui ognuno registra la propria attrezzatura da montagna (l'armadio), con peso, categoria e indicazione di cosa è indispensabile o preferito.
+- Per ogni uscita l'utente descrive il viaggio (attività, persone, giorni, pernotto, cucina) e con un click ottiene uno zaino proposto, composto dai suoi oggetti indispensabili e preferiti.
+- Nella pagina del viaggio spunta la checklist, vede aggiornarsi in tempo reale il peso totale e quello già inserito, e consulta i consigli su acqua, alba e tramonto.
 
 ## User story MVP
 
