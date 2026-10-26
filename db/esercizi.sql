@@ -42,3 +42,8 @@ VALUES (1, 'Coltellino', 0);
 -- La chiave esterna impedisce di riferirsi a un oggetto che non esiste. Nel backend: codice 23503 → HTTP 422.
 INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id) VALUES (1, 999);
 
+-- Esercizio 1 (consegna): indispensabili dell'utente 1, dal più pesante
+-- Risultato: 6 righe, da Zaino 40L (1400 g) a Lampada frontale (90 g)
+SELECT * FROM oggetto WHERE utente_id = 1 AND is_indispensabile = TRUE ORDER BY peso_g DESC;
+
+
