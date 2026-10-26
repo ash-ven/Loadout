@@ -43,3 +43,23 @@ Come escursionista voglio alba, tramonto e acqua consigliata, per scegliere l'or
 - [ ] CA1. Nella pagina del viaggio vedo i litri consigliati (fn_acqua_consigliata, con ore di cammino inserite dall'utente).
 - [ ] CA2. Se il viaggio ha coordinate e data, vedo alba e tramonto in ora italiana, ottenuti dal backend (è il server che chiama l'API sunrise-sunset.org), non dal browser.
 - [ ] CA3. Se l'API esterna non risponde, la pagina funziona lo stesso e mostra "non disponibile".
+## Percorso di una richiesta: "aggiungo Giacca antivento al mio armadio"
+
+I nomi dei file sono provvisori: verranno aggiornati venerdì con quelli reali.
+
+1. **Browser.** Sulla pagina dell'armadio compilo il form (nome, categoria, peso 320 g, indispensabile) e clicco "Salva". Il JavaScript della pagina intercetta l'evento `submit` e legge i campi.
+   File: `public/armadio.html`, `public/js/armadio.js`
+2. **Browser.** Il JavaScript chiama `fetch` con metodo `POST` verso `/api/oggetti`, mettendo i dati nel body in formato JSON.
+   File: `public/js/api.js`
+3. **Rete.** Il browser invia la richiesta HTTPS: riga di richiesta, header (con il cookie `token` del login) e body. Il proxy la riceve e la inoltra all'API.
+   File: `Caddyfile`
+4. **Server.** Express riceve la richiesta e la fa passare per i middleware: log, lettura del JSON, controllo del login (`requireAuth` verifica il token e ricava il mio id utente).
+   File: `api/src/app.js`, `api/src/middleware/logger.js`, `api/src/middleware/auth.js`
+5. **Server.** La rotta `POST /api/oggetti` controlla i dati (nome obbligatorio, peso numerico…). Se qualcosa non va risponde subito 400.
+   File: `api/src/routes/oggetti.js`, `api/src/middleware/validate.js`
+6. **Server.** Il service esegue la query parametrizzata `INSERT INTO oggetto (...) VALUES ($1, $2, ...) RETURNING *` con il mio `utente_id`, usando una connessione del pool.
+   File: `api/src/services/oggetti.js`, `api/src/db.js`
+7. **Database.** Postgres controlla i vincoli: `NOT NULL`, `CHECK (peso_g > 0)`, `UNIQUE (utente_id, nome)`, chiave esterna su `utente`. Se va bene salva la riga e la restituisce. Se viola un vincolo, il gestore degli errori lo traduce in 409 o 422.
+   File: `db/initdb/loadout_schema.sql` (tabella `oggetto`), `api/src/middleware/errors.js`
+8. **Ritorno.** Il server risponde `201 Created` con la giacca in JSON (compreso il nuovo `id`). Il JavaScript legge la risposta e aggiorna la tabella dell'armadio senza ricaricare la pagina.
+   File: `api/src/routes/oggetti.js`, `public/js/armadio.js`
