@@ -67,4 +67,72 @@ SELECT nome, peso_g FROM oggetto WHERE id = 4;
 ROLLBACK;
 SELECT nome, peso_g FROM oggetto WHERE id = 4;
 
+-- L4.8 Esercizio 5: JOIN non presente nelle viste (viaggio + utente)
+-- Risultato: 2 righe, ogni viaggio con il nome del proprietario (entrambi di Asiha).
+-- Il JOIN segue la chiave esterna viaggio.utente_id -> utente.id.
+SELECT viaggio.nome, utente.nome FROM viaggio JOIN utente ON viaggio.utente_id = utente.id;
+
+-- Consegna Esercizio 3: nuovo viaggio di 3 giorni in tenda con cucina
+-- Risultato: id 4. fn_genera_zaino(4) aggiunge 11 oggetti: 6 indispensabili + 5 preferiti
+-- (compresi Fornello e Pentolino, perché serve_cucina = TRUE). Peso totale 5610 g.
+-- Il viaggio 1 ne ha 9 perché non ha la cucina: la regola esclude gli oggetti di categoria cucina.
+INSERT INTO viaggio (utente_id, nome, attivita, n_giorni, pernotto, serve_cucina)
+VALUES (1, 'Tre giorni in tenda', 'trekking', 3, 'tenda', TRUE)
+RETURNING id;
+SELECT fn_genera_zaino(4);
+SELECT * FROM v_zaino_peso;
+
+-- Consegna Esercizio 4
+-- Segna come inseriti tutti gli oggetti di categoria abbigliamento del viaggio 2,
+-- con un solo UPDATE e una sottoquery.
+-- La sottoquery (tra parentesi) viene eseguita per prima e restituisce gli id
+-- degli oggetti di abbigliamento: 2 (Giacca), 3 (Pile), 4 (Scarponi).
+-- L'UPDATE poi mette inserito = TRUE solo per quegli oggetti nel viaggio 2.
+-- Risultato: UPDATE 3. In v_zaino_peso il peso_inserito_g del viaggio 2
+-- passa da 0 a 1700 (320 + 280 + 1100).
+UPDATE viaggio_oggetto SET inserito = TRUE
+WHERE viaggio_id = 2
+  AND oggetto_id IN (SELECT id FROM oggetto WHERE categoria = 'abbigliamento');
+
+  -- Consegna Esercizio 6
+-- Per ogni viaggio, l'oggetto più pesante nello zaino.
+-- ORDER BY mette in cima, per ogni viaggio, l'oggetto più pesante;
+-- DISTINCT ON (viaggio_id) tiene solo la prima riga di ogni viaggio.
+-- Risultato: viaggi 1, 2 e 4 -> Zaino 40L (1400 g), che è indispensabile
+-- e quindi è in tutti gli zaini. Il viaggio 3 non esiste (id consumato
+-- da un INSERT fallito).
+SELECT DISTINCT ON (viaggio_id) viaggio_id, nome, peso_g
+FROM v_zaino_dettaglio
+ORDER BY viaggio_id, peso_g DESC;
+
+
+-- Consegna Esercizio 7
+-- Aggiunto il parametro temperatura_max a fn_acqua_consigliata:
+-- sopra i 25 °C la quantità aumenta del 25% (× 1.25).
+-- Prima faccio DROP della vecchia versione, perché aggiungere un parametro
+-- cambia la "firma" della funzione e CREATE OR REPLACE ne creerebbe una seconda.
+-- DEFAULT NULL: le chiamate a 3 parametri continuano a funzionare.
+-- Tutto dentro BEGIN/COMMIT, così un errore non lascia il DB senza funzione.
+-- Prove: (2,3,5) = 18.0 · (2,3,5,20) = 18.0 · (2,3,5,30) = 22.5
+BEGIN;
+DROP FUNCTION fn_acqua_consigliata(INT, INT, NUMERIC);
+CREATE OR REPLACE FUNCTION fn_acqua_consigliata(p_n_giorni INT, p_n_persone INT, p_ore_cammino_giorno NUMERIC, p_temperatura_max NUMERIC DEFAULT NULL)
+RETURNS NUMERIC AS $$
+  SELECT ROUND((p_ore_cammino_giorno * 0.5 * p_n_giorni
+               + CASE WHEN p_n_giorni > 1 THEN p_n_giorni - 1 ELSE 0 END) * p_n_persone
+               * CASE WHEN p_temperatura_max > 25 THEN 1.25 ELSE 1 END, 1);
+$$ LANGUAGE sql IMMUTABLE;
+COMMIT;
+
+-- L4.8 Esercizio 8
+-- EXPLAIN ANALYZE mostra il "piano": come Postgres trova le righe e quanto ci mette.
+-- 1) Senza filtro: Seq Scan (legge tutte le 14 righe) + Sort per categoria, nome.
+--    Stima rows=160, reali 14: la tabella non ha ancora statistiche, conta "actual".
+-- 2) Con WHERE id = 4: Index Scan using oggetto_pkey, cioè usa l'indice creato
+--    in automatico dalla chiave primaria e va dritto all'unica riga (rows=1).
+-- Conclusione: con un filtro sulla PK Postgres usa l'indice invece di leggere tutto.
+-- Su 14 righe i tempi sono simili (millisecondi); la differenza si vede su tabelle grandi.
+EXPLAIN ANALYZE SELECT * FROM oggetto ORDER BY categoria, nome;
+EXPLAIN ANALYZE SELECT * FROM oggetto WHERE id = 4 ORDER BY categoria, nome;
+
 
