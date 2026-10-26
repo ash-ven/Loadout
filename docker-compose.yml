@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16
+    container_name: loadout-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: loadout
+      POSTGRES_PASSWORD: loadout_dev
+      POSTGRES_DB: loadout
+    ports:
+      - "5432:5432"
+    volumes:
+      - loadout_pgdata:/var/lib/postgresql/data
+      - ./db/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loadout -d loadout"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  loadout_pgdata:
