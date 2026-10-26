@@ -1,0 +1,46 @@
+### Nome App: Loadout
+### Scopo:
+## Scopo
+Loadout è una web app per escursionisti in cui ognuno registra la propria attrezzatura da montagna (l'armadio), con peso, categoria e indicazione di cosa è indispensabile o preferito.
+Per ogni uscita l'utente descrive il viaggio (attività, persone, giorni, pernotto, cucina) e con un click ottiene uno zaino proposto, composto dai suoi oggetti indispensabili e preferiti.
+Nella pagina del viaggio spunta la checklist, vede aggiornarsi in tempo reale il peso totale e quello già inserito, e consulta i consigli su acqua, alba e tramonto.
+
+## User story MVP
+
+### US1 – Registrazione e login
+Come escursionista voglio creare un account e accedere, per avere il mio armadio personale.
+- [ ] CA1. Registrazione con email, password (≥ 8 caratteri), nome; email duplicata → messaggio chiaro.
+- [ ] CA2. Login errato → "Email o password errati" (senza dire quale).
+- [ ] CA3. Dopo il login vedo solo i miei oggetti e i miei viaggi; un altro utente non li vede.
+
+### US2 – Armadio
+Come escursionista voglio gestire la mia attrezzatura con il peso, per sapere cosa possiedo.
+- [ ] CA1. Lista con ricerca per nome e ordinamento per categoria/nome.
+- [ ] CA2. Inserimento con nome (obbligatorio), categoria (lista chiusa), peso in grammi (> 0), flag indispensabile/preferito, etichetta e note opzionali.
+- [ ] CA3. Nome duplicato nello stesso armadio → errore 409 mostrato all'utente.
+- [ ] CA4. Modifica ed eliminazione (con conferma). Eliminando un oggetto sparisce anche dagli zaini (ON DELETE CASCADE).
+
+### US3 – Prepara il tuo cammino
+Come escursionista voglio descrivere la mia uscita, per avere uno zaino adatto.
+- [ ] CA1. Form con attività, persone (1–50), giorni (1–60), pernotto, cucina sì/no, data, coordinate di partenza (opzionali).
+- [ ] CA2. Validazione lato server dei limiti; errori mostrati nel form.
+- [ ] CA3. Lista dei miei viaggi ordinata per data di partenza.
+
+### US4 – Genera lo zaino
+Come escursionista voglio che l'app proponga lo zaino, per non dimenticare nulla.
+- [ ] CA1. Pulsante "Genera zaino" → chiama POST /api/viaggi/:id/genera → il backend esegue SELECT fn_genera_zaino($1).
+- [ ] CA2. Oggetti di categoria cucina entrano solo se serve_cucina è vero.
+- [ ] CA3. Generare due volte non crea duplicati; la risposta dice quanti oggetti sono stati aggiunti.
+
+### US5 – Il tuo zaino
+Come escursionista voglio vedere lo zaino riempirsi e il suo peso, per decidere cosa togliere.
+- [ ] CA1. Lista degli oggetti del viaggio con categoria, peso, quantità, checkbox "inserito".
+- [ ] CA2. Peso totale e peso inserito (in kg con 2 decimali) aggiornati senza ricaricare la pagina (vista v_zaino_peso).
+- [ ] CA3. Posso aggiungere un oggetto dall'armadio che non è stato proposto, cambiare la quantità, rimuoverlo.
+- [ ] CA4. La checklist si può "svuotare" (tutti non inseriti) con un pulsante.
+
+### US6 – Consigli
+Come escursionista voglio alba, tramonto e acqua consigliata, per scegliere l'ora di partenza.
+- [ ] CA1. Nella pagina del viaggio vedo i litri consigliati (fn_acqua_consigliata, con ore di cammino inserite dall'utente).
+- [ ] CA2. Se il viaggio ha coordinate e data, vedo alba e tramonto in ora italiana, ottenuti dal backend (è il server che chiama l'API sunrise-sunset.org), non dal browser.
+- [ ] CA3. Se l'API esterna non risponde, la pagina funziona lo stesso e mostra "non disponibile".
