@@ -63,3 +63,7 @@ I nomi dei file sono provvisori: verranno aggiornati venerdì con quelli reali.
    File: `db/initdb/loadout_schema.sql` (tabella `oggetto`), `api/src/middleware/errors.js`
 8. **Ritorno.** Il server risponde `201 Created` con la giacca in JSON (compreso il nuovo `id`). Il JavaScript legge la risposta e aggiorna la tabella dell'armadio senza ricaricare la pagina.
    File: `api/src/routes/oggetti.js`, `public/js/armadio.js`
+
+  - [ ] CA3. Se l'API esterna non risponde, la pagina funziona lo stesso e mostra "non disponibile".
+                                                              ← aggiungi qui una riga vuota
+## Percorso di una richiesta: "aggiungo Giacca antivento al mio armadio" 

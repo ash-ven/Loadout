@@ -22,7 +22,7 @@ Contratto tra backend e frontend. Tutte le risposte sono in JSON.
 ## Armadio
 | Metodo | URL | Body in ingresso | Risposta | Status code |
 | --- | --- | --- | --- | --- |
-| GET | /api/oggetti?q=&categoria= | — | lista dei miei oggetti (array JSON) | 200, 401 |
+| GET | /api/oggetti?q=&categoria=&limit=&offset= | — | lista dei miei oggetti (array JSON), ordinata per categoria e nome; limit da 1 a 200 (default 50), offset ≥ 0 (default 0) | 200, 400, 401 |
 | POST | /api/oggetti | { nome, categoria, peso_g, is_indispensabile, is_preferito, codice_etichetta, note } | l'oggetto creato, con il suo id | 201, 400, 401, 409, 422 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
 | PUT | /api/oggetti/:id | { nome, categoria, peso_g, is_indispensabile, is_preferito, codice_etichetta, note } | l'oggetto aggiornato | 200, 400, 401, 404, 409, 422 |
@@ -47,7 +47,7 @@ Contratto tra backend e frontend. Tutte le risposte sono in JSON.
 | DELETE | /api/viaggi/:id/zaino/:oggettoId | — | nessun corpo | 204, 400, 401, 404 |
 
 ## Note sugli status code
-- **400:** body scritto male (campo mancante, tipo sbagliato) oppure id nell'URL che non è un numero.
+- **400:** body scritto male (campo mancante, tipo sbagliato) oppure parametri dell'URL non validi (id non numerico, limit < 1, offset < 0).
 - **404:** la risorsa non esiste o non è mia. Nello zaino vale sia per il viaggio sia per l'oggetto che aggiungo.
 - **409:** doppione. Nome già presente nel mio armadio (UNIQUE utente_id, nome), email già registrata, oggetto già nello zaino (PK composta).
 - **422:** viola una regola del database. peso_g ≤ 0, quantita ≤ 0, n_persone fuori da 1–50, n_giorni fuori da 1–60 (CHECK); oggetto_id inesistente (FK).
