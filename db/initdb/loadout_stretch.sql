@@ -25,3 +25,11 @@ UPDATE utente SET peso_corporeo_kg = 75 WHERE id = 2;  -- Demo
 --
 -- Nota: se peso_corporeo_kg è NULL (utente che non l'ha inserito),
 -- troppo_pesante vale NULL → il frontend non mostra l'avviso.
+
+
+-- Stretch 4: percorsi da fare in futuro
+ALTER TABLE viaggio
+  ADD COLUMN IF NOT EXISTS pianificato BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Dato di esempio: il viaggio 2 diventa un percorso da fare in futuro
+UPDATE viaggio SET pianificato = TRUE WHERE id = 2;
