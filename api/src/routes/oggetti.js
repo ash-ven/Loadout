@@ -9,6 +9,14 @@ router.get("/", async (req, res, next) => {
   try {
     const limit = Math.min(Number(req.query.limit ?? 50), 200);
     const offset = Number(req.query.offset ?? 0);
+
+    if (!Number.isInteger(limit) || limit < 1) {
+      return res.status(400).json({ error: "BAD_QUERY", message: "limit deve essere un intero ≥ 1" });
+    }
+    if (!Number.isInteger(offset) || offset < 0) {
+      return res.status(400).json({ error: "BAD_QUERY", message: "offset deve essere un intero ≥ 0" });
+    }
+
     res.json(await svc.list({ q: req.query.q ?? "", limit, offset }));
   } catch (err) { next(err); }
 });
