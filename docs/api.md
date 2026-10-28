@@ -23,9 +23,9 @@ Contratto tra backend e frontend. Tutte le risposte sono in JSON.
 | Metodo | URL | Body in ingresso | Risposta | Status code |
 | --- | --- | --- | --- | --- |
 | GET | /api/oggetti?q=&categoria=&limit=&offset= | — | lista dei miei oggetti (array JSON), ordinata per categoria e nome; limit da 1 a 200 (default 50), offset ≥ 0 (default 0) | 200, 400, 401 |
-| POST | /api/oggetti | { nome, categoria, peso_g, is_indispensabile, is_preferito, codice_etichetta, note } | l'oggetto creato, con il suo id | 201, 400, 401, 409, 422 |
+| POST | /api/oggetti | { nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note } — *obbligatori; nome max 120; categoria tra abbigliamento, attrezzatura, cucina, sicurezza, igiene, elettronica, cibo, altro; peso_g intero ≥ 1; codice_etichetta max 64; note max 1000 | l'oggetto creato, con il suo id | 201, 400, 401, 409, 422 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
-| PUT | /api/oggetti/:id | { nome, categoria, peso_g, is_indispensabile, is_preferito, codice_etichetta, note } | l'oggetto aggiornato | 200, 400, 401, 404, 409, 422 |
+| PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano a false/null) | l'oggetto aggiornato | 200, 400, 401, 404, 409, 422 |
 | DELETE | /api/oggetti/:id | — | nessun corpo (sparisce anche dagli zaini: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
 ## Viaggi
