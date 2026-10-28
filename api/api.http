@@ -80,3 +80,69 @@ DELETE {{base}}/api/oggetti/16
 
 ### Elimina oggetto - id non valido (atteso 400)
 DELETE {{base}}/api/oggetti/abc
+### Login - Asiha (atteso 200 + cookie)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "asiha@example.com",
+  "password": "Password123!"
+}
+
+### Chi sono? (atteso 200 se loggata, 401 se no)
+GET {{base}}/api/auth/me
+
+
+### Login - password sbagliata (atteso 401)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "asiha@example.com",
+  "password": "sbagliata"
+}
+
+### Login - email inesistente (atteso 401, STESSO messaggio)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nessuno@example.com",
+  "password": "Password123!"
+}
+
+### Registrazione - password corta (atteso 400)
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "prova@example.com",
+  "password": "corta",
+  "nome": "Prova"
+}
+
+### Registrazione - caso giusto (atteso 201)
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "prova@example.com",
+  "password": "Password123!",
+  "nome": "Prova"
+}
+
+### Registrazione - email già usata (atteso 409)
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "prova@example.com",
+  "password": "Password123!",
+  "nome": "Prova bis"
+}
+
+### Logout (atteso 204)
+POST {{base}}/api/auth/logout
+
+### Chi sono? dopo il logout (atteso 401)
+GET {{base}}/api/auth/me
