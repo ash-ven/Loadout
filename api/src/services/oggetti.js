@@ -27,3 +27,21 @@ export async function create(utenteId, dati) {
   );
   return rows[0];
 }
+export async function update(utenteId, id, dati) {
+  const { nome, categoria, peso_g, is_indispensabile = false, is_preferito = false, codice_etichetta = null, note = null } = dati;
+  const { rows } = await query(
+    `UPDATE oggetto
+     SET nome = $3, categoria = $4, peso_g = $5, is_indispensabile = $6, is_preferito = $7, codice_etichetta = $8, note = $9
+     WHERE id = $1 AND utente_id = $2
+     RETURNING *`,
+    [id, utenteId, nome, categoria, peso_g, is_indispensabile, is_preferito, codice_etichetta, note]
+  );
+  return rows[0] ?? null;
+}
+export async function remove(utenteId, id) {
+  const { rowCount } = await query(
+    "DELETE FROM oggetto WHERE id = $1 AND utente_id = $2",
+    [id, utenteId]
+  );
+  return rowCount > 0;
+}

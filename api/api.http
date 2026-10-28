@@ -41,3 +41,42 @@ Content-Type: application/json
   "categoria": "attrezzatura",
   "peso_g": 2.5
 }
+### Modifica oggetto - caso giusto (atteso 200)
+PUT {{base}}/api/oggetti/16
+Content-Type: application/json
+
+{
+  "nome": "Borraccia termica",
+  "categoria": "cucina",
+  "peso_g": 380,
+  "is_preferito": true,
+  "note": "Tiene caldo 12 ore"
+}
+
+### Modifica oggetto - id inesistente (atteso 404)
+PUT {{base}}/api/oggetti/999
+Content-Type: application/json
+
+{
+  "nome": "Fantasma",
+  "categoria": "altro",
+  "peso_g": 10
+}
+
+### Modifica oggetto - dati sbagliati E id inesistente (atteso 400)
+PUT {{base}}/api/oggetti/999
+Content-Type: application/json
+
+{
+  "nome": "Fantasma",
+  "categoria": "altro",
+  "peso_g": 0
+}
+### Elimina oggetto - caso giusto (atteso 204)
+DELETE {{base}}/api/oggetti/16
+
+### Elimina oggetto - già eliminato (atteso 404)
+DELETE {{base}}/api/oggetti/16
+
+### Elimina oggetto - id non valido (atteso 400)
+DELETE {{base}}/api/oggetti/abc

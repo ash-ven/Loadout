@@ -50,3 +50,27 @@ router.post("/", validate(schemaOggetto), async (req, res, next) => {
     res.status(201).json(nuovo);
   } catch (err) { next(err); }
 });
+// === ROTTA 4: PUT /api/oggetti/:id (modifica) ===
+router.put("/:id", validate(schemaOggetto), async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "BAD_ID", message: "id deve essere un intero positivo" });
+    }
+    const row = await svc.update(1, id, req.validated); // 1 = Asiha, finché non c'è il login
+    if (!row) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${id} non trovato` });
+    res.json(row);
+  } catch (err) { next(err); }
+});
+// === ROTTA 5: DELETE /api/oggetti/:id (elimina) ===
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "BAD_ID", message: "id deve essere un intero positivo" });
+    }
+    const ok = await svc.remove(1, id); // 1 = Asiha, finché non c'è il login
+    if (!ok) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${id} non trovato` });
+    res.status(204).end();
+  } catch (err) { next(err); }
+});
