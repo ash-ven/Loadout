@@ -53,3 +53,18 @@ export async function sole(viaggio) {
 function oraItaliana(iso) {
   return new Date(iso).toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
 }
+// 5. Avviso se lo zaino supera il 20% del peso corporeo (stretch 5)
+export async function avvisoPeso(utenteId, pesoZainoKg) {
+  const { rows } = await query("SELECT peso_corporeo_kg FROM utente WHERE id = $1", [utenteId]);
+  const pesoCorporeo = rows[0]?.peso_corporeo_kg ?? null;
+  if (pesoCorporeo == null) {
+    return { disponibile: false, motivo: "imposta il tuo peso corporeo nel profilo" };
+  }
+  const soglia = Math.round(pesoCorporeo * 0.2 * 100) / 100;
+  return {
+    disponibile: true,
+    peso_corporeo_kg: pesoCorporeo,
+    soglia_kg: soglia,
+    troppo_pesante: pesoZainoKg > soglia,
+  };
+}

@@ -59,3 +59,18 @@ router.post("/logout", (req, res) => {
 router.get("/me", requireAuth, (req, res) => {
   res.json(req.user);
 });
+
+// === PATCH /api/auth/me (stretch 5: imposta il proprio peso corporeo) ===
+const schemaProfilo = {
+  peso_corporeo_kg: { type: "number", required: true, min: 20, max: 300 },
+};
+
+router.patch("/me", requireAuth, validate(schemaProfilo), async (req, res, next) => {
+  try {
+    const { rows } = await query(
+      "UPDATE utente SET peso_corporeo_kg = $1 WHERE id = $2 RETURNING id, email, nome, peso_corporeo_kg",
+      [req.validated.peso_corporeo_kg, req.user.sub]
+    );
+    res.json(rows[0]);
+  } catch (err) { next(err); }
+});

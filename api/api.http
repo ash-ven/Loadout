@@ -500,3 +500,31 @@ GET {{base}}/api/viaggi?pianificato=false
 
 ### S4.3 Valore non valido (atteso 400)
 GET {{base}}/api/viaggi?pianificato=forse
+
+### =====================================================================
+###  STRETCH 5 - avviso zaino oltre il 20% del peso corporeo
+### =====================================================================
+
+### S5.1 Lago Santo con Asiha a 60 kg: soglia 12 kg, zaino 5,02 kg (atteso troppo_pesante: false)
+GET {{base}}/api/viaggi/1
+
+### S5.2 Imposta un peso corporeo basso, solo per la prova (soglia 5 kg)
+PATCH {{base}}/api/auth/me
+Content-Type: application/json
+
+{ "peso_corporeo_kg": 25 }
+
+### S5.3 Di nuovo il Lago Santo (atteso troppo_pesante: true, perché 5,02 > 5)
+GET {{base}}/api/viaggi/1
+
+### S5.4 Peso non valido (atteso 400)
+PATCH {{base}}/api/auth/me
+Content-Type: application/json
+
+{ "peso_corporeo_kg": 5 }
+
+### S5.5 Rimetti il peso vero
+PATCH {{base}}/api/auth/me
+Content-Type: application/json
+
+{ "peso_corporeo_kg": 60 }

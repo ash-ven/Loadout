@@ -85,6 +85,7 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
         fonte_ore: fonteOre,
         acqua_litri: acquaLitri,
         sole,
+        avviso_peso: await consigli.avvisoPeso(req.user.sub, peso.peso_totale_kg),
       },
     });
   } catch (err) { next(err); }
