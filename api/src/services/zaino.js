@@ -26,3 +26,35 @@ export async function peso(viaggioId) {
   );
   return rows[0];
 }
+
+// Aggiunge un oggetto allo zaino, SOLO se l'oggetto è dell'utente
+export async function aggiungi(utenteId, viaggioId, oggettoId, quantita) {
+  const { rows } = await query(
+    `INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id, quantita)
+     SELECT $1::int, id, $3::int FROM oggetto WHERE id = $2 AND utente_id = $4
+     RETURNING *`,
+    [viaggioId, oggettoId, quantita, utenteId]
+  );
+  return rows[0] ?? null;
+}
+
+// Cambia "inserito" e/o la quantità (solo i campi inviati)
+export async function modifica(viaggioId, oggettoId, { inserito, quantita }) {
+  const { rows } = await query(
+    `UPDATE viaggio_oggetto
+     SET inserito = COALESCE($3, inserito), quantita = COALESCE($4, quantita)
+     WHERE viaggio_id = $1 AND oggetto_id = $2
+     RETURNING *`,
+    [viaggioId, oggettoId, inserito ?? null, quantita ?? null]
+  );
+  return rows[0] ?? null;
+}
+
+// Toglie un oggetto dallo zaino (l'oggetto resta nell'armadio)
+export async function rimuovi(viaggioId, oggettoId) {
+  const { rowCount } = await query(
+    "DELETE FROM viaggio_oggetto WHERE viaggio_id = $1 AND oggetto_id = $2",
+    [viaggioId, oggettoId]
+  );
+  return rowCount > 0;
+}

@@ -1,9 +1,107 @@
 @base = http://localhost:3000
 
-### Health
+### =====================================================================
+###  SERVIZIO
+### =====================================================================
+
+### Health (libera, controlla anche il DB)
 GET {{base}}/api/health
 
-### Crea oggetto - caso giusto
+
+### =====================================================================
+###  AUTENTICAZIONE (US1)
+### =====================================================================
+
+### AU1. Login Asiha (atteso 200 + cookie)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "asiha@example.com",
+  "password": "Password123!"
+}
+
+### AU2. Chi sono? (atteso 200)
+GET {{base}}/api/auth/me
+
+### AU3. Login - password sbagliata (atteso 401)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "asiha@example.com",
+  "password": "sbagliata"
+}
+
+### AU4. Login - email inesistente (atteso 401, STESSO messaggio)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nessuno@example.com",
+  "password": "Password123!"
+}
+
+### AU5. Registrazione - password corta (atteso 400)
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "prova@example.com",
+  "password": "corta",
+  "nome": "Prova"
+}
+
+### AU6. Registrazione - caso giusto (201 la prima volta; 409 dalla seconda, perché prova@example.com esiste già)
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "prova@example.com",
+  "password": "Password123!",
+  "nome": "Prova"
+}
+
+### AU7. Logout (atteso 204)
+POST {{base}}/api/auth/logout
+
+### AU8. Chi sono? dopo il logout (atteso 401)
+GET {{base}}/api/auth/me
+
+### AU9. Armadio senza login (atteso 401)
+GET {{base}}/api/oggetti
+
+
+### =====================================================================
+###  ARMADIO - OGGETTI (US2)
+### =====================================================================
+
+### O0. Login Asiha
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "asiha@example.com",
+  "password": "Password123!"
+}
+
+### O1. Lista (solo i miei, ordinati per categoria e nome)
+GET {{base}}/api/oggetti
+
+### O2. Ricerca per nome
+GET {{base}}/api/oggetti?q=zai
+
+### O3. Limit non valido (atteso 400)
+GET {{base}}/api/oggetti?limit=abc
+
+### O4. Dettaglio (atteso 200)
+GET {{base}}/api/oggetti/1
+
+### O5. Dettaglio inesistente (atteso 404)
+GET {{base}}/api/oggetti/999
+
+### O6. Crea - caso giusto (atteso 201; 409 se esiste già)
+# @name nuovoOggetto
 POST {{base}}/api/oggetti
 Content-Type: application/json
 
@@ -12,7 +110,8 @@ Content-Type: application/json
   "categoria": "cucina",
   "peso_g": 350
 }
-### Crea oggetto - dati sbagliati (atteso 400)
+
+### O7. Crea - dati sbagliati (atteso 400)
 POST {{base}}/api/oggetti
 Content-Type: application/json
 
@@ -23,7 +122,7 @@ Content-Type: application/json
   "utente_id": 2
 }
 
-### Crea oggetto - duplicato (atteso 409)
+### O8. Crea - duplicato (atteso 409)
 POST {{base}}/api/oggetti
 Content-Type: application/json
 
@@ -32,7 +131,8 @@ Content-Type: application/json
   "categoria": "cucina",
   "peso_g": 350
 }
-### Crea oggetto - peso con la virgola
+
+### O9. Crea - peso con la virgola (atteso 400)
 POST {{base}}/api/oggetti
 Content-Type: application/json
 
@@ -41,8 +141,9 @@ Content-Type: application/json
   "categoria": "attrezzatura",
   "peso_g": 2.5
 }
-### Modifica oggetto - caso giusto (atteso 200)
-PUT {{base}}/api/oggetti/16
+
+### O10. Modifica - caso giusto (atteso 200)
+PUT {{base}}/api/oggetti/{{nuovoOggetto.response.body.id}}
 Content-Type: application/json
 
 {
@@ -53,7 +154,7 @@ Content-Type: application/json
   "note": "Tiene caldo 12 ore"
 }
 
-### Modifica oggetto - id inesistente (atteso 404)
+### O11. Modifica - id inesistente (atteso 404)
 PUT {{base}}/api/oggetti/999
 Content-Type: application/json
 
@@ -63,7 +164,7 @@ Content-Type: application/json
   "peso_g": 10
 }
 
-### Modifica oggetto - dati sbagliati E id inesistente (atteso 400)
+### O12. Modifica - dati sbagliati E id inesistente (atteso 400)
 PUT {{base}}/api/oggetti/999
 Content-Type: application/json
 
@@ -72,85 +173,20 @@ Content-Type: application/json
   "categoria": "altro",
   "peso_g": 0
 }
-### Elimina oggetto - caso giusto (atteso 204)
-DELETE {{base}}/api/oggetti/16
 
-### Elimina oggetto - già eliminato (atteso 404)
-DELETE {{base}}/api/oggetti/16
+### O13. Elimina - caso giusto (atteso 204)
+DELETE {{base}}/api/oggetti/{{nuovoOggetto.response.body.id}}
 
-### Elimina oggetto - id non valido (atteso 400)
+### O14. Elimina - già eliminato (atteso 404)
+DELETE {{base}}/api/oggetti/{{nuovoOggetto.response.body.id}}
+
+### O15. Elimina - id non valido (atteso 400)
 DELETE {{base}}/api/oggetti/abc
-### Login - Asiha (atteso 200 + cookie)
-POST {{base}}/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "asiha@example.com",
-  "password": "Password123!"
-}
-
-### Chi sono? (atteso 200 se loggata, 401 se no)
-GET {{base}}/api/auth/me
 
 
-### Login - password sbagliata (atteso 401)
-POST {{base}}/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "asiha@example.com",
-  "password": "sbagliata"
-}
-
-### Login - email inesistente (atteso 401, STESSO messaggio)
-POST {{base}}/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "nessuno@example.com",
-  "password": "Password123!"
-}
-
-### Registrazione - password corta (atteso 400)
-POST {{base}}/api/auth/register
-Content-Type: application/json
-
-{
-  "email": "prova@example.com",
-  "password": "corta",
-  "nome": "Prova"
-}
-
-### Registrazione - caso giusto (atteso 201)
-POST {{base}}/api/auth/register
-Content-Type: application/json
-
-{
-  "email": "prova@example.com",
-  "password": "Password123!",
-  "nome": "Prova"
-}
-
-### Registrazione - email già usata (atteso 409)
-POST {{base}}/api/auth/register
-Content-Type: application/json
-
-{
-  "email": "prova@example.com",
-  "password": "Password123!",
-  "nome": "Prova bis"
-}
-
-### Logout (atteso 204)
-POST {{base}}/api/auth/logout
-
-### Chi sono? dopo il logout (atteso 401)
-GET {{base}}/api/auth/me
-### Lista oggetti
-GET {{base}}/api/oggetti
-
-
-### ===================== PROVA AUTORIZZAZIONE (7.10.3) =====================
+### =====================================================================
+###  AUTORIZZAZIONE - esercizio 7.10.3 (US1 CA3)
+### =====================================================================
 
 ### A1. Login come Asiha
 POST {{base}}/api/auth/login
@@ -161,18 +197,18 @@ Content-Type: application/json
   "password": "Password123!"
 }
 
-### A2. Asiha crea un oggetto
+### A2. Asiha crea un oggetto (se dà 409 il diario esiste già: cambia il nome)
 # @name segreto
 POST {{base}}/api/oggetti
 Content-Type: application/json
 
 {
-  "nome": "Diario segreto",
+  "nome": "Diario segreto 2",
   "categoria": "altro",
   "peso_g": 200
 }
 
-### A3. Lista di Asiha (NON devono esserci gli id 13 e 14 di Demo)
+### A3. Lista di Asiha (NON devono esserci gli oggetti di Demo)
 GET {{base}}/api/oggetti
 
 ### D1. Login come Demo
@@ -187,7 +223,7 @@ Content-Type: application/json
 ### D2. Lista di Demo (solo i suoi 2 oggetti)
 GET {{base}}/api/oggetti
 
-### D3. Demo prova a LEGGERE il diario di Asiha (atteso 404)
+### D3. Demo prova a LEGGERE l'oggetto di Asiha (atteso 404)
 GET {{base}}/api/oggetti/{{segreto.response.body.id}}
 
 ### D4. Demo prova a MODIFICARLO (atteso 404)
@@ -204,7 +240,9 @@ Content-Type: application/json
 DELETE {{base}}/api/oggetti/{{segreto.response.body.id}}
 
 
-### ===================== VIAGGI =====================
+### =====================================================================
+###  VIAGGI (US3)
+### =====================================================================
 
 ### V0. Login come Asiha
 POST {{base}}/api/auth/login
@@ -215,9 +253,8 @@ Content-Type: application/json
   "password": "Password123!"
 }
 
-### V1. Lista dei miei viaggi
+### V1. Lista dei miei viaggi (ordinati per data, senza data in fondo)
 GET {{base}}/api/viaggi
-
 
 ### V2. Crea viaggio - caso giusto (atteso 201)
 # @name nuovoViaggio
@@ -267,7 +304,10 @@ DELETE {{base}}/api/viaggi/{{nuovoViaggio.response.body.id}}
 ### V6. Dettaglio viaggio eliminato (atteso 404)
 GET {{base}}/api/viaggi/{{nuovoViaggio.response.body.id}}
 
-### ===================== ZAINO =====================
+
+### =====================================================================
+###  ZAINO (US4, US5)
+### =====================================================================
 
 ### Z1. Crea un viaggio SENZA cucina
 # @name tz
@@ -280,10 +320,10 @@ Content-Type: application/json
   "serve_cucina": false
 }
 
-### Z2. Genera lo zaino (US4 CA1)
+### Z2. Genera lo zaino (US4 CA1, CA2)
 POST {{base}}/api/viaggi/{{tz.response.body.id}}/genera
 
-### Z3. Genera di nuovo (US4 CA3: nessun duplicato)
+### Z3. Genera di nuovo (US4 CA3: atteso { "aggiunti": 0 })
 POST {{base}}/api/viaggi/{{tz.response.body.id}}/genera
 
 ### Z4. Checklist + peso (US5 CA1, CA2)
@@ -291,3 +331,48 @@ GET {{base}}/api/viaggi/{{tz.response.body.id}}/zaino
 
 ### Z5. Zaino di un viaggio che non esiste (atteso 404)
 GET {{base}}/api/viaggi/999/zaino
+
+### Z6. Aggiungi la Crema solare (id 12) dall'armadio (atteso 201)
+POST {{base}}/api/viaggi/{{tz.response.body.id}}/zaino
+Content-Type: application/json
+
+{ "oggetto_id": 12 }
+
+### Z7. Aggiungila di nuovo (atteso 409)
+POST {{base}}/api/viaggi/{{tz.response.body.id}}/zaino
+Content-Type: application/json
+
+{ "oggetto_id": 12 }
+
+### Z8. Aggiungi lo Zaino 25L di DEMO (id 13) (atteso 404)
+POST {{base}}/api/viaggi/{{tz.response.body.id}}/zaino
+Content-Type: application/json
+
+{ "oggetto_id": 13 }
+
+### Z9. Spunta "inserito" sullo Zaino 40L (id 1) (atteso 200)
+PATCH {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/1
+Content-Type: application/json
+
+{ "inserito": true }
+
+### Z10. Porta 2 borracce (id 10) (atteso 200)
+PATCH {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/10
+Content-Type: application/json
+
+{ "quantita": 2 }
+
+### Z11. PATCH vuota (atteso 400)
+PATCH {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/10
+Content-Type: application/json
+
+{}
+
+### Z12. Checklist aggiornata
+GET {{base}}/api/viaggi/{{tz.response.body.id}}/zaino
+
+### Z13. Togli la Crema solare (atteso 204)
+DELETE {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/12
+
+### Z14. Toglila di nuovo (atteso 404)
+DELETE {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/12

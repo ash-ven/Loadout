@@ -102,3 +102,53 @@ router.get("/:id/zaino", caricaViaggio, async (req, res, next) => {
     res.json({ peso, oggetti });
   } catch (err) { next(err); }
 });
+const schemaAggiungi = {
+  oggetto_id: { type: "number", required: true, integer: true, min: 1 },
+  quantita:   { type: "number", integer: true, min: 1, max: 99 },
+};
+
+const schemaModifica = {
+  inserito: { type: "boolean" },
+  quantita: { type: "number", integer: true, min: 1, max: 99 },
+};
+
+// legge :oggettoId dall'URL; null se non è un intero positivo
+function leggiOggettoId(req) {
+  const id = Number(req.params.oggettoId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+// === POST /api/viaggi/:id/zaino (US5 CA3: aggiungi dall'armadio) ===
+router.post("/:id/zaino", caricaViaggio, validate(schemaAggiungi), async (req, res, next) => {
+  try {
+    const { oggetto_id, quantita = 1 } = req.validated;
+    const riga = await zaino.aggiungi(req.user.sub, req.viaggio.id, oggetto_id, quantita);
+    if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggetto_id} non trovato` });
+    res.status(201).json(riga);
+  } catch (err) { next(err); }
+});
+
+// === PATCH /api/viaggi/:id/zaino/:oggettoId (checkbox "inserito" e/o quantità) ===
+router.patch("/:id/zaino/:oggettoId", caricaViaggio, validate(schemaModifica), async (req, res, next) => {
+  try {
+    const oggettoId = leggiOggettoId(req);
+    if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
+    if (Object.keys(req.validated).length === 0) {
+      return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito' o 'quantita'" });
+    }
+    const riga = await zaino.modifica(req.viaggio.id, oggettoId, req.validated);
+    if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
+    res.json(riga);
+  } catch (err) { next(err); }
+});
+
+// === DELETE /api/viaggi/:id/zaino/:oggettoId (togli dallo zaino) ===
+router.delete("/:id/zaino/:oggettoId", caricaViaggio, async (req, res, next) => {
+  try {
+    const oggettoId = leggiOggettoId(req);
+    if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
+    const ok = await zaino.rimuovi(req.viaggio.id, oggettoId);
+    if (!ok) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
+    res.status(204).end();
+  } catch (err) { next(err); }
+});
