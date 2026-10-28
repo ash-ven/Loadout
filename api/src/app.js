@@ -7,6 +7,7 @@ import { notFound, errorHandler } from "./middleware/errors.js";
 import { requireAuth } from "./middleware/auth.js";
 import { router as authRouter } from "./routes/auth.js";
 import { router as oggettiRouter } from "./routes/oggetti.js";
+import { router as viaggiRouter } from "./routes/viaggi.js";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.get("/api/health", async (req, res) => {
 });
 app.use("/api/auth", authRouter);                        // libera (login, register…)
 app.use("/api/oggetti", requireAuth, oggettiRouter);     // protetta
+app.use("/api/viaggi", requireAuth, viaggiRouter);       // protetta
 
 // === 4. CHIUSURA (dopo tutte le rotte) ===
 app.use(notFound);       // nessuna rotta ha risposto → 404
