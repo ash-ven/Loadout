@@ -1,20 +1,19 @@
-// api/src/services/oggetti.js
 import { query } from "../db.js";
 
-export async function list({ q = "", limit = 50, offset = 0 }) {
+export async function list(utenteId, { q = "", limit = 50, offset = 0 }) {
   const { rows } = await query(
     `SELECT * FROM oggetto
-     WHERE nome ILIKE $1
+     WHERE utente_id = $1 AND nome ILIKE $2
      ORDER BY categoria, nome
-     LIMIT $2 OFFSET $3`,
-    [`%${q}%`, limit, offset]
+     LIMIT $3 OFFSET $4`,
+    [utenteId, `%${q}%`, limit, offset]
   );
   return rows;
 }
 
-export async function getById(id) {
-  const { rows } = await query("SELECT * FROM oggetto WHERE id = $1", [id]);
-  return rows[0] ?? null; // undefined → null: chi chiama controlla "se null → 404"
+export async function getById(utenteId, id) {
+  const { rows } = await query("SELECT * FROM oggetto WHERE id = $1 AND utente_id = $2", [id, utenteId]);
+  return rows[0] ?? null;
 }
 
 export async function create(utenteId, dati) {
@@ -27,6 +26,7 @@ export async function create(utenteId, dati) {
   );
   return rows[0];
 }
+
 export async function update(utenteId, id, dati) {
   const { nome, categoria, peso_g, is_indispensabile = false, is_preferito = false, codice_etichetta = null, note = null } = dati;
   const { rows } = await query(
@@ -38,10 +38,8 @@ export async function update(utenteId, id, dati) {
   );
   return rows[0] ?? null;
 }
+
 export async function remove(utenteId, id) {
-  const { rowCount } = await query(
-    "DELETE FROM oggetto WHERE id = $1 AND utente_id = $2",
-    [id, utenteId]
-  );
+  const { rowCount } = await query("DELETE FROM oggetto WHERE id = $1 AND utente_id = $2", [id, utenteId]);
   return rowCount > 0;
 }

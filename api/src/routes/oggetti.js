@@ -16,7 +16,7 @@ const schemaOggetto = {
   note:              { type: "string", maxLength: 1000 },
 };
 
-
+// === GET /api/oggetti (lista) ===
 router.get("/", async (req, res, next) => {
   try {
     const limit = Math.min(Number(req.query.limit ?? 50), 200);
@@ -27,49 +27,52 @@ router.get("/", async (req, res, next) => {
     if (!Number.isInteger(offset) || offset < 0) {
       return res.status(400).json({ error: "BAD_QUERY", message: "offset deve essere un intero ≥ 0" });
     }
-    res.json(await svc.list({ q: req.query.q ?? "", limit, offset }));
+    res.json(await svc.list(req.user.sub, { q: req.query.q ?? "", limit, offset }));
   } catch (err) { next(err); }
 });
 
+// === GET /api/oggetti/:id (dettaglio) ===
 router.get("/:id", async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "BAD_ID", message: "id deve essere un intero positivo" });
     }
-    const row = await svc.getById(id);
+    const row = await svc.getById(req.user.sub, id);
     if (!row) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${id} non trovato` });
     res.json(row);
   } catch (err) { next(err); }
-});                                  // ← qui finisce la rotta 2
+});
 
-
+// === POST /api/oggetti (crea) ===
 router.post("/", validate(schemaOggetto), async (req, res, next) => {
   try {
-    const nuovo = await svc.create(1, req.validated); // 1 = Asiha, finché non c'è il login
+    const nuovo = await svc.create(req.user.sub, req.validated);
     res.status(201).json(nuovo);
   } catch (err) { next(err); }
 });
-// === ROTTA 4: PUT /api/oggetti/:id (modifica) ===
+
+// === PUT /api/oggetti/:id (modifica) ===
 router.put("/:id", validate(schemaOggetto), async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "BAD_ID", message: "id deve essere un intero positivo" });
     }
-    const row = await svc.update(1, id, req.validated); // 1 = Asiha, finché non c'è il login
+    const row = await svc.update(req.user.sub, id, req.validated);
     if (!row) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${id} non trovato` });
     res.json(row);
   } catch (err) { next(err); }
 });
-// === ROTTA 5: DELETE /api/oggetti/:id (elimina) ===
+
+// === DELETE /api/oggetti/:id (elimina) ===
 router.delete("/:id", async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "BAD_ID", message: "id deve essere un intero positivo" });
     }
-    const ok = await svc.remove(1, id); // 1 = Asiha, finché non c'è il login
+    const ok = await svc.remove(req.user.sub, id);
     if (!ok) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${id} non trovato` });
     res.status(204).end();
   } catch (err) { next(err); }

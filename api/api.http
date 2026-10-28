@@ -146,3 +146,59 @@ POST {{base}}/api/auth/logout
 
 ### Chi sono? dopo il logout (atteso 401)
 GET {{base}}/api/auth/me
+### Lista oggetti
+GET {{base}}/api/oggetti
+
+
+### ===================== PROVA AUTORIZZAZIONE (7.10.3) =====================
+
+### A1. Login come Asiha
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "asiha@example.com",
+  "password": "Password123!"
+}
+
+### A2. Asiha crea un oggetto
+# @name segreto
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{
+  "nome": "Diario segreto",
+  "categoria": "altro",
+  "peso_g": 200
+}
+
+### A3. Lista di Asiha (NON devono esserci gli id 13 e 14 di Demo)
+GET {{base}}/api/oggetti
+
+### D1. Login come Demo
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "Password123!"
+}
+
+### D2. Lista di Demo (solo i suoi 2 oggetti)
+GET {{base}}/api/oggetti
+
+### D3. Demo prova a LEGGERE il diario di Asiha (atteso 404)
+GET {{base}}/api/oggetti/{{segreto.response.body.id}}
+
+### D4. Demo prova a MODIFICARLO (atteso 404)
+PUT {{base}}/api/oggetti/{{segreto.response.body.id}}
+Content-Type: application/json
+
+{
+  "nome": "Diario letto da Demo",
+  "categoria": "altro",
+  "peso_g": 200
+}
+
+### D5. Demo prova a CANCELLARLO (atteso 404)
+DELETE {{base}}/api/oggetti/{{segreto.response.body.id}}
