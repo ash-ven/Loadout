@@ -7,6 +7,6 @@ export function requireAuth(req, res, next) {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
   } catch {
-    res.status(401).json({ error: "INVALID_TOKEN", message: "Sessione scaduta, effettua di nuovo il login" });
+    res.status(401).json({ error: "INVALID_TOKEN", message: "Sessione non valida o scaduta, effettua di nuovo il login" });
   }
 }

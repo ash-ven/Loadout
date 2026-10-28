@@ -405,3 +405,22 @@ GET {{base}}/api/viaggi/4
 
 ### C5. Ore non valide (atteso 400)
 GET {{base}}/api/viaggi/1?ore_cammino=abc
+
+### =====================================================================
+###  TOKEN MANOMESSO - esercizio 7.10.2
+### =====================================================================
+
+### T0. Logout, così REST Client non manda il suo cookie e usiamo solo quelli scritti a mano
+POST {{base}}/api/auth/logout
+
+### T1. Controllo: token ORIGINALE di Asiha scritto a mano (atteso 200, sub 1)
+GET {{base}}/api/auth/me
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsIm5vbWUiOiJBc2loYSIsImlhdCI6MTc5MzE4NjMyMiwiZXhwIjoxNzkzMjE1MTIyfQ.AZ_PAy5RHxs9XDEMxCOJNs7Ys97WmxmynlvLjUm-TM0
+
+### T2. Token MANOMESSO: payload con sub 2 (Demo), firma di Asiha (atteso 401)
+GET {{base}}/api/auth/me
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsIm5vbWUiOiJEZW1vIiwiaWF0IjoxNzkzMTg2MzIyLCJleHAiOjE3OTMyMTUxMjJ9.AZ_PAy5RHxs9XDEMxCOJNs7Ys97WmxmynlvLjUm-TM0
+
+### T3. L'hacker prova a leggere l'armadio di Demo con il token falso (atteso 401)
+GET {{base}}/api/oggetti
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsIm5vbWUiOiJEZW1vIiwiaWF0IjoxNzkzMTg2MzIyLCJleHAiOjE3OTMyMTUxMjJ9.AZ_PAy5RHxs9XDEMxCOJNs7Ys97WmxmynlvLjUm-TM0
