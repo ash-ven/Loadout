@@ -449,3 +449,17 @@ GET {{base}}/api/oggetti?categoria=astronave
 
 ### F4. Senza filtro (atteso: tutti i miei oggetti, come prima)
 GET {{base}}/api/oggetti
+
+### =====================================================================
+###  ESERCIZIO L5.10.4 - violazione CHECK → 422
+### =====================================================================
+
+### X1. Peso 0 con il validatore "allentato" (atteso 422 CHECK_VIOLATION)
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{
+  "nome": "Oggetto senza peso",
+  "categoria": "altro",
+  "peso_g": 0
+}
