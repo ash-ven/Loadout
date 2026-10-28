@@ -266,3 +266,28 @@ DELETE {{base}}/api/viaggi/{{nuovoViaggio.response.body.id}}
 
 ### V6. Dettaglio viaggio eliminato (atteso 404)
 GET {{base}}/api/viaggi/{{nuovoViaggio.response.body.id}}
+
+### ===================== ZAINO =====================
+
+### Z1. Crea un viaggio SENZA cucina
+# @name tz
+POST {{base}}/api/viaggi
+Content-Type: application/json
+
+{
+  "nome": "Test zaino senza cucina",
+  "attivita": "escursione",
+  "serve_cucina": false
+}
+
+### Z2. Genera lo zaino (US4 CA1)
+POST {{base}}/api/viaggi/{{tz.response.body.id}}/genera
+
+### Z3. Genera di nuovo (US4 CA3: nessun duplicato)
+POST {{base}}/api/viaggi/{{tz.response.body.id}}/genera
+
+### Z4. Checklist + peso (US5 CA1, CA2)
+GET {{base}}/api/viaggi/{{tz.response.body.id}}/zaino
+
+### Z5. Zaino di un viaggio che non esiste (atteso 404)
+GET {{base}}/api/viaggi/999/zaino
