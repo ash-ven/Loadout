@@ -376,3 +376,12 @@ DELETE {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/12
 
 ### Z14. Toglila di nuovo (atteso 404)
 DELETE {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/12
+
+### Z15. Svuota la checklist (US5 CA4) - atteso { "svuotati": 1 }
+POST {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/svuota
+
+### Z16. Svuota di nuovo - atteso { "svuotati": 0 }
+POST {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/svuota
+
+### Z17. Checklist dopo lo svuotamento (peso_inserito a 0)
+GET {{base}}/api/viaggi/{{tz.response.body.id}}/zaino

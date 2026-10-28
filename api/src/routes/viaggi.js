@@ -152,3 +152,11 @@ router.delete("/:id/zaino/:oggettoId", caricaViaggio, async (req, res, next) => 
     res.status(204).end();
   } catch (err) { next(err); }
 });
+
+// === POST /api/viaggi/:id/zaino/svuota (US5 CA4: svuota la checklist) ===
+router.post("/:id/zaino/svuota", caricaViaggio, async (req, res, next) => {
+  try {
+    const svuotati = await zaino.svuota(req.viaggio.id);
+    res.json({ svuotati });
+  } catch (err) { next(err); }
+});

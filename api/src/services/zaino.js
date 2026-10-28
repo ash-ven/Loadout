@@ -58,3 +58,12 @@ export async function rimuovi(viaggioId, oggettoId) {
   );
   return rowCount > 0;
 }
+
+// Svuota la checklist: tutti gli oggetti tornano "non inseriti" (US5 CA4)
+export async function svuota(viaggioId) {
+  const { rowCount } = await query(
+    "UPDATE viaggio_oggetto SET inserito = FALSE WHERE viaggio_id = $1 AND inserito = TRUE",
+    [viaggioId]
+  );
+  return rowCount;
+}
