@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as svc from "../services/viaggi.js";
 import * as zaino from "../services/zaino.js";
+import * as consigli from "../services/consigli.js";
 import { validate } from "../middleware/validate.js";
 
 export const router = Router();
@@ -47,9 +48,39 @@ router.get("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// === GET /api/viaggi/:id (dettaglio) ===
-router.get("/:id", caricaViaggio, (req, res) => {
-  res.json(req.viaggio);
+// === GET /api/viaggi/:id?ore_cammino= (dettaglio + peso + consigli, US6) ===
+router.get("/:id", caricaViaggio, async (req, res, next) => {
+  try {
+    const v = req.viaggio;
+
+    // Ore di cammino al giorno: quelle inserite dall'utente vincono sulla stima dal percorso
+    let ore = consigli.oreStimate(v);
+    let fonteOre = ore == null ? null : "percorso";
+    if (req.query.ore_cammino !== undefined) {
+      const o = Number(req.query.ore_cammino);
+      if (Number.isNaN(o) || o < 0.5 || o > 16) {
+        return res.status(400).json({ error: "BAD_QUERY", message: "ore_cammino deve essere un numero tra 0.5 e 16" });
+      }
+      ore = o;
+      fonteOre = "utente";
+    }
+
+    const peso = await zaino.peso(v.id);
+    const sole = await consigli.sole(v);
+    const acquaLitri = ore == null ? null : await consigli.acqua(v, ore);
+
+    res.json({
+      ...v,
+      peso,
+      consigli: {
+        distanza_linea_aria_km: consigli.distanzaLineaAria(v),
+        ore_cammino_giorno: ore,
+        fonte_ore: fonteOre,
+        acqua_litri: acquaLitri,
+        sole,
+      },
+    });
+  } catch (err) { next(err); }
 });
 
 // === POST /api/viaggi (crea) ===
@@ -95,69 +126,4 @@ router.post("/:id/genera", caricaViaggio, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// === GET /api/viaggi/:id/zaino (US5: checklist + peso) ===
-router.get("/:id/zaino", caricaViaggio, async (req, res, next) => {
-  try {
-    const peso = await zaino.peso(req.viaggio.id);
-    const oggetti = await zaino.dettaglio(req.viaggio.id);
-    res.json({ peso, oggetti });
-  } catch (err) { next(err); }
-});
-const schemaAggiungi = {
-  oggetto_id: { type: "number", required: true, integer: true, min: 1 },
-  quantita:   { type: "number", integer: true, min: 1, max: 99 },
-};
-
-const schemaModifica = {
-  inserito: { type: "boolean" },
-  quantita: { type: "number", integer: true, min: 1, max: 99 },
-};
-
-// legge :oggettoId dall'URL; null se non è un intero positivo
-function leggiOggettoId(req) {
-  const id = Number(req.params.oggettoId);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
-
-// === POST /api/viaggi/:id/zaino (US5 CA3: aggiungi dall'armadio) ===
-router.post("/:id/zaino", caricaViaggio, validate(schemaAggiungi), async (req, res, next) => {
-  try {
-    const { oggetto_id, quantita = 1 } = req.validated;
-    const riga = await zaino.aggiungi(req.user.sub, req.viaggio.id, oggetto_id, quantita);
-    if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggetto_id} non trovato` });
-    res.status(201).json(riga);
-  } catch (err) { next(err); }
-});
-
-// === PATCH /api/viaggi/:id/zaino/:oggettoId (checkbox "inserito" e/o quantità) ===
-router.patch("/:id/zaino/:oggettoId", caricaViaggio, validate(schemaModifica), async (req, res, next) => {
-  try {
-    const oggettoId = leggiOggettoId(req);
-    if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
-    if (Object.keys(req.validated).length === 0) {
-      return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito' o 'quantita'" });
-    }
-    const riga = await zaino.modifica(req.viaggio.id, oggettoId, req.validated);
-    if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
-    res.json(riga);
-  } catch (err) { next(err); }
-});
-
-// === DELETE /api/viaggi/:id/zaino/:oggettoId (togli dallo zaino) ===
-router.delete("/:id/zaino/:oggettoId", caricaViaggio, async (req, res, next) => {
-  try {
-    const oggettoId = leggiOggettoId(req);
-    if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
-    const ok = await zaino.rimuovi(req.viaggio.id, oggettoId);
-    if (!ok) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
-    res.status(204).end();
-  } catch (err) { next(err); }
-});
-
-// === POST /api/viaggi/:id/zaino/svuota (US5 CA4: svuota la checklist) ===
-router.post("/:id/zaino/svuota", caricaViaggio, async (req, res, next) => {
-  try {
-    const svuotati = await zaino.svuota(req.viaggio.id);
-    res.json({ svuotati });
-  } catch (err) { next(err); }
-});
+//

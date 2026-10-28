@@ -385,3 +385,23 @@ POST {{base}}/api/viaggi/{{tz.response.body.id}}/zaino/svuota
 
 ### Z17. Checklist dopo lo svuotamento (peso_inserito a 0)
 GET {{base}}/api/viaggi/{{tz.response.body.id}}/zaino
+
+
+### =====================================================================
+###  CONSIGLI (US6)
+### =====================================================================
+
+### C1. Lago Santo: ore stimate dal percorso, acqua, linea d'aria, alba/tramonto
+GET {{base}}/api/viaggi/1
+
+### C2. Lago Santo con ore inserite dall'utente (vincono sulla stima)
+GET {{base}}/api/viaggi/1?ore_cammino=6
+
+### C3. Rifugio: 2 giorni, 3 persone
+GET {{base}}/api/viaggi/2
+
+### C4. Tre giorni in tenda: niente km, niente coordinate, niente data
+GET {{base}}/api/viaggi/4
+
+### C5. Ore non valide (atteso 400)
+GET {{base}}/api/viaggi/1?ore_cammino=abc
