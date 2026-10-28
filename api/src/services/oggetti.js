@@ -1,12 +1,14 @@
 import { query } from "../db.js";
 
-export async function list(utenteId, { q = "", limit = 50, offset = 0 }) {
+export async function list(utenteId, { q = "", categoria = null, limit = 50, offset = 0 }) {
   const { rows } = await query(
     `SELECT * FROM oggetto
-     WHERE utente_id = $1 AND nome ILIKE $2
+     WHERE utente_id = $1
+       AND nome ILIKE $2
+       AND ($3::categoria_oggetto IS NULL OR categoria = $3)
      ORDER BY categoria, nome
-     LIMIT $3 OFFSET $4`,
-    [utenteId, `%${q}%`, limit, offset]
+     LIMIT $4 OFFSET $5`,
+    [utenteId, `%${q}%`, categoria, limit, offset]
   );
   return rows;
 }

@@ -424,3 +424,28 @@ Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsIm5vbWUiOiJEZW1vI
 ### T3. L'hacker prova a leggere l'armadio di Demo con il token falso (atteso 401)
 GET {{base}}/api/oggetti
 Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsIm5vbWUiOiJEZW1vIiwiaWF0IjoxNzkzMTg2MzIyLCJleHAiOjE3OTMyMTUxMjJ9.AZ_PAy5RHxs9XDEMxCOJNs7Ys97WmxmynlvLjUm-TM0
+
+### =====================================================================
+###  FILTRO PER CATEGORIA
+### =====================================================================
+
+### F0. Login come Asiha (REST Client era sloggato dopo T0)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "asiha@example.com",
+  "password": "Password123!"
+}
+
+### F1. Solo abbigliamento (atteso: Giacca antivento, Pile leggero, Scarponi)
+GET {{base}}/api/oggetti?categoria=abbigliamento
+
+### F2. Categoria + ricerca insieme (atteso: solo Pentolino 1L)
+GET {{base}}/api/oggetti?categoria=cucina&q=pent
+
+### F3. Categoria inesistente (atteso 400)
+GET {{base}}/api/oggetti?categoria=astronave
+
+### F4. Senza filtro (atteso: tutti i miei oggetti, come prima)
+GET {{base}}/api/oggetti

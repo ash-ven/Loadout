@@ -16,18 +16,22 @@ const schemaOggetto = {
   note:              { type: "string", maxLength: 1000 },
 };
 
-// === GET /api/oggetti (lista) ===
+// === GET /api/oggetti?q=&categoria=&limit=&offset= (lista) ===
 router.get("/", async (req, res, next) => {
   try {
     const limit = Math.min(Number(req.query.limit ?? 50), 200);
     const offset = Number(req.query.offset ?? 0);
+    const categoria = req.query.categoria ?? null;
     if (!Number.isInteger(limit) || limit < 1) {
       return res.status(400).json({ error: "BAD_QUERY", message: "limit deve essere un intero ≥ 1" });
     }
     if (!Number.isInteger(offset) || offset < 0) {
       return res.status(400).json({ error: "BAD_QUERY", message: "offset deve essere un intero ≥ 0" });
     }
-    res.json(await svc.list(req.user.sub, { q: req.query.q ?? "", limit, offset }));
+    if (categoria !== null && !CATEGORIE.includes(categoria)) {
+      return res.status(400).json({ error: "BAD_QUERY", message: `categoria deve essere uno tra: ${CATEGORIE.join(", ")}` });
+    }
+    res.json(await svc.list(req.user.sub, { q: req.query.q ?? "", categoria, limit, offset }));
   } catch (err) { next(err); }
 });
 
