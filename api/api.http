@@ -542,3 +542,29 @@ GET {{base}}/api/viaggi/2
 
 ### S1.3 Tenda: niente coordinate né data
 GET {{base}}/api/viaggi/4
+
+### =====================================================================
+###  TRANSAZIONE (lezione 5.8) - crea viaggio + zaino in un colpo solo
+### =====================================================================
+
+### TX1. Crea un viaggio CON cucina e genera subito lo zaino (atteso 201 + "aggiunti": 11)
+# @name txViaggio
+POST {{base}}/api/viaggi?genera=true
+Content-Type: application/json
+
+{
+  "nome": "Weekend in tenda con fornello",
+  "attivita": "trekking",
+  "n_giorni": 2,
+  "pernotto": "tenda",
+  "serve_cucina": true
+}
+
+### TX2. Controllo: lo zaino del viaggio appena creato
+GET {{base}}/api/viaggi/{{txViaggio.response.body.id}}/zaino
+
+### TX3. Valore non valido (atteso 400)
+POST {{base}}/api/viaggi?genera=forse
+Content-Type: application/json
+
+{ "nome": "Test", "attivita": "escursione" }

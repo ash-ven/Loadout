@@ -1,4 +1,4 @@
-import { query } from "../db.js";
+import { query, pool } from "../db.js";
 
 // I 15 campi del viaggio, sempre nello stesso ordine, con i valori di riserva
 function campi(d) {
@@ -21,6 +21,13 @@ function campi(d) {
   ];
 }
 
+// La INSERT del viaggio, usata sia da create sia da createConZaino
+const SQL_INSERT = `
+  INSERT INTO viaggio (utente_id, nome, attivita, n_persone, n_giorni, pernotto, serve_cucina, data_partenza,
+                       lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, note, pianificato, distanza_km)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+  RETURNING *`;
+
 export async function list(utenteId, { pianificato = null } = {}) {
   const { rows } = await query(
     `SELECT * FROM viaggio
@@ -38,14 +45,26 @@ export async function getById(utenteId, id) {
 }
 
 export async function create(utenteId, dati) {
-  const { rows } = await query(
-    `INSERT INTO viaggio (utente_id, nome, attivita, n_persone, n_giorni, pernotto, serve_cucina, data_partenza,
-                          lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, note, pianificato, distanza_km)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-     RETURNING *`,
-    [utenteId, ...campi(dati)]
-  );
+  const { rows } = await query(SQL_INSERT, [utenteId, ...campi(dati)]);
   return rows[0];
+}
+
+// Crea il viaggio E genera lo zaino in UNA transazione: o tutto, o niente (lezione 5.8)
+export async function createConZaino(utenteId, dati) {
+  const client = await pool.connect(); // un client dedicato: BEGIN e COMMIT devono stare sulla stessa connessione
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query(SQL_INSERT, [utenteId, ...campi(dati)]);
+    const viaggio = rows[0];
+    const gen = await client.query("SELECT fn_genera_zaino($1) AS aggiunti", [viaggio.id]);
+    await client.query("COMMIT");
+    return { ...viaggio, aggiunti: gen.rows[0].aggiunti };
+  } catch (err) {
+    await client.query("ROLLBACK"); // annulla anche la INSERT del viaggio
+    throw err;                      // e passa l'errore alla rotta, che lo manda all'errorHandler
+  } finally {
+    client.release(); // SEMPRE: altrimenti il pool resta senza connessioni
+  }
 }
 
 export async function update(utenteId, id, dati) {

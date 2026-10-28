@@ -41,6 +41,8 @@ async function caricaViaggio(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// ===================== VIAGGI =====================
+
 // === GET /api/viaggi?pianificato=true|false (lista) ===
 router.get("/", async (req, res, next) => {
   try {
@@ -95,10 +97,17 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// === POST /api/viaggi (crea) ===
+// === POST /api/viaggi?genera=true (crea; con genera=true riempie anche lo zaino, in una transazione) ===
 router.post("/", validate(schemaViaggio), async (req, res, next) => {
   try {
-    res.status(201).json(await svc.create(req.user.sub, req.validated));
+    const genera = req.query.genera;
+    if (genera !== undefined && genera !== "true" && genera !== "false") {
+      return res.status(400).json({ error: "BAD_QUERY", message: "genera deve essere true oppure false" });
+    }
+    const viaggio = genera === "true"
+      ? await svc.createConZaino(req.user.sub, req.validated)
+      : await svc.create(req.user.sub, req.validated);
+    res.status(201).json(viaggio);
   } catch (err) { next(err); }
 });
 
@@ -138,4 +147,71 @@ router.post("/:id/genera", caricaViaggio, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-//
+// === GET /api/viaggi/:id/zaino (US5: checklist + peso) ===
+router.get("/:id/zaino", caricaViaggio, async (req, res, next) => {
+  try {
+    const peso = await zaino.peso(req.viaggio.id);
+    const oggetti = await zaino.dettaglio(req.viaggio.id);
+    res.json({ peso, oggetti });
+  } catch (err) { next(err); }
+});
+
+// --- Aggiungi / modifica / rimuovi ---
+const schemaAggiungi = {
+  oggetto_id: { type: "number", required: true, integer: true, min: 1 },
+  quantita:   { type: "number", integer: true, min: 1, max: 99 },
+};
+
+const schemaModifica = {
+  inserito: { type: "boolean" },
+  quantita: { type: "number", integer: true, min: 1, max: 99 },
+};
+
+// legge :oggettoId dall'URL; null se non è un intero positivo
+function leggiOggettoId(req) {
+  const id = Number(req.params.oggettoId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+// === POST /api/viaggi/:id/zaino (US5 CA3: aggiungi dall'armadio) ===
+router.post("/:id/zaino", caricaViaggio, validate(schemaAggiungi), async (req, res, next) => {
+  try {
+    const { oggetto_id, quantita = 1 } = req.validated;
+    const riga = await zaino.aggiungi(req.user.sub, req.viaggio.id, oggetto_id, quantita);
+    if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggetto_id} non trovato` });
+    res.status(201).json(riga);
+  } catch (err) { next(err); }
+});
+
+// === PATCH /api/viaggi/:id/zaino/:oggettoId (checkbox "inserito" e/o quantità) ===
+router.patch("/:id/zaino/:oggettoId", caricaViaggio, validate(schemaModifica), async (req, res, next) => {
+  try {
+    const oggettoId = leggiOggettoId(req);
+    if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
+    if (Object.keys(req.validated).length === 0) {
+      return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito' o 'quantita'" });
+    }
+    const riga = await zaino.modifica(req.viaggio.id, oggettoId, req.validated);
+    if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
+    res.json(riga);
+  } catch (err) { next(err); }
+});
+
+// === DELETE /api/viaggi/:id/zaino/:oggettoId (togli dallo zaino) ===
+router.delete("/:id/zaino/:oggettoId", caricaViaggio, async (req, res, next) => {
+  try {
+    const oggettoId = leggiOggettoId(req);
+    if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
+    const ok = await zaino.rimuovi(req.viaggio.id, oggettoId);
+    if (!ok) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
+    res.status(204).end();
+  } catch (err) { next(err); }
+});
+
+// === POST /api/viaggi/:id/zaino/svuota (US5 CA4: svuota la checklist) ===
+router.post("/:id/zaino/svuota", caricaViaggio, async (req, res, next) => {
+  try {
+    const svuotati = await zaino.svuota(req.viaggio.id);
+    res.json({ svuotati });
+  } catch (err) { next(err); }
+});
