@@ -1,0 +1,43 @@
+@base = http://localhost:3000
+
+### Health
+GET {{base}}/api/health
+
+### Crea oggetto - caso giusto
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{
+  "nome": "Borraccia termica",
+  "categoria": "cucina",
+  "peso_g": 350
+}
+### Crea oggetto - dati sbagliati (atteso 400)
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{
+  "nome": "",
+  "categoria": "astronave",
+  "peso_g": 0,
+  "utente_id": 2
+}
+
+### Crea oggetto - duplicato (atteso 409)
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{
+  "nome": "Borraccia termica",
+  "categoria": "cucina",
+  "peso_g": 350
+}
+### Crea oggetto - peso con la virgola
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{
+  "nome": "Moschettone",
+  "categoria": "attrezzatura",
+  "peso_g": 2.5
+}
