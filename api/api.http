@@ -463,3 +463,26 @@ Content-Type: application/json
   "categoria": "altro",
   "peso_g": 0
 }
+
+### =====================================================================
+###  NESSUN 500 PER INPUT SBAGLIATO (Definition of Done)
+### =====================================================================
+
+### Y1. JSON malformato: virgola finale (atteso 400 BAD_JSON)
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{ "nome": "Giacca", }
+
+### Y2. Id oltre il massimo di un INT (atteso 400 BAD_INPUT)
+GET {{base}}/api/oggetti/99999999999
+
+### Y3. Peso gigante (atteso 400 BAD_INPUT)
+POST {{base}}/api/oggetti
+Content-Type: application/json
+
+{
+  "nome": "Montagna intera",
+  "categoria": "altro",
+  "peso_g": 99999999999
+}
