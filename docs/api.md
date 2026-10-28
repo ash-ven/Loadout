@@ -20,11 +20,12 @@ Il browser lo rimanda da solo: tutte le rotte di Armadio, Viaggi e Zaino lo rich
 | POST | /api/auth/login | `{ email*, password* }` | `{ id, nome }` + cookie `token` | 200, 400, 401 ("Email o password errati", stesso messaggio per email inesistente e password sbagliata) |
 | POST | /api/auth/logout | — | nessun corpo, cookie cancellato | 204 |
 | GET | /api/auth/me | — | payload del token `{ sub, nome, iat, exp }` | 200, 401 |
+| PATCH | /api/auth/me | `{ peso_corporeo_kg* }` – tra 20 e 300 | `{ id, email, nome, peso_corporeo_kg }` | 200, 400, 401 |
 
 ## Armadio (oggetti dell'utente loggato)
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/oggetti?q=&limit=&offset= | — | array dei miei oggetti, ordinati per categoria e nome; `q` cerca nel nome; limit 1–200 (default 50), offset ≥ 0 | 200, 400, 401 |
+| GET | /api/oggetti?q=&categoria=&limit=&offset= | — | array dei miei oggetti, ordinati per categoria e nome; `q` cerca nel nome; `categoria` tra quelle ammesse; limit 1–200 (default 50), offset ≥ 0 | 200, 400, 401 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
 | POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note }` – nome max 120; categoria tra abbigliamento, attrezzatura, cucina, sicurezza, igiene, elettronica, cibo, altro; peso_g intero ≥ 1; codice_etichetta max 64; note max 1000 | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
 | PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano a false/null) | l'oggetto aggiornato | 200, 400, 401, 404, 409 |
@@ -55,6 +56,8 @@ Blocco `consigli` del dettaglio:
 - `distanza_linea_aria_km`: tra partenza e arrivo (formula di haversine); `null` se mancano le coordinate
 - `sole`: `{ disponibile: true, alba, tramonto }` in ora italiana, chiesti dal server a sunrise-sunset.org;
   `{ disponibile: false, motivo }` se mancano coordinate/data o se il servizio esterno non risponde entro 3 secondi
+- `avviso_peso`: `{ disponibile: true, peso_corporeo_kg, soglia_kg, troppo_pesante }` – soglia = 20% del peso corporeo,
+  confrontata con il peso totale dello zaino; `{ disponibile: false, motivo }` se il peso corporeo non è impostato
 
 ## Zaino
 | Metodo | URL | Body | Risposta | Status |
@@ -71,7 +74,7 @@ Blocco `consigli` del dettaglio:
 - **401**: non autenticato (manca il cookie, token scaduto o manomesso) oppure credenziali errate al login.
 - **404**: la risorsa non esiste **oppure non è mia**: non riveliamo che esiste (niente 403).
 - **409**: violazione di unicità (email già registrata, nome già nel mio armadio, oggetto già nello zaino).
-- **422**: vincolo del database violato che il validatore non ha intercettato (rete di sicurezza).
+- **422**: vincolo del database violato che il validatore non ha intercettato (rete di sicurezza, es. `CHECK (peso_g > 0)`).
 - **500**: errore interno; il dettaglio resta nel log del server, al client arriva solo "Errore interno".
 
 ## Scelte da confermare con il tutor
