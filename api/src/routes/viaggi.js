@@ -55,7 +55,7 @@ router.get("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// === GET /api/viaggi/:id?ore_cammino= (dettaglio + peso + consigli, US6) ===
+// === GET /api/viaggi/:id?ore_cammino= (dettaglio + peso + consigli, US6 + stretch 1 e 5) ===
 router.get("/:id", caricaViaggio, async (req, res, next) => {
   try {
     const v = req.viaggio;
@@ -74,7 +74,9 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
 
     const peso = await zaino.peso(v.id);
     const sole = await consigli.sole(v);
-    const acquaLitri = ore == null ? null : await consigli.acqua(v, ore);
+    const meteo = await consigli.meteo(v);
+    const tempMax = meteo.disponibile ? meteo.temp_max : null;
+    const acquaLitri = ore == null ? null : await consigli.acqua(v, ore, tempMax);
 
     res.json({
       ...v,
@@ -84,7 +86,9 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
         ore_cammino_giorno: ore,
         fonte_ore: fonteOre,
         acqua_litri: acquaLitri,
+        acqua_con_temperatura: tempMax != null,
         sole,
+        meteo,
         avviso_peso: await consigli.avvisoPeso(req.user.sub, peso.peso_totale_kg),
       },
     });

@@ -52,10 +52,13 @@ Regole dei campi del viaggio (* = obbligatorio):
 Blocco `consigli` del dettaglio:
 - `ore_cammino_giorno`: da `?ore_cammino=` se presente (`fonte_ore: "utente"`), altrimenti stimate dal percorso
   con 4 km/h in piano + 1 h ogni 400 m di salita, divise per i giorni e arrotondate alla mezz'ora (`fonte_ore: "percorso"`); `null` se mancano i km
-- `acqua_litri`: `fn_acqua_consigliata(n_giorni, n_persone, ore_cammino_giorno)`; `null` se mancano le ore
+- `acqua_litri`: `fn_acqua_consigliata(n_giorni, n_persone, ore_cammino_giorno, temperatura_max)`, +25% sopra i 25 °C; `null` se mancano le ore.
+  `acqua_con_temperatura` dice se il meteo è stato usato nel calcolo
 - `distanza_linea_aria_km`: tra partenza e arrivo (formula di haversine); `null` se mancano le coordinate
 - `sole`: `{ disponibile: true, alba, tramonto }` in ora italiana, chiesti dal server a sunrise-sunset.org;
   `{ disponibile: false, motivo }` se mancano coordinate/data o se il servizio esterno non risponde entro 3 secondi
+- `meteo`: `{ disponibile: true, temp_max, temp_min, prob_pioggia, vestiario: [...] }` da Open-Meteo per la data e le coordinate di partenza;
+  `{ disponibile: false, motivo }` se mancano coordinate/data, se la partenza è passata o oltre 16 giorni, o se il servizio non risponde
 - `avviso_peso`: `{ disponibile: true, peso_corporeo_kg, soglia_kg, troppo_pesante }` – soglia = 20% del peso corporeo,
   confrontata con il peso totale dello zaino; `{ disponibile: false, motivo }` se il peso corporeo non è impostato
 

@@ -528,3 +528,17 @@ PATCH {{base}}/api/auth/me
 Content-Type: application/json
 
 { "peso_corporeo_kg": 60 }
+
+
+### =====================================================================
+###  STRETCH 1 - meteo e vestiario
+### =====================================================================
+
+### S1.1 Lago Santo, 8 novembre: entro 16 giorni (atteso meteo disponibile)
+GET {{base}}/api/viaggi/1
+
+### S1.2 Rifugio, 21 novembre: troppo lontano (atteso "previsioni disponibili solo nei 16 giorni...")
+GET {{base}}/api/viaggi/2
+
+### S1.3 Tenda: niente coordinate né data
+GET {{base}}/api/viaggi/4
