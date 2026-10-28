@@ -21,6 +21,7 @@ router.post("/register", validate(schemaRegister), async (req, res, next) => {
   try {
     const { email, password, nome } = req.validated;
     if (password.length < 8) throw new HttpError(400, "WEAK_PASSWORD", "Password di almeno 8 caratteri");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "BAD_EMAIL", "Indirizzo email non valido");
     const hash = await bcrypt.hash(password, 12);
     const { rows } = await query(
       "INSERT INTO utente (email, password_hash, nome) VALUES ($1, $2, $3) RETURNING id, email, nome",

@@ -568,3 +568,13 @@ POST {{base}}/api/viaggi?genera=forse
 Content-Type: application/json
 
 { "nome": "Test", "attivita": "escursione" }
+
+### Registrazione - email non valida (atteso 400 BAD_EMAIL)
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "pippo",
+  "password": "Password123!",
+  "nome": "Pippo"
+}
