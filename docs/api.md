@@ -1,58 +1,80 @@
-# API di Loadout
+# Loadout – Contratto API
 
-Contratto tra backend e frontend. Tutte le risposte sono in JSON.
+Base URL in sviluppo: `http://localhost:3000`. Tutte le risposte sono JSON (tranne i 204, senza corpo).
+Le date sono in formato ISO `AAAA-MM-GG` (es. `2026-11-08`); gli orari tecnici (`created_at`) in UTC.
 
-- **Autenticazione:** dopo il login il server imposta il cookie `token` (httpOnly). Tutte le rotte richiedono il login, tranne register e login: senza cookie valido rispondono **401**.
-- **Proprietà:** ogni oggetto e ogni viaggio appartiene all'utente loggato. Una risorsa di un altro utente risponde **404** (non 403).
-- **Formato degli errori:** `{ "error": "VALIDATION_ERROR", "message": "Il campo 'nome' è obbligatorio" }`
+Errori: sempre `{ "error": "CODICE", "message": "testo leggibile" }`.
 
 ## Servizio
-| Metodo | URL | Body in ingresso | Risposta | Status code |
+| Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/health | — | { status: "ok", db: true } | 200, 500 |
+| GET | /api/health | — | `{ status, time, db }` | 200, 500 |
 
 ## Autenticazione
-| Metodo | URL | Body in ingresso | Risposta | Status code |
-| --- | --- | --- | --- | --- |
-| POST | /api/auth/register | { email, password, nome } | l'utente creato { id, email, nome } | 201, 400, 409 |
-| POST | /api/auth/login | { email, password } | { id, nome } + cookie token | 200, 401, 429 |
-| POST | /api/auth/logout | — | nessun corpo (cancella il cookie) | 204 |
-| GET | /api/auth/me | — | l'utente loggato { sub, nome }, mai password_hash | 200, 401 |
+Dopo il login il server imposta il cookie `token` (JWT firmato, `HttpOnly`, `SameSite=Lax`, `Secure` in produzione, durata 8 ore).
+Il browser lo rimanda da solo: tutte le rotte di Armadio, Viaggi e Zaino lo richiedono (senza → 401).
 
-## Armadio
-| Metodo | URL | Body in ingresso | Risposta | Status code |
+| Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/oggetti?q=&categoria=&limit=&offset= | — | lista dei miei oggetti (array JSON), ordinata per categoria e nome; limit da 1 a 200 (default 50), offset ≥ 0 (default 0) | 200, 400, 401 |
-| POST | /api/oggetti | { nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note } — *obbligatori; nome max 120; categoria tra abbigliamento, attrezzatura, cucina, sicurezza, igiene, elettronica, cibo, altro; peso_g intero ≥ 1; codice_etichetta max 64; note max 1000 | l'oggetto creato, con il suo id | 201, 400, 401, 409, 422 |
+| POST | /api/auth/register | `{ email*, password*, nome* }` – password ≥ 8 caratteri, email max 255, nome max 100 | `{ id, email, nome }` (mai la password né l'hash) | 201, 400, 409 (email già usata) |
+| POST | /api/auth/login | `{ email*, password* }` | `{ id, nome }` + cookie `token` | 200, 400, 401 ("Email o password errati", stesso messaggio per email inesistente e password sbagliata) |
+| POST | /api/auth/logout | — | nessun corpo, cookie cancellato | 204 |
+| GET | /api/auth/me | — | payload del token `{ sub, nome, iat, exp }` | 200, 401 |
+
+## Armadio (oggetti dell'utente loggato)
+| Metodo | URL | Body | Risposta | Status |
+| --- | --- | --- | --- | --- |
+| GET | /api/oggetti?q=&limit=&offset= | — | array dei miei oggetti, ordinati per categoria e nome; `q` cerca nel nome; limit 1–200 (default 50), offset ≥ 0 | 200, 400, 401 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
-| PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano a false/null) | l'oggetto aggiornato | 200, 400, 401, 404, 409, 422 |
+| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note }` – nome max 120; categoria tra abbigliamento, attrezzatura, cucina, sicurezza, igiene, elettronica, cibo, altro; peso_g intero ≥ 1; codice_etichetta max 64; note max 1000 | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
+| PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano a false/null) | l'oggetto aggiornato | 200, 400, 401, 404, 409 |
 | DELETE | /api/oggetti/:id | — | nessun corpo (sparisce anche dagli zaini: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
 ## Viaggi
-| Metodo | URL | Body in ingresso | Risposta | Status code |
+| Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/viaggi | — | lista dei miei viaggi, ordinata per data di partenza | 200, 401 |
-| POST | /api/viaggi | { nome, attivita, n_persone, n_giorni, pernotto, serve_cucina, data_partenza, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, note } | il viaggio creato, con il suo id | 201, 400, 401, 422 |
-| GET | /api/viaggi/:id?ore_cammino= | — | il viaggio + peso (v_zaino_peso) + consigli { acqua_litri, alba, tramonto } | 200, 400, 401, 404 |
-| PUT | /api/viaggi/:id | come il POST | il viaggio aggiornato | 200, 400, 401, 404, 422 |
-| DELETE | /api/viaggi/:id | — | nessun corpo (sparisce anche il suo zaino: ON DELETE CASCADE) | 204, 400, 401, 404 |
-| POST | /api/viaggi/:id/genera | — | { aggiunti: n } (fn_genera_zaino; la seconda volta n = 0) | 200, 400, 401, 404 |
+| GET | /api/viaggi | — | array dei miei viaggi, ordinati per data di partenza (senza data in fondo) | 200, 401 |
+| GET | /api/viaggi/:id?ore_cammino= | — | il viaggio + `peso` (vedi Zaino) + `consigli` (vedi sotto); `ore_cammino` facoltativo, 0.5–16 | 200, 400, 401, 404 |
+| POST | /api/viaggi | `{ nome*, attivita*, n_persone, n_giorni, pernotto, serve_cucina, data_partenza, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, distanza_km, note, pianificato }` – vedi regole sotto | il viaggio creato | 201, 400, 401 |
+| PUT | /api/viaggi/:id | come POST (viaggio intero) | il viaggio aggiornato | 200, 400, 401, 404 |
+| DELETE | /api/viaggi/:id | — | nessun corpo (lo zaino del viaggio viene cancellato: ON DELETE CASCADE) | 204, 400, 401, 404 |
+
+Regole dei campi del viaggio (* = obbligatorio):
+- `nome`* max 150; `attivita`* tra escursione, trekking, alpinismo, ciaspolata, ferrata
+- `n_persone` intero 1–50 (default 1); `n_giorni` intero 1–60 (default 1)
+- `pernotto` tra nessuno, rifugio, tenda, bivacco (default nessuno); `serve_cucina` booleano (default false)
+- `data_partenza` data `AAAA-MM-GG` valida
+- `lat_*` tra −90 e 90; `lon_*` tra −180 e 180
+- `dislivello_m` intero 0–9000; `distanza_km` 0.1–999 (lunghezza del sentiero, inserita dall'utente)
+- `note` max 1000; `pianificato` booleano (default false) – percorsi da fare in futuro
+
+Blocco `consigli` del dettaglio:
+- `ore_cammino_giorno`: da `?ore_cammino=` se presente (`fonte_ore: "utente"`), altrimenti stimate dal percorso
+  con 4 km/h in piano + 1 h ogni 400 m di salita, divise per i giorni e arrotondate alla mezz'ora (`fonte_ore: "percorso"`); `null` se mancano i km
+- `acqua_litri`: `fn_acqua_consigliata(n_giorni, n_persone, ore_cammino_giorno)`; `null` se mancano le ore
+- `distanza_linea_aria_km`: tra partenza e arrivo (formula di haversine); `null` se mancano le coordinate
+- `sole`: `{ disponibile: true, alba, tramonto }` in ora italiana, chiesti dal server a sunrise-sunset.org;
+  `{ disponibile: false, motivo }` se mancano coordinate/data o se il servizio esterno non risponde entro 3 secondi
 
 ## Zaino
-| Metodo | URL | Body in ingresso | Risposta | Status code |
+| Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/viaggi/:id/zaino | — | la checklist: una riga per oggetto (v_zaino_dettaglio) | 200, 400, 401, 404 |
-| POST | /api/viaggi/:id/zaino | { oggetto_id, quantita } | la riga aggiunta allo zaino | 201, 400, 401, 404, 409, 422 |
-| PATCH | /api/viaggi/:id/zaino/:oggettoId | { inserito, quantita } (entrambi facoltativi) | la riga aggiornata | 200, 400, 401, 404, 422 |
-| DELETE | /api/viaggi/:id/zaino/:oggettoId | — | nessun corpo | 204, 400, 401, 404 |
+| POST | /api/viaggi/:id/genera | — | `{ aggiunti: n }` – indispensabili + preferiti, cucina solo se `serve_cucina`; generare di nuovo non duplica | 200, 400, 401, 404 |
+| GET | /api/viaggi/:id/zaino | — | `{ peso: { n_oggetti, peso_totale_g, peso_inserito_g, peso_totale_kg, peso_inserito_kg }, oggetti: [ { oggetto_id, nome, categoria, peso_g, quantita, peso_riga_g, inserito, is_indispensabile, is_preferito } ] }` | 200, 400, 401, 404 |
+| POST | /api/viaggi/:id/zaino | `{ oggetto_id*, quantita }` – quantita intero 1–99 (default 1); l'oggetto deve essere mio | la riga dello zaino | 201, 400, 401, 404, 409 (già nello zaino) |
+| PATCH | /api/viaggi/:id/zaino/:oggettoId | `{ inserito, quantita }` – almeno uno dei due; cambia solo i campi inviati | la riga aggiornata | 200, 400, 401, 404 |
+| DELETE | /api/viaggi/:id/zaino/:oggettoId | — | nessun corpo (l'oggetto resta nell'armadio) | 204, 400, 401, 404 |
+| POST | /api/viaggi/:id/zaino/svuota | — | `{ svuotati: n }` – tutti gli oggetti tornano "non inseriti" | 200, 400, 401, 404 |
 
 ## Note sugli status code
-- **400:** body scritto male (campo mancante, tipo sbagliato) oppure parametri dell'URL non validi (id non numerico, limit < 1, offset < 0).
-- **404:** la risorsa non esiste o non è mia. Nello zaino vale sia per il viaggio sia per l'oggetto che aggiungo.
-- **409:** doppione. Nome già presente nel mio armadio (UNIQUE utente_id, nome), email già registrata, oggetto già nello zaino (PK composta).
-- **422:** viola una regola del database. peso_g ≤ 0, quantita ≤ 0, n_persone fuori da 1–50, n_giorni fuori da 1–60 (CHECK); oggetto_id inesistente (FK).
-- **429:** troppi tentativi di login (rate limit, venerdì).
+- **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico); il `message` elenca tutti gli errori.
+- **401**: non autenticato (manca il cookie, token scaduto o manomesso) oppure credenziali errate al login.
+- **404**: la risorsa non esiste **oppure non è mia**: non riveliamo che esiste (niente 403).
+- **409**: violazione di unicità (email già registrata, nome già nel mio armadio, oggetto già nello zaino).
+- **422**: vincolo del database violato che il validatore non ha intercettato (rete di sicurezza).
+- **500**: errore interno; il dettaglio resta nel log del server, al client arriva solo "Errore interno".
 
-## Da decidere con il tutor
-- **Ore di cammino per l'acqua (US6 CA1):** proposta, passarle come `?ore_cammino=` nel GET del viaggio.
-- **Pulsante "svuota checklist" (US5 CA4):** non c'è un endpoint nella consegna. Si può fare con un PATCH per ogni riga oppure con un endpoint dedicato.
+## Scelte da confermare con il tutor
+- Ore di cammino: stimate dal percorso (`distanza_km` + `dislivello_m`) o inserite dall'utente con `?ore_cammino=`.
+- Svuota checklist: endpoint "azione" `POST /api/viaggi/:id/zaino/svuota` (coerente con `/genera`) invece di una PATCH sull'intera collezione.
+- Km lungo i sentieri calcolati automaticamente: fuori dallo scope di questa settimana (serve un servizio di routing esterno); per ora `distanza_km` è inserita dall'utente.
