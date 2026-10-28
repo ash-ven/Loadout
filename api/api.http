@@ -486,3 +486,17 @@ Content-Type: application/json
   "categoria": "altro",
   "peso_g": 99999999999
 }
+
+
+### =====================================================================
+###  STRETCH 4 - percorsi da fare in futuro
+### =====================================================================
+
+### S4.1 Solo i pianificati (atteso: solo il Rifugio Duca degli Abruzzi)
+GET {{base}}/api/viaggi?pianificato=true
+
+### S4.2 Solo i NON pianificati
+GET {{base}}/api/viaggi?pianificato=false
+
+### S4.3 Valore non valido (atteso 400)
+GET {{base}}/api/viaggi?pianificato=forse

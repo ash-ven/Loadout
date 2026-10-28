@@ -21,10 +21,13 @@ function campi(d) {
   ];
 }
 
-export async function list(utenteId) {
+export async function list(utenteId, { pianificato = null } = {}) {
   const { rows } = await query(
-    "SELECT * FROM viaggio WHERE utente_id = $1 ORDER BY data_partenza NULLS LAST, id",
-    [utenteId]
+    `SELECT * FROM viaggio
+     WHERE utente_id = $1
+       AND ($2::boolean IS NULL OR pianificato = $2)
+     ORDER BY data_partenza NULLS LAST, id`,
+    [utenteId, pianificato]
   );
   return rows;
 }

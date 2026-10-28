@@ -41,10 +41,17 @@ async function caricaViaggio(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// === GET /api/viaggi (lista) ===
+// === GET /api/viaggi?pianificato=true|false (lista) ===
 router.get("/", async (req, res, next) => {
   try {
-    res.json(await svc.list(req.user.sub));
+    let pianificato = null;
+    if (req.query.pianificato !== undefined) {
+      if (req.query.pianificato !== "true" && req.query.pianificato !== "false") {
+        return res.status(400).json({ error: "BAD_QUERY", message: "pianificato deve essere true oppure false" });
+      }
+      pianificato = req.query.pianificato === "true";
+    }
+    res.json(await svc.list(req.user.sub, { pianificato }));
   } catch (err) { next(err); }
 });
 
