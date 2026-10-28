@@ -1,6 +1,6 @@
 import { query } from "../db.js";
 
-// I 14 campi del viaggio, sempre nello stesso ordine, con i valori di riserva
+// I 15 campi del viaggio, sempre nello stesso ordine, con i valori di riserva
 function campi(d) {
   return [
     d.nome,
@@ -17,6 +17,7 @@ function campi(d) {
     d.dislivello_m ?? null,
     d.note ?? null,
     d.pianificato ?? false,
+    d.distanza_km ?? null,
   ];
 }
 
@@ -36,8 +37,8 @@ export async function getById(utenteId, id) {
 export async function create(utenteId, dati) {
   const { rows } = await query(
     `INSERT INTO viaggio (utente_id, nome, attivita, n_persone, n_giorni, pernotto, serve_cucina, data_partenza,
-                          lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, note, pianificato)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                          lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, note, pianificato, distanza_km)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
      RETURNING *`,
     [utenteId, ...campi(dati)]
   );
@@ -48,7 +49,8 @@ export async function update(utenteId, id, dati) {
   const { rows } = await query(
     `UPDATE viaggio
      SET nome = $3, attivita = $4, n_persone = $5, n_giorni = $6, pernotto = $7, serve_cucina = $8, data_partenza = $9,
-         lat_partenza = $10, lon_partenza = $11, lat_arrivo = $12, lon_arrivo = $13, dislivello_m = $14, note = $15, pianificato = $16
+         lat_partenza = $10, lon_partenza = $11, lat_arrivo = $12, lon_arrivo = $13, dislivello_m = $14, note = $15,
+         pianificato = $16, distanza_km = $17
      WHERE id = $1 AND utente_id = $2
      RETURNING *`,
     [id, utenteId, ...campi(dati)]

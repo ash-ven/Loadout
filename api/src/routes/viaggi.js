@@ -21,6 +21,7 @@ const schemaViaggio = {
   lat_arrivo:    { type: "number", min: -90,  max: 90 },
   lon_arrivo:    { type: "number", min: -180, max: 180 },
   dislivello_m:  { type: "number", integer: true, min: 0, max: 9000 },
+  distanza_km:   { type: "number", min: 0.1, max: 999 },
   note:          { type: "string", maxLength: 1000 },
   pianificato:   { type: "boolean" },
 };

@@ -33,3 +33,13 @@ ALTER TABLE viaggio
 
 -- Dato di esempio: il viaggio 2 diventa un percorso da fare in futuro
 UPDATE viaggio SET pianificato = TRUE WHERE id = 2;
+
+
+-- Percorso (livello 1): lunghezza del sentiero in km, inserita dall'utente
+-- (es. dal cartello CAI o dalla guida). Serve a stimare le ore di cammino.
+ALTER TABLE viaggio
+  ADD COLUMN IF NOT EXISTS distanza_km NUMERIC(5,1)
+  CHECK (distanza_km IS NULL OR distanza_km > 0);
+
+UPDATE viaggio SET distanza_km = 7.5  WHERE id = 1;  -- Anello del Lago Santo
+UPDATE viaggio SET distanza_km = 14.0 WHERE id = 2;  -- Rifugio Duca degli Abruzzi
