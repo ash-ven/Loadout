@@ -21,16 +21,18 @@ export function distanzaLineaAria(viaggio) {
   return Math.round(2 * R * Math.asin(Math.sqrt(a)) * 10) / 10;
 }
 
-// 3. Acqua consigliata in litri (la formula sta nel database).
-//    Con la temperatura massima, sopra i 25 °C la quantità aumenta del 25% (esercizio di lunedì).
+// 3. Acqua consigliata (B4: la formula sta nel database, vedi loadout_stretch_acqua.sql).
+//    Restituisce i litri a persona al giorno e il totale del viaggio.
+//    Tiene conto di ore di cammino, salita del giorno, temperatura prevista e cucina.
 export async function acqua(viaggio, oreGiorno, temperaturaMax = null) {
-  const { rows } = await query("SELECT fn_acqua_consigliata($1, $2, $3, $4) AS litri", [
-    viaggio.n_giorni,
-    viaggio.n_persone,
-    oreGiorno,
-    temperaturaMax,
-  ]);
-  return rows[0].litri;
+  // il dislivello inserito è quello di tutto il percorso: lo dividiamo per i giorni
+  const dislivelloGiorno = viaggio.dislivello_m == null ? 0 : viaggio.dislivello_m / viaggio.n_giorni;
+  const { rows } = await query(
+    `SELECT fn_acqua_persona_giorno($3, $5, $4, $6)       AS persona_giorno,
+            fn_acqua_consigliata($1, $2, $3, $4, $5, $6)  AS totale`,
+    [viaggio.n_giorni, viaggio.n_persone, oreGiorno, temperaturaMax, dislivelloGiorno, viaggio.serve_cucina]
+  );
+  return rows[0];
 }
 
 // 4. Alba e tramonto dal servizio esterno sunrise-sunset.org (US6 CA2, CA3)

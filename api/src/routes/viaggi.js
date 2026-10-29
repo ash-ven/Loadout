@@ -78,7 +78,7 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
     const sole = await consigli.sole(v);
     const meteo = await consigli.meteo(v);
     const tempMax = meteo.disponibile ? meteo.temp_max : null;
-    const acquaLitri = ore == null ? null : await consigli.acqua(v, ore, tempMax);
+    const acqua = ore == null ? null : await consigli.acqua(v, ore, tempMax); // { persona_giorno, totale }
 
     res.json({
       ...v,
@@ -87,8 +87,11 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
         distanza_linea_aria_km: consigli.distanzaLineaAria(v),
         ore_cammino_giorno: ore,
         fonte_ore: fonteOre,
-        acqua_litri: acquaLitri,
+        acqua_litri: acqua?.totale ?? null,                    // tutto il viaggio, tutto il gruppo
+        acqua_persona_giorno: acqua?.persona_giorno ?? null,   // B4: il dato principale
         acqua_con_temperatura: tempMax != null,
+        acqua_con_dislivello: v.dislivello_m != null,
+        acqua_con_cucina: v.serve_cucina,
         sole,
         meteo,
         avviso_peso: await consigli.avvisoPeso(req.user.sub, peso.peso_totale_kg),

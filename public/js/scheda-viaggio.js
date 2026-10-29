@@ -34,6 +34,9 @@ let viaggio = null;                       // il viaggio con peso e consigli (GET
 let zaino = { peso: null, oggetti: [] };  // la checklist (GET /api/viaggi/:id/zaino)
 let armadio = [];                         // tutti i miei oggetti, per il selettore "aggiungi"
 
+// Unisce un elenco all'italiana: ["a", "b", "c"] → "a, b e c"
+const elenco = (parti) => parti.length < 2 ? parti.join("") : `${parti.slice(0, -1).join(", ")} e ${parti.at(-1)}`;
+
 // Numeri in formato italiano: 3.5 → "3,5"; e con 2 decimali: 5.6 → "5,60"
 const num = (n) => Number(n).toLocaleString("it-IT");
 const num2 = (n) => Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -84,23 +87,26 @@ function creaEtichetta(testo, icona) {
 function renderConsigli() {
   const c = viaggio.consigli;
 
-  // Acqua (A5): il dato che serve davvero è quanta acqua porta OGNI persona OGNI giorno
-  // (sui viaggi di più giorni ci si rifornisce lungo il percorso). Il totale resta sotto, più piccolo.
-  if (c.acqua_litri == null) {
+  // Acqua: il dato principale è quanta acqua porta OGNI persona OGNI giorno (A5).
+  // Lo calcola il database (fn_acqua_persona_giorno, B4); il totale del viaggio resta sotto, più piccolo.
+  if (c.acqua_persona_giorno == null) {
     elAcquaPersona.hidden = true;
     elAcqua.textContent = "Inserisci le ore di cammino (o i km del percorso) per calcolarla.";
   } else {
     const v = viaggio;
-    const perPersonaAlGiorno = c.acqua_litri / (v.n_persone * v.n_giorni);
-    const litri = perPersonaAlGiorno.toLocaleString("it-IT", { maximumFractionDigits: 1 });
-    elAcquaPersona.innerHTML = `${litri}&nbsp;L <span>a persona, al giorno</span>`; // solo numeri nostri: niente rischio XSS
+    elAcquaPersona.innerHTML = `${num(c.acqua_persona_giorno)}&nbsp;L <span>a persona, al giorno</span>`; // solo numeri: niente rischio XSS
     elAcquaPersona.hidden = false;
+
+    // Da cosa dipende il calcolo: un pezzo di frase per ogni fattore usato
+    const fattori = [`${num(c.ore_cammino_giorno)} ore di cammino al giorno (${c.fonte_ore === "utente" ? "inserite da te" : "stimate dal percorso"})`];
+    if (c.acqua_con_dislivello) fattori.push(`${num(Math.round(v.dislivello_m / v.n_giorni))} m di salita al giorno`);
+    if (c.acqua_con_temperatura) fattori.push(`la temperatura prevista (${num(c.meteo.temp_max)} °C)`);
+    if (c.acqua_con_cucina) fattori.push("l'acqua per cucinare");
 
     const persone = `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`;
     const giorni = `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`;
-    const fonte = c.fonte_ore === "utente" ? "inserite da te" : "stimate dal percorso";
-    const caldo = c.acqua_con_temperatura ? " Calcolata anche in base alla temperatura prevista." : "";
-    elAcqua.textContent = `In tutto ${num(c.acqua_litri)} litri per ${persone} e ${giorni}, con ${num(c.ore_cammino_giorno)} ore di cammino al giorno (${fonte}).${caldo}`;
+    elAcqua.textContent = `In tutto ${num(c.acqua_litri)} litri per ${persone} e ${giorni}. Calcolata su ${elenco(fattori)}.` +
+      (v.n_giorni > 1 ? " Sui percorsi di più giorni informati su fontane e rifugi per rifornirti." : "");
   }
   formOre.elements.ore.value = c.ore_cammino_giorno ?? "";
 
