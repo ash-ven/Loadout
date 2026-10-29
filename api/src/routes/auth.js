@@ -10,18 +10,18 @@ export const router = Router();
 
 const COOKIE = { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 8 * 3600 * 1000 };
 
+// === POST /api/auth/register ===
 const schemaRegister = {
   email:    { type: "string", required: true, maxLength: 255 },
   password: { type: "string", required: true },
   nome:     { type: "string", required: true, maxLength: 100 },
 };
 
-// === POST /api/auth/register ===
 router.post("/register", validate(schemaRegister), async (req, res, next) => {
   try {
     const { email, password, nome } = req.validated;
     if (password.length < 8) throw new HttpError(400, "WEAK_PASSWORD", "Password di almeno 8 caratteri");
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "BAD_EMAIL", "Indirizzo email non valido");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "BAD_EMAIL", "Indirizzo email non valido");
     const hash = await bcrypt.hash(password, 12);
     const { rows } = await query(
       "INSERT INTO utente (email, password_hash, nome) VALUES ($1, $2, $3) RETURNING id, email, nome",
@@ -30,12 +30,13 @@ router.post("/register", validate(schemaRegister), async (req, res, next) => {
     res.status(201).json(rows[0]);
   } catch (err) { next(err); }
 });
+
+// === POST /api/auth/login ===
 const schemaLogin = {
   email:    { type: "string", required: true },
   password: { type: "string", required: true },
 };
 
-// === POST /api/auth/login ===
 router.post("/login", validate(schemaLogin), async (req, res, next) => {
   try {
     const { email, password } = req.validated;
@@ -51,14 +52,22 @@ router.post("/login", validate(schemaLogin), async (req, res, next) => {
     res.cookie("token", token, COOKIE).json({ id: user.id, nome: user.nome });
   } catch (err) { next(err); }
 });
+
 // === POST /api/auth/logout ===
 router.post("/logout", (req, res) => {
   res.clearCookie("token").status(204).end();
 });
 
-// === GET /api/auth/me ===
-router.get("/me", requireAuth, (req, res) => {
-  res.json(req.user);
+// === GET /api/auth/me (dati aggiornati dal database, mai il password_hash) ===
+router.get("/me", requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await query(
+      "SELECT id, email, nome, peso_corporeo_kg FROM utente WHERE id = $1",
+      [req.user.sub]
+    );
+    if (!rows[0]) throw new HttpError(401, "UNAUTHENTICATED", "Effettua il login"); // utente cancellato nel frattempo
+    res.json(rows[0]);
+  } catch (err) { next(err); }
 });
 
 // === PATCH /api/auth/me (stretch 5: imposta il proprio peso corporeo) ===
