@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Registrati</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/">🎒 Loadout</a>
+  </header>
+
+  <main>
+    <section class="card centrato">
+      <h1>Crea il tuo account</h1>
+      <form id="form-register" novalidate>
+        <label>Nome
+          <input name="nome" type="text" autocomplete="given-name" maxlength="100" required>
+        </label>
+        <label>Email
+          <input name="email" type="email" autocomplete="email" maxlength="255" required>
+        </label>
+        <label>Password (almeno 8 caratteri)
+          <input name="password" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <p class="errore" id="errore" hidden></p>
+        <button type="submit">Registrati</button>
+      </form>
+      <p class="muto">Hai già un account? <a href="/login.html">Accedi</a></p>
+    </section>
+  </main>
+
+  <script type="module" src="/js/register.js"></script>
+</body>
+</html>
