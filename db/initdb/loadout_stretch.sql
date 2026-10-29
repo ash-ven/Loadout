@@ -62,3 +62,8 @@ CREATE OR REPLACE FUNCTION fn_acqua_consigliata(
         * CASE WHEN p_temperatura_max > 25 THEN 1.25 ELSE 1 END,
     1);
 $$ LANGUAGE sql IMMUTABLE;
+
+-- Nome dell'oggetto unico nell'armadio SENZA distinguere maiuscole e minuscole
+-- ("Guanti" e "guanti" sono lo stesso oggetto). Si affianca a UNIQUE (utente_id, nome) dello schema.
+CREATE UNIQUE INDEX IF NOT EXISTS oggetto_utente_nome_ci
+  ON oggetto (utente_id, lower(nome));

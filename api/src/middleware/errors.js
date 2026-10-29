@@ -6,10 +6,11 @@ export class HttpError extends Error {
   }
 }
 
-// Messaggi chiari per i duplicati, in base al nome del vincolo violato
+// Messaggi chiari per i duplicati, in base al nome del vincolo (o indice unico) violato
 const MESSAGGI_DUPLICATO = {
   utente_email_key: "Email già registrata",
   oggetto_utente_id_nome_key: "Hai già un oggetto con questo nome nell'armadio",
+  oggetto_utente_nome_ci: "Hai già un oggetto con questo nome nell'armadio",
   viaggio_oggetto_pkey: "Questo oggetto è già nello zaino",
 };
 

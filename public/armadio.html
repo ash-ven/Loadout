@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Armadio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/">🎒 Loadout</a>
+    <nav>
+      <a href="/armadio.html">Armadio</a>
+      <a href="/viaggi.html">Viaggi</a>
+      <a href="#" id="esci">Esci</a>
+    </nav>
+  </header>
+
+  <main class="container due-colonne">
+    <!-- Colonna sinistra: la lista -->
+    <section class="card">
+      <h1>Il mio armadio</h1>
+      <div class="filtri">
+        <input type="search" id="q" placeholder="Cerca per nome…" aria-label="Cerca per nome">
+        <select id="filtro-categoria" aria-label="Filtra per categoria">
+          <option value="">Tutte le categorie</option>
+          <option value="abbigliamento">Abbigliamento</option>
+          <option value="attrezzatura">Attrezzatura</option>
+          <option value="cucina">Cucina</option>
+          <option value="sicurezza">Sicurezza</option>
+          <option value="igiene">Igiene</option>
+          <option value="elettronica">Elettronica</option>
+          <option value="cibo">Cibo</option>
+          <option value="altro">Altro</option>
+        </select>
+      </div>
+      <p class="muto" id="riepilogo"></p>
+      <div class="tabella-scroll">
+        <table id="tabella">
+          <thead>
+            <tr><th>Nome</th><th>Categoria</th><th>Peso</th><th></th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Colonna destra: il form nuovo / modifica -->
+    <section class="card">
+      <h2 id="titolo-form">Nuovo oggetto</h2>
+      <form id="form-oggetto" novalidate>
+        <label>Nome
+          <input name="nome" type="text" maxlength="120" required>
+        </label>
+        <label>Categoria
+          <select name="categoria" required>
+            <option value="abbigliamento">Abbigliamento</option>
+            <option value="attrezzatura">Attrezzatura</option>
+            <option value="cucina">Cucina</option>
+            <option value="sicurezza">Sicurezza</option>
+            <option value="igiene">Igiene</option>
+            <option value="elettronica">Elettronica</option>
+            <option value="cibo">Cibo</option>
+            <option value="altro">Altro</option>
+          </select>
+        </label>
+        <label>Peso (grammi)
+          <input name="peso_g" type="number" min="1" step="1" required>
+        </label>
+        <label class="check"><input name="is_indispensabile" type="checkbox"> Indispensabile</label>
+        <label class="check"><input name="is_preferito" type="checkbox"> Preferito</label>
+        <label>Codice etichetta
+          <input name="codice_etichetta" type="text" maxlength="64">
+        </label>
+        <label>Note
+          <textarea name="note" maxlength="1000" rows="3"></textarea>
+        </label>
+        <p class="errore" id="form-errore" hidden></p>
+        <div class="azioni">
+          <button type="submit" id="salva">Salva</button>
+          <button type="button" class="secondario" id="annulla" hidden>Annulla modifica</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="/js/armadio.js"></script>
+</body>
+</html>

@@ -73,3 +73,11 @@ tbody tr:hover { background: #f8faf7; }
 @media (min-width: 768px) {
   .due-colonne { grid-template-columns: 2fr 1fr; align-items: start; }
 }
+
+/* --- Riga di filtri e riga di pulsanti --- */
+.filtri { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.filtri input { flex: 2 1 12rem; }
+.filtri select { flex: 1 1 10rem; }
+.azioni { display: flex; gap: .5rem; flex-wrap: wrap; }
+tbody tr { cursor: pointer; }
+tr.selezionata { background: #e3efe8; }
