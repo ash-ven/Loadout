@@ -3,17 +3,106 @@ import { esci } from "./menu.js"; // importare menu.js collega anche il link "Es
 
 const elNome = document.querySelector("#nome");
 const elEmail = document.querySelector("#email");
+const avatar = document.querySelector("#avatar");
+const scegliFoto = document.querySelector("#scegli-foto");
+const rimuoviFoto = document.querySelector("#rimuovi-foto");
+const erroreFoto = document.querySelector("#foto-errore");
+const formDati = document.querySelector("#form-dati");
+const infoDati = document.querySelector("#dati-info");
+const erroreDati = document.querySelector("#dati-errore");
 const formProfilo = document.querySelector("#form-profilo");
 const campoPeso = formProfilo.elements.peso_corporeo_kg;
 const info = document.querySelector("#profilo-info");
 const errore = document.querySelector("#profilo-errore");
 
 // Chi sono? Se non sono loggata, api() mi porta da sola alla pagina di login
-const utente = await api("/api/auth/me");
+let utente = await api("/api/auth/me");
 elNome.textContent = utente.nome;
 elEmail.textContent = utente.email;
 campoPeso.value = utente.peso_corporeo_kg ?? "";
 mostraSoglia(utente.peso_corporeo_kg);
+mostraFoto();
+for (const nome of ["livello_esperienza", "citta", "emergenza_nome", "emergenza_telefono"]) {
+  formDati.elements[nome].value = utente[nome] ?? "";
+}
+
+// =====================================================================
+//  FOTO (C1)
+// =====================================================================
+
+// La foto è un'immagine vera all'indirizzo /api/auth/me/foto. Il "?v=" con l'ora cambia l'indirizzo
+// ogni volta: così, dopo averla cambiata, il browser non mostra quella vecchia dalla sua cache.
+function mostraFoto() {
+  if (utente.ha_foto) {
+    avatar.innerHTML = `<img src="/api/auth/me/foto?v=${Date.now()}" alt="">`;
+  } else {
+    avatar.textContent = utente.nome.trim().charAt(0).toUpperCase(); // l'iniziale del nome
+  }
+  rimuoviFoto.hidden = !utente.ha_foto;
+}
+
+// Scelta del file: il browser la ritaglia quadrata e la riduce a 256×256 PRIMA di mandarla.
+// Una foto del telefono pesa 3–5 MB; ridotta così pesa circa 20–40 kB.
+scegliFoto.addEventListener("change", async () => {
+  const file = scegliFoto.files[0];
+  scegliFoto.value = ""; // così si può riscegliere lo stesso file
+  if (!file) return;
+  erroreFoto.hidden = true;
+  try {
+    const foto = await riduciFoto(file);
+    utente = await api("/api/auth/me", { method: "PATCH", body: { foto } });
+    mostraFoto();
+  } catch (err) {
+    erroreFoto.textContent = err.message || "Immagine non leggibile";
+    erroreFoto.hidden = false;
+  }
+});
+
+rimuoviFoto.addEventListener("click", async () => {
+  if (!confirm("Togliere la foto del profilo?")) return;
+  utente = await api("/api/auth/me", { method: "PATCH", body: { foto: null } }); // null = svuota
+  mostraFoto();
+});
+
+// Ritaglia al centro un quadrato e lo disegna su un <canvas> 256×256, poi lo trasforma in testo JPEG
+async function riduciFoto(file, lato = 256) {
+  const immagine = await createImageBitmap(file); // decodifica il file in un'immagine
+  const quadrato = Math.min(immagine.width, immagine.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = lato;
+  canvas.getContext("2d").drawImage(
+    immagine,
+    (immagine.width - quadrato) / 2, (immagine.height - quadrato) / 2, quadrato, quadrato, // parte da prendere
+    0, 0, lato, lato                                                                        // dove disegnarla
+  );
+  return canvas.toDataURL("image/jpeg", 0.85); // "data:image/jpeg;base64,..." (qualità 85%)
+}
+
+// =====================================================================
+//  DATI PERSONALI (C1)
+// =====================================================================
+formDati.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  infoDati.hidden = true;
+  erroreDati.hidden = true;
+  // Mando tutti e quattro i campi: quelli vuoti ("") il server li svuota
+  const dati = {};
+  for (const nome of ["livello_esperienza", "citta", "emergenza_nome", "emergenza_telefono"]) {
+    dati[nome] = formDati.elements[nome].value.trim();
+  }
+  try {
+    utente = await api("/api/auth/me", { method: "PATCH", body: dati });
+    infoDati.textContent = "Dati salvati.";
+    infoDati.hidden = false;
+  } catch (err) {
+    erroreDati.textContent = err.message; // es. "Numero di telefono non valido"
+    erroreDati.hidden = false;
+  }
+});
+
+// =====================================================================
+//  PESO CORPOREO (stretch 5)
+// =====================================================================
 
 // Pulsante "Esci dall'account": stessa funzione del link nel menu
 document.querySelector("#bottone-esci").addEventListener("click", esci);

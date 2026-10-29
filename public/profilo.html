@@ -30,16 +30,54 @@
   </section>
 
   <main class="container stretta">
-    <!-- I dati dell'account: solo lettura (l'API non permette di cambiare nome ed email) -->
+    <!-- Account: foto, nome ed email (nome ed email in sola lettura: l'API non permette di cambiarli) -->
     <section class="card">
-      <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Account</h2>
-      <dl class="dati">
-        <dt>Nome</dt>
-        <dd id="nome">…</dd>
-        <dt>Email</dt>
-        <dd id="email">…</dd>
-      </dl>
+      <div class="account">
+        <!-- La foto: se non c'è, un cerchio con l'iniziale del nome -->
+        <div class="avatar" id="avatar" aria-hidden="true"></div>
+        <div class="account-testo">
+          <h2 id="nome">…</h2>
+          <p class="muto" id="email">…</p>
+          <div class="azioni">
+            <!-- Il vero <input type="file"> è nascosto: il <label> lo apre con un clic -->
+            <label class="btn secondario btn-piccolo" for="scegli-foto">Cambia foto</label>
+            <input type="file" id="scegli-foto" accept="image/jpeg,image/png,image/webp" hidden>
+            <button type="button" class="pericolo btn-piccolo" id="rimuovi-foto" hidden>Rimuovi</button>
+          </div>
+        </div>
+      </div>
+      <p class="errore" id="foto-errore" hidden></p>
       <button type="button" class="secondario" id="bottone-esci">Esci dall'account</button>
+    </section>
+
+    <!-- C1: dati personali utili in montagna (tutti facoltativi) -->
+    <section class="card">
+      <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Dati personali</h2>
+      <p class="muto">Tutti facoltativi, li vedi solo tu. Il contatto di emergenza compare nella scheda di ogni viaggio.</p>
+      <form id="form-dati" novalidate>
+        <label>Esperienza in montagna
+          <select name="livello_esperienza">
+            <option value="">Non indicata</option>
+            <option value="principiante">Principiante</option>
+            <option value="intermedio">Intermedio</option>
+            <option value="esperto">Esperto</option>
+          </select>
+        </label>
+        <label>Città da cui parti di solito
+          <input name="citta" type="text" maxlength="100" autocomplete="address-level2">
+        </label>
+        <div class="riga2">
+          <label>Contatto di emergenza
+            <input name="emergenza_nome" type="text" maxlength="100" placeholder="Nome">
+          </label>
+          <label>Telefono
+            <input name="emergenza_telefono" type="tel" maxlength="30" placeholder="+39 333 1234567" autocomplete="off">
+          </label>
+        </div>
+        <p class="avviso" id="dati-info" hidden></p>
+        <p class="errore" id="dati-errore" hidden></p>
+        <div class="azioni"><button type="submit">Salva i dati</button></div>
+      </form>
     </section>
 
     <!-- Peso corporeo e soglia dello zaino (stretch 5) -->

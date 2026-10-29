@@ -1,5 +1,6 @@
 import { api, esc, formattaData, oggiISO } from "./api.js";
 import "./menu.js";
+import { creaMappa, punto, linea, numeroDa } from "./mappa.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -112,7 +113,68 @@ finestra.addEventListener("click", (e) => {
 function svuotaForm() {
   form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
   erroreForm.hidden = true;
+  disegnaPunti(); // campi vuoti → mappa senza punti
 }
+
+// =====================================================================
+//  C3: MAPPA PER SCEGLIERE PARTENZA E ARRIVO
+//  Lo "stato" sono i 4 campi delle coordinate: il clic sulla mappa li compila,
+//  e disegnaPunti() ridisegna la mappa leggendo i campi (anche se li scrivi a mano).
+// =====================================================================
+let mappa = null;      // creata solo la prima volta che apri la sezione (Leaflet vuole un contenitore visibile)
+let livelloPunti = null; // gruppo con i punti e la linea: si svuota e si ridisegna
+
+const sezionePercorso = form.querySelector("details");
+sezionePercorso.addEventListener("toggle", () => {
+  if (!sezionePercorso.open) return;
+  if (!mappa) {
+    mappa = creaMappa("mappa-scelta");
+    livelloPunti = L.layerGroup().addTo(mappa);
+    mappa.on("click", sceltaSullaMappa);
+  }
+  mappa.invalidateSize(); // il contenitore era nascosto: Leaflet ricalcola le sue misure
+  disegnaPunti();
+});
+
+function sceltaSullaMappa(e) {
+  const { lat, lng } = e.latlng;
+  const haPartenza = campi.lat_partenza.value !== "";
+  const haArrivo = campi.lat_arrivo.value !== "";
+  if (!haPartenza || haArrivo) {
+    // primo tocco, oppure terzo (si ricomincia): questo è la partenza
+    impostaCoordinate("partenza", lat, lng);
+    impostaCoordinate("arrivo", null, null);
+  } else {
+    impostaCoordinate("arrivo", lat, lng);
+  }
+  disegnaPunti();
+}
+
+function impostaCoordinate(tipo, lat, lon) {
+  campi[`lat_${tipo}`].value = lat == null ? "" : lat.toFixed(5); // 5 decimali ≈ 1 metro
+  campi[`lon_${tipo}`].value = lon == null ? "" : lon.toFixed(5);
+}
+
+function disegnaPunti() {
+  if (!mappa) return;
+  livelloPunti.clearLayers();
+  const partenza = [numeroDa(campi.lat_partenza), numeroDa(campi.lon_partenza)];
+  const arrivo = [numeroDa(campi.lat_arrivo), numeroDa(campi.lon_arrivo)];
+  const ok = (p) => p[0] !== null && p[1] !== null;
+  if (ok(partenza)) punto(...partenza, "partenza").addTo(livelloPunti);
+  if (ok(arrivo)) punto(...arrivo, "arrivo").addTo(livelloPunti);
+  if (ok(partenza) && ok(arrivo)) linea(partenza, arrivo).addTo(livelloPunti);
+}
+
+// Se scrivi le coordinate a mano, la mappa si aggiorna
+for (const nome of ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"]) {
+  campi[nome].addEventListener("change", disegnaPunti);
+}
+document.querySelector("#ricomincia-mappa").addEventListener("click", () => {
+  impostaCoordinate("partenza", null, null);
+  impostaCoordinate("arrivo", null, null);
+  disegnaPunti();
+});
 finestra.addEventListener("close", svuotaForm);
 
 // --- Lettura e validazione del form ---

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout – Scheda viaggio</title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <!-- Leaflet (mappe, C3): foglio di stile -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -97,11 +99,20 @@
         <div class="consiglio">
           <h3><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24">Percorso</h3>
           <p id="percorso"></p>
+          <!-- C3: partenza, arrivo e linea in linea d'aria (solo se il viaggio ha le coordinate) -->
+          <div class="mappa" id="mappa-percorso" hidden></div>
+        </div>
+        <!-- C1: numero di emergenza e il contatto inserito nel profilo -->
+        <div class="consiglio">
+          <h3><img class="icona" src="/img/icone/categorie/sicurezza.svg" alt="" width="24" height="24">Emergenza</h3>
+          <p id="emergenza">In caso di emergenza chiama il <strong>112</strong>.</p>
         </div>
       </section>
     </div>
   </main>
 
+  <!-- Leaflet: script "classico" (non module) che crea la variabile globale L, prima dei nostri moduli -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="/js/scheda-viaggio.js"></script>
 </body>
 </html>

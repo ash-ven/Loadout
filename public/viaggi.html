@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout – Viaggi</title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <!-- Leaflet (mappe, C3): foglio di stile -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -85,7 +87,11 @@
         <label class="check"><input name="serve_cucina" type="checkbox"> Serve la cucina</label>
 
         <details>
-          <summary>Percorso e coordinate (facoltativi)</summary>
+          <summary>Percorso e mappa (facoltativi)</summary>
+          <!-- C3: tocca la mappa per scegliere partenza e arrivo; le coordinate qui sotto si compilano da sole -->
+          <p class="muto aiuto-mappa">Tocca la mappa: il primo punto è la <strong>partenza</strong>, il secondo l'<strong>arrivo</strong>. Un terzo tocco ricomincia.</p>
+          <div class="mappa" id="mappa-scelta"></div>
+          <button type="button" class="secondario btn-piccolo" id="ricomincia-mappa">Cancella i punti</button>
           <div class="riga2">
             <label>Lunghezza (km)
               <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">
@@ -127,6 +133,8 @@
     </dialog>
   </main>
 
+  <!-- Leaflet: script "classico" (non module) che crea la variabile globale L, prima dei nostri moduli -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="/js/viaggi.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { CATEGORIE } from "./categorie.js";
+import { creaMappa, punto, linea } from "./mappa.js";
 
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
@@ -14,6 +15,7 @@ const formOre = document.querySelector("#form-ore");
 const elSole = document.querySelector("#sole");
 const elMeteo = document.querySelector("#meteo");
 const elPercorso = document.querySelector("#percorso");
+const elEmergenza = document.querySelector("#emergenza");
 
 // --- Elementi della pagina: zaino ---
 const bottoneGenera = document.querySelector("#genera");
@@ -133,6 +135,35 @@ function renderConsigli() {
   elPercorso.textContent = parti.length
     ? parti.join(" · ")
     : "Aggiungi km, dislivello e coordinate per avere più consigli.";
+
+  disegnaMappaPercorso(); // C3
+}
+
+// --- C3: la mappa del percorso (partenza, arrivo e linea in linea d'aria) ---
+let mappaPercorso = null;
+let puntiPercorso = null; // gruppo con punti e linea: si svuota prima di ridisegnare (niente doppioni)
+function disegnaMappaPercorso() {
+  const v = viaggio;
+  const elMappa = document.querySelector("#mappa-percorso");
+  if (v.lat_partenza == null || v.lon_partenza == null || typeof L === "undefined") {
+    elMappa.hidden = true; // niente coordinate (o Leaflet non caricato): niente mappa
+    return;
+  }
+  elMappa.hidden = false;
+  const partenza = [v.lat_partenza, v.lon_partenza];
+  const haArrivo = v.lat_arrivo != null && v.lon_arrivo != null;
+  if (!mappaPercorso) { // una volta sola (renderConsigli può ripartire con "Ricalcola")
+    mappaPercorso = creaMappa("mappa-percorso", partenza, 13);
+    puntiPercorso = L.layerGroup().addTo(mappaPercorso);
+  }
+  puntiPercorso.clearLayers();
+  punto(...partenza, "partenza").addTo(puntiPercorso);
+  if (haArrivo) {
+    const arrivo = [v.lat_arrivo, v.lon_arrivo];
+    punto(...arrivo, "arrivo").addTo(puntiPercorso);
+    linea(partenza, arrivo).addTo(puntiPercorso);
+    mappaPercorso.fitBounds([partenza, arrivo], { padding: [30, 30], maxZoom: 14 }); // inquadra tutti e due i punti
+  }
 }
 
 // Ricalcolo dell'acqua con le ore inserite dall'utente (US6 CA1)
@@ -367,6 +398,18 @@ function nascondiErrore() {
   erroreZaino.hidden = true;
 }
 
+// --- Emergenza (C1): sempre il 112, più il contatto del profilo se c'è (tel: = un tocco per chiamare) ---
+function mostraEmergenza(utente) {
+  const { emergenza_nome: nome, emergenza_telefono: telefono } = utente;
+  if (!nome && !telefono) {
+    elEmergenza.innerHTML = 'In caso di emergenza chiama il <strong>112</strong>. <a href="/profilo.html">Aggiungi un contatto di emergenza</a> nel profilo.';
+    return;
+  }
+  const chi = esc(nome || "il tuo contatto");
+  const numero = telefono ? ` <a href="tel:${esc(telefono.replace(/\s/g, ""))}">${esc(telefono)}</a>` : "";
+  elEmergenza.innerHTML = `In caso di emergenza chiama il <strong>112</strong>. Avvisa anche ${chi}${numero}.`;
+}
+
 // --- Elimina viaggio (prima era un pulsante nella lista dei viaggi) ---
 document.querySelector("#elimina-viaggio").addEventListener("click", async () => {
   if (!confirm(`Eliminare il viaggio "${viaggio.nome}"?\nVerrà eliminato anche il suo zaino.`)) return;
@@ -392,6 +435,7 @@ if (!Number.isInteger(id) || id <= 0) {
     await caricaViaggio();
     armadio = await api("/api/oggetti?limit=200");
     await caricaZaino();
+    mostraEmergenza(await api("/api/auth/me")); // C1: il contatto di emergenza dal profilo
     document.querySelector("#corpo-scheda").hidden = false; // tutto ok: mostro zaino e consigli
   } catch (err) {
     titolo.textContent = err.message; // es. "Viaggio 99 non trovato" (anche se è di un altro utente)
