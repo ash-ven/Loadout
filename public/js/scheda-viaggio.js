@@ -9,6 +9,7 @@ const id = Number(new URLSearchParams(location.search).get("id"));
 const titolo = document.querySelector("#titolo");
 const dettagli = document.querySelector("#dettagli");
 const elAcqua = document.querySelector("#acqua");
+const elAcquaPersona = document.querySelector("#acqua-persona");
 const formOre = document.querySelector("#form-ore");
 const elSole = document.querySelector("#sole");
 const elMeteo = document.querySelector("#meteo");
@@ -82,13 +83,23 @@ function creaEtichetta(testo, icona) {
 function renderConsigli() {
   const c = viaggio.consigli;
 
-  // Acqua
+  // Acqua (A5): il dato che serve davvero è quanta acqua porta OGNI persona OGNI giorno
+  // (sui viaggi di più giorni ci si rifornisce lungo il percorso). Il totale resta sotto, più piccolo.
   if (c.acqua_litri == null) {
+    elAcquaPersona.hidden = true;
     elAcqua.textContent = "Inserisci le ore di cammino (o i km del percorso) per calcolarla.";
   } else {
+    const v = viaggio;
+    const perPersonaAlGiorno = c.acqua_litri / (v.n_persone * v.n_giorni);
+    const litri = perPersonaAlGiorno.toLocaleString("it-IT", { maximumFractionDigits: 1 });
+    elAcquaPersona.innerHTML = `${litri}&nbsp;L <span>a persona, al giorno</span>`; // solo numeri nostri: niente rischio XSS
+    elAcquaPersona.hidden = false;
+
+    const persone = `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`;
+    const giorni = `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`;
     const fonte = c.fonte_ore === "utente" ? "inserite da te" : "stimate dal percorso";
     const caldo = c.acqua_con_temperatura ? " Calcolata anche in base alla temperatura prevista." : "";
-    elAcqua.textContent = `${num(c.acqua_litri)} litri in tutto, con ${num(c.ore_cammino_giorno)} ore di cammino al giorno (${fonte}).${caldo}`;
+    elAcqua.textContent = `In tutto ${num(c.acqua_litri)} litri per ${persone} e ${giorni}, con ${num(c.ore_cammino_giorno)} ore di cammino al giorno (${fonte}).${caldo}`;
   }
   formOre.elements.ore.value = c.ore_cammino_giorno ?? "";
 

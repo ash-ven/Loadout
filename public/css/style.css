@@ -355,3 +355,8 @@ button.togli { flex-shrink: 0; display: grid; place-items: center; width: 36px; 
 button.togli:hover { background: #f6e3df; color: var(--rosso); }
 /* Telefono molto stretto: via l'icona della categoria, il nome ha più spazio */
 @media (max-width: 420px) { .riga-zaino .riquadro-icona { display: none; } }
+
+/* Un numero importante in grande, nel carattere dei titoli (es. litri d'acqua a persona) */
+.dato-grande { margin: .15rem 0 .35rem; font-family: var(--font-titoli); font-size: 2.3rem; font-weight: 600;
+               line-height: 1; color: var(--muschio); font-variation-settings: "opsz" 72; }
+.dato-grande span { font-family: var(--font); font-size: .95rem; font-weight: 500; color: var(--terra); }
