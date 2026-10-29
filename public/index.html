@@ -18,31 +18,30 @@
     </nav>
   </header>
 
-  <main class="container">
-    <!-- Riquadro iniziale con le montagne -->
-    <section class="hero">
+  <!-- Testata: saluto, frase e zaino animato appoggiato sulla cresta -->
+  <section class="testata">
+    <div class="testata-dentro">
       <h1 id="saluto">Ciao!</h1>
       <p>Prepara lo zaino giusto per la tua prossima uscita in montagna: niente dimenticato, niente di troppo.</p>
-      <svg viewBox="0 0 1200 110" preserveAspectRatio="none" aria-hidden="true">
-        <polygon points="0,110 0,70 140,25 260,62 380,18 520,70 650,30 780,64 900,22 1040,66 1200,35 1200,110" fill="#4b6b54"/>
-        <polygon points="0,110 0,88 120,58 250,86 400,52 560,90 700,60 860,92 1000,62 1120,86 1200,70 1200,110" fill="#5f8463"/>
-        <polygon points="0,110 0,100 200,92 420,102 640,94 880,103 1080,95 1200,100 1200,110" fill="#ece3cf"/>
-      </svg>
       <img class="hero-zaino" src="/img/zaino-animato.svg" alt="" width="150" height="150">
-    </section>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2><img class="icona" src="/img/icone/armadio.svg" alt="" width="24" height="24">Il mio armadio</h2>
-      <p>Tutta la tua attrezzatura, con peso, categoria, indispensabili e preferiti.</p>
-      <a class="btn" href="/armadio.html">Apri l'armadio</a>
-    </section>
+  <main class="container">
+    <!-- Le due sezioni principali, affiancate sugli schermi larghi -->
+    <div class="scorciatoie">
+      <section class="card">
+        <h2><img class="icona" src="/img/icone/armadio.svg" alt="" width="24" height="24">Il mio armadio</h2>
+        <p>Tutta la tua attrezzatura, con peso, categoria, indispensabili e preferiti.</p>
+        <a class="btn" href="/armadio.html">Apri l'armadio</a>
+      </section>
 
-    <section class="card">
-      <h2><img class="icona" src="/img/icone/viaggi.svg" alt="" width="24" height="24">I miei viaggi</h2>
-      <p>Descrivi l'uscita, genera lo zaino e spunta la checklist prima di partire.</p>
-      <a class="btn" href="/viaggi.html">Vai ai viaggi</a>
-    </section>
-
+      <section class="card">
+        <h2><img class="icona" src="/img/icone/viaggi.svg" alt="" width="24" height="24">I miei viaggi</h2>
+        <p>Descrivi l'uscita, genera lo zaino e spunta la checklist prima di partire.</p>
+        <a class="btn" href="/viaggi.html">Vai ai viaggi</a>
+      </section>
+    </div>
   </main>
 
   <script type="module" src="/js/index.js"></script>

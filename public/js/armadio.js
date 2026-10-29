@@ -12,6 +12,9 @@ const titoloForm = document.querySelector("#titolo-form");
 const erroreForm = document.querySelector("#form-errore");
 const bottoneSalva = document.querySelector("#salva");
 const bottoneAnnulla = document.querySelector("#annulla");
+const finestra = document.querySelector("#finestra");          // il <dialog> con il form
+const bottoneNuovo = document.querySelector("#apri-nuovo");    // il pulsante + nella testata
+const bottoneChiudi = document.querySelector("#chiudi");       // la X in alto nella finestra
 
 // --- Stato ---
 let oggetti = [];        // gli oggetti mostrati in tabella
@@ -28,10 +31,12 @@ async function carica() {
 // --- Render: dallo stato all'HTML della tabella ---
 function render() {
   const pesoTotale = oggetti.reduce((somma, o) => somma + o.peso_g, 0);
-  riepilogo.textContent = `${oggetti.length} oggetti · ${(pesoTotale / 1000).toFixed(2)} kg in totale`;
+  // "1 oggetto" / "3 oggetti" e kg in formato italiano con la virgola (0,40 e non 0.40)
+  const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  riepilogo.textContent = `${oggetti.length} ${oggetti.length === 1 ? "oggetto" : "oggetti"}, ${kg} kg in tutto`;
 
   if (oggetti.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muto">Nessun oggetto trovato.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muto">Nessun oggetto qui. Premi + per aggiungere il primo.</td></tr>`;
     return;
   }
 
@@ -85,22 +90,43 @@ function riempiForm(o) {
   campi.codice_etichetta.value = o.codice_etichetta ?? "";
   campi.note.value = o.note ?? "";
   titoloForm.textContent = `Modifica: ${o.nome}`;
-  bottoneAnnulla.hidden = false;
   nascondiErrore();
-  render();           // per colorare la riga selezionata
-  campi.nome.focus(); // il cursore va nel primo campo
+  render();       // per colorare la riga selezionata
+  apriFinestra();
 }
 
 function svuotaForm() {
   inModifica = null;
   form.reset();
   titoloForm.textContent = "Nuovo oggetto";
-  bottoneAnnulla.hidden = true;
   nascondiErrore();
   render();
 }
 
-bottoneAnnulla.addEventListener("click", svuotaForm);
+// --- La finestra (dialog) con il form ---
+// showModal() la apre sopra la pagina (il resto non è cliccabile); close() la chiude.
+// Il browser la chiude da solo anche con il tasto Esc.
+function apriFinestra() {
+  finestra.showModal();
+  campi.nome.focus(); // il cursore va nel primo campo
+}
+
+bottoneNuovo.addEventListener("click", () => {
+  svuotaForm();
+  apriFinestra();
+});
+bottoneChiudi.addEventListener("click", () => finestra.close());
+bottoneAnnulla.addEventListener("click", () => finestra.close());
+
+// Clic sullo sfondo scuro fuori dalla finestra: chiude.
+// (Il contenuto è dentro .finestra-contenuto, quindi e.target è il dialog solo se clicchi fuori.)
+finestra.addEventListener("click", (e) => {
+  if (e.target === finestra) finestra.close();
+});
+
+// Comunque venga chiusa (X, Annulla, Esc, sfondo, dopo il salvataggio) la finestra
+// lancia l'evento "close": è il posto giusto per rimettere il form in modalità "nuovo".
+finestra.addEventListener("close", svuotaForm);
 
 // --- Lettura e validazione dei dati del form ---
 function leggiForm() {
@@ -138,7 +164,7 @@ form.addEventListener("submit", async (e) => {
     } else {
       await api("/api/oggetti", { method: "POST", body: dati });
     }
-    svuotaForm();
+    finestra.close(); // la chiusura svuota anche il form (evento "close")
     await carica();
   } catch (err) {
     mostraErrore(err.message); // es. "Hai già un oggetto con questo nome nell'armadio" (409)

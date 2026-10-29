@@ -18,10 +18,22 @@
     </nav>
   </header>
 
-  <main class="container due-colonne">
-    <!-- Colonna sinistra: i miei viaggi -->
+  <!-- Testata della pagina: titolo e quanti viaggi ci sono, e il pulsante + che apre la finestra di inserimento -->
+  <section class="testata">
+    <div class="testata-dentro con-azione">
+      <div>
+        <h1>I miei viaggi</h1>
+        <p id="riepilogo"></p>
+      </div>
+      <button type="button" class="pulsante-aggiungi" id="apri-nuovo" aria-label="Prepara un nuovo viaggio" title="Prepara un nuovo viaggio">
+        <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <main class="container">
+    <!-- La lista dei viaggi, a tutta larghezza -->
     <section class="card">
-      <h1><img class="icona" src="/img/icone/viaggi.svg" alt="" width="24" height="24">I miei viaggi</h1>
       <div class="filtri">
         <select id="filtro-pianificati" aria-label="Filtra i viaggi">
           <option value="">Tutti i viaggi</option>
@@ -29,7 +41,6 @@
           <option value="false">Già organizzati</option>
         </select>
       </div>
-      <p class="muto" id="riepilogo"></p>
       <div class="tabella-scroll">
         <table id="tabella">
           <thead>
@@ -40,9 +51,13 @@
       </div>
     </section>
 
-    <!-- Colonna destra: prepara il tuo cammino -->
-    <section class="card">
-      <h2><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24">Prepara il tuo cammino</h2>
+    <!-- Finestra (dialog) "Prepara il tuo cammino": si apre con il + -->
+    <dialog class="finestra" id="finestra" aria-labelledby="titolo-form">
+      <div class="finestra-contenuto">
+      <div class="finestra-testa">
+        <h2 id="titolo-form"><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24">Prepara il tuo cammino</h2>
+        <button type="button" class="chiudi" id="chiudi" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
       <form id="form-viaggio" novalidate>
         <label>Nome dell'uscita
           <input name="nome" type="text" maxlength="150" required>
@@ -111,9 +126,13 @@
         <label class="check"><input name="pianificato" type="checkbox"> <img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Percorso da fare in futuro</label>
         <label class="check"><input name="genera" type="checkbox" checked> <img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Genera subito lo zaino</label>
         <p class="errore" id="form-errore" hidden></p>
-        <button type="submit" id="salva">Crea il viaggio</button>
+        <div class="azioni">
+          <button type="submit" id="salva">Crea il viaggio</button>
+          <button type="button" class="secondario" id="annulla">Annulla</button>
+        </div>
       </form>
-    </section>
+      </div>
+    </dialog>
   </main>
 
   <script type="module" src="/js/viaggi.js"></script>

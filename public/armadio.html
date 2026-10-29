@@ -18,10 +18,22 @@
     </nav>
   </header>
 
-  <main class="container due-colonne">
-    <!-- Colonna sinistra: la lista -->
+  <!-- Testata della pagina: titolo e riepilogo (numero di oggetti e peso totale), e il pulsante + che apre la finestra di inserimento -->
+  <section class="testata">
+    <div class="testata-dentro con-azione">
+      <div>
+        <h1>Il mio armadio</h1>
+        <p id="riepilogo"></p>
+      </div>
+      <button type="button" class="pulsante-aggiungi" id="apri-nuovo" aria-label="Nuovo oggetto" title="Nuovo oggetto">
+        <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <main class="container">
+    <!-- La lista degli oggetti, a tutta larghezza -->
     <section class="card">
-      <h1><img class="icona" src="/img/icone/armadio.svg" alt="" width="24" height="24">Il mio armadio</h1>
       <div class="filtri">
         <input type="search" id="q" placeholder="Cerca per nome…" aria-label="Cerca per nome">
         <select id="filtro-categoria" aria-label="Filtra per categoria">
@@ -36,7 +48,6 @@
           <option value="altro">Altro</option>
         </select>
       </div>
-      <p class="muto" id="riepilogo"></p>
       <div class="tabella-scroll">
         <table id="tabella">
           <thead>
@@ -47,9 +58,13 @@
       </div>
     </section>
 
-    <!-- Colonna destra: il form nuovo / modifica -->
-    <section class="card">
-      <h2 id="titolo-form">Nuovo oggetto</h2>
+    <!-- Finestra (dialog) con il form nuovo / modifica: si apre con il + o cliccando una riga -->
+    <dialog class="finestra" id="finestra" aria-labelledby="titolo-form">
+      <div class="finestra-contenuto">
+      <div class="finestra-testa">
+        <h2 id="titolo-form">Nuovo oggetto</h2>
+        <button type="button" class="chiudi" id="chiudi" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
       <form id="form-oggetto" novalidate>
         <label>Nome
           <input name="nome" type="text" maxlength="120" required>
@@ -80,10 +95,11 @@
         <p class="errore" id="form-errore" hidden></p>
         <div class="azioni">
           <button type="submit" id="salva">Salva</button>
-          <button type="button" class="secondario" id="annulla" hidden>Annulla modifica</button>
+          <button type="button" class="secondario" id="annulla">Annulla</button>
         </div>
       </form>
-    </section>
+      </div>
+    </dialog>
   </main>
 
   <script type="module" src="/js/armadio.js"></script>

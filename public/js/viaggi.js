@@ -9,6 +9,10 @@ const form = document.querySelector("#form-viaggio");
 const campi = form.elements;
 const erroreForm = document.querySelector("#form-errore");
 const bottoneSalva = document.querySelector("#salva");
+const bottoneAnnulla = document.querySelector("#annulla");
+const finestra = document.querySelector("#finestra");          // il <dialog> con il form
+const bottoneNuovo = document.querySelector("#apri-nuovo");    // il pulsante + nella testata
+const bottoneChiudi = document.querySelector("#chiudi");       // la X in alto nella finestra
 
 // --- Stato ---
 let viaggi = [];
@@ -25,7 +29,7 @@ function render() {
   riepilogo.textContent = viaggi.length === 1 ? "1 viaggio" : `${viaggi.length} viaggi`;
 
   if (viaggi.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muto">Nessun viaggio qui. Preparane uno con il form!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="muto">Nessun viaggio qui. Premi + per prepararne uno.</td></tr>`;
     return;
   }
 
@@ -63,6 +67,34 @@ async function elimina(id) {
     alert(err.message);
   }
 }
+
+// --- La finestra (dialog) con il form ---
+// showModal() la apre sopra la pagina (il resto non è cliccabile); close() la chiude.
+// Il browser la chiude da solo anche con il tasto Esc.
+function apriFinestra() {
+  finestra.showModal();
+  campi.nome.focus(); // il cursore va nel primo campo
+}
+
+bottoneNuovo.addEventListener("click", () => {
+  svuotaForm();
+  apriFinestra();
+});
+bottoneChiudi.addEventListener("click", () => finestra.close());
+bottoneAnnulla.addEventListener("click", () => finestra.close());
+
+// Clic sullo sfondo scuro fuori dalla finestra: chiude.
+// (Il contenuto è dentro .finestra-contenuto, quindi e.target è il dialog solo se clicchi fuori.)
+finestra.addEventListener("click", (e) => {
+  if (e.target === finestra) finestra.close();
+});
+
+// Quando la finestra si chiude, il form torna pulito per la prossima volta
+function svuotaForm() {
+  form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
+  erroreForm.hidden = true;
+}
+finestra.addEventListener("close", svuotaForm);
 
 // --- Lettura e validazione del form ---
 function leggiForm() {

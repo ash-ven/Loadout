@@ -58,19 +58,24 @@ function renderIntestazione() {
     v.pernotto === "nessuno" ? "in giornata" : `pernotto in ${v.pernotto}`,
     v.serve_cucina ? "con cucina" : "senza cucina",
   ];
-  dettagli.textContent = parti.join(" · ");
-  // Viaggio da fare in futuro: aggiungo il badge con l'icona costruendo gli elementi a mano
-  // (createElement + textContent: nessun rischio XSS, non uso innerHTML)
-  if (v.pianificato) {
-    const badge = document.createElement("span");
-    badge.className = "badge preferito";
-    const icona = document.createElement("img");
-    icona.className = "icona";
-    icona.src = "/img/icone/da-fare.svg";
-    icona.alt = "";
-    badge.append(icona, "da fare in futuro");
-    dettagli.append(" ", badge);
+  // Ogni dato del viaggio diventa un'etichetta (createElement + textContent: niente innerHTML, niente XSS)
+  dettagli.replaceChildren(...parti.map((testo) => creaEtichetta(testo)));
+  if (v.pianificato) dettagli.append(creaEtichetta("da fare in futuro", "da-fare"));
+}
+
+// Un'etichetta della testata; con un'icona diventa quella "in evidenza" (sfondo senape)
+function creaEtichetta(testo, icona) {
+  const el = document.createElement("span");
+  el.className = icona ? "etichetta in-evidenza" : "etichetta";
+  if (icona) {
+    const img = document.createElement("img");
+    img.className = "icona";
+    img.src = `/img/icone/${icona}.svg`;
+    img.alt = "";
+    el.append(img);
   }
+  el.append(testo);
+  return el;
 }
 
 function renderConsigli() {

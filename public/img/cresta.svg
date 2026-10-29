@@ -1,0 +1,6 @@
+<!-- La cresta di montagne in fondo alle testate: due catene verdi e il "prato" crema che si unisce alla pagina -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 110" preserveAspectRatio="none">
+  <polygon points="0,110 0,70 140,25 260,62 380,18 520,70 650,30 780,64 900,22 1040,66 1200,35 1200,110" fill="#4b6b54"/>
+  <polygon points="0,110 0,88 120,58 250,86 400,52 560,90 700,60 860,92 1000,62 1120,86 1200,70 1200,110" fill="#5f8463"/>
+  <polygon points="0,110 0,100 200,92 420,102 640,94 880,103 1080,95 1200,100 1200,110" fill="#ece3cf"/>
+</svg>
