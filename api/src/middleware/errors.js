@@ -6,6 +6,13 @@ export class HttpError extends Error {
   }
 }
 
+// Messaggi chiari per i duplicati, in base al nome del vincolo violato
+const MESSAGGI_DUPLICATO = {
+  utente_email_key: "Email già registrata",
+  oggetto_utente_id_nome_key: "Hai già un oggetto con questo nome nell'armadio",
+  viaggio_oggetto_pkey: "Questo oggetto è già nello zaino",
+};
+
 export function notFound(req, res) {
   res.status(404).json({ error: "NOT_FOUND", message: `Rotta ${req.method} ${req.originalUrl} inesistente` });
 }
@@ -17,7 +24,9 @@ export function errorHandler(err, req, res, next) { // 4 parametri: Express lo r
   }
 
   // errori di Postgres: traduciamo i codici più comuni
-  if (err.code === "23505") return res.status(409).json({ error: "DUPLICATE", message: "Valore già presente" });
+  if (err.code === "23505") {
+    return res.status(409).json({ error: "DUPLICATE", message: MESSAGGI_DUPLICATO[err.constraint] ?? "Valore già presente" });
+  }
   if (err.code === "23503") return res.status(422).json({ error: "FK_VIOLATION", message: "Riferimento a un record inesistente" });
   if (err.code === "23514") return res.status(422).json({ error: "CHECK_VIOLATION", message: err.message });
   if (err.code === "P0001") return res.status(422).json({ error: "DOMAIN_RULE", message: err.message }); // RAISE EXCEPTION
