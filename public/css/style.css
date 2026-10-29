@@ -1,0 +1,75 @@
+/* public/css/style.css – un solo foglio di stile per tutto il sito */
+
+/* --- Variabili: i colori e le misure, definiti una volta sola --- */
+:root {
+  --verde: #2f6b4f;
+  --verde-scuro: #1f4a36;
+  --sabbia: #f4f1ea;
+  --testo: #26312b;
+  --grigio: #66736b;
+  --bordo: #d9ddd5;
+  --rosso: #b23a32;
+  --arancio: #c77d1a;
+  --bianco: #ffffff;
+  --raggio: 8px;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, "Segoe UI", sans-serif; color: var(--testo); background: var(--sabbia); line-height: 1.5; }
+a { color: var(--verde); }
+h1, h2, h3 { margin: 0 0 .5rem; line-height: 1.2; }
+
+/* --- Barra in alto (Flexbox: elementi in riga) --- */
+.topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
+          padding: .75rem 1rem; background: var(--verde-scuro); color: var(--bianco); }
+.topbar .logo { font-weight: 700; font-size: 1.1rem; color: var(--bianco); text-decoration: none; }
+.topbar nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+.topbar nav a { color: var(--bianco); text-decoration: none; }
+.topbar nav a:hover { text-decoration: underline; }
+
+/* --- Contenitore e schede (Grid: elementi incolonnati con spazio regolare) --- */
+.container { max-width: 1000px; margin: 0 auto; padding: 1rem; display: grid; gap: 1.5rem; }
+.card { background: var(--bianco); border: 1px solid var(--bordo); border-radius: var(--raggio); padding: 1rem; }
+.centrato { max-width: 400px; margin: 3rem auto; }
+
+/* --- Form --- */
+form { display: grid; gap: .75rem; }
+label { display: grid; gap: .25rem; font-size: .9rem; color: var(--grigio); }
+label.check { display: flex; align-items: center; gap: .5rem; color: var(--testo); }
+input, select, textarea { width: 100%; padding: .55rem; border: 1px solid var(--bordo); border-radius: 6px; font: inherit; background: var(--bianco); }
+label.check input { width: auto; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--verde); outline-offset: 1px; }
+
+/* --- Pulsanti --- */
+button, .btn { display: inline-block; padding: .55rem 1rem; border: 0; border-radius: 6px; font: inherit; cursor: pointer;
+               background: var(--verde); color: var(--bianco); text-decoration: none; }
+button:hover, .btn:hover { background: var(--verde-scuro); }
+button.secondario { background: var(--bianco); color: var(--verde); border: 1px solid var(--verde); }
+button.pericolo { background: var(--rosso); }
+button:disabled { opacity: .6; cursor: wait; }
+
+/* --- Messaggi --- */
+.errore { color: var(--rosso); margin: 0; }
+.avviso { background: #fdf3e3; border-left: 4px solid var(--arancio); padding: .5rem .75rem; border-radius: 4px; }
+.muto { color: var(--grigio); font-size: .9rem; }
+
+/* --- Tabelle --- */
+.tabella-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .5rem; border-bottom: 1px solid var(--bordo); }
+th { font-size: .85rem; color: var(--grigio); font-weight: 600; }
+tbody tr:hover { background: #f8faf7; }
+
+/* --- Badge (etichette colorate: indispensabile / preferito) --- */
+.badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+.badge.indispensabile { background: #e3efe8; color: var(--verde-scuro); }
+.badge.preferito { background: #fdf0d9; color: #8a5a10; }
+
+/* --- Barra del peso dello zaino --- */
+.barra { height: 14px; background: var(--bordo); border-radius: 999px; overflow: hidden; }
+.barra > div { height: 100%; width: 0; background: var(--verde); transition: width .3s; }
+
+/* --- Responsive: due colonne solo sugli schermi larghi --- */
+@media (min-width: 768px) {
+  .due-colonne { grid-template-columns: 2fr 1fr; align-items: start; }
+}

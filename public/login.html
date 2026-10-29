@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Accedi</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/">🎒 Loadout</a>
+  </header>
+
+  <main>
+    <section class="card centrato">
+      <h1>Accedi</h1>
+      <form id="form-login" novalidate>
+        <label>Email
+          <input name="email" type="email" autocomplete="email" required>
+        </label>
+        <label>Password
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <p class="errore" id="errore" hidden></p>
+        <button type="submit">Entra</button>
+      </form>
+      <p class="muto">Non hai un account? <a href="/register.html">Registrati</a></p>
+    </section>
+  </main>
+
+  <script type="module" src="/js/login.js"></script>
+</body>
+</html>
