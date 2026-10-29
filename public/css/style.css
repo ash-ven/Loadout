@@ -405,3 +405,9 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 .aiuto-mappa { margin: .6rem 0 0; }
 #mappa-percorso { height: 220px; }
 .leaflet-container { font-family: var(--font); }
+
+/* C3: blocco della mappa nel form del viaggio */
+.blocco-mappa { display: grid; gap: .1rem; }
+.titolo-campo { margin: 0; font-size: .88rem; font-weight: 500; color: var(--terra); }
+.titolo-campo .muto { font-size: .8rem; }
+.riepilogo-percorso { margin: 0 0 .4rem; min-height: 1.4em; font-weight: 600; color: var(--muschio); }

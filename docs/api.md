@@ -54,7 +54,7 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 | --- | --- | --- | --- | --- |
 | GET | /api/viaggi?pianificato= | — | array dei miei viaggi, ordinati per data di partenza (senza data in fondo); `pianificato=true` solo i percorsi da fare in futuro, `false` solo gli altri | 200, 400, 401 |
 | GET | /api/viaggi/:id?ore_cammino= | — | il viaggio + `peso` (vedi Zaino) + `consigli` (vedi sotto); `ore_cammino` facoltativo, 0.5–16 | 200, 400, 401, 404 |
-| POST | /api/viaggi?genera= | `{ nome*, attivita*, n_persone, n_giorni, pernotto, serve_cucina, data_partenza, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, distanza_km, note, pianificato }` – vedi regole sotto | il viaggio creato; con `genera=true` lo zaino viene generato subito, nella stessa transazione, e la risposta contiene anche `aggiunti` | 201, 400, 401 |
+| POST | /api/viaggi?genera= | `{ nome*, attivita*, n_persone, n_giorni, pernotto, serve_cucina, data_partenza, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, distanza_km, note, pianificato, traccia }` – vedi regole sotto | il viaggio creato; con `genera=true` lo zaino viene generato subito, nella stessa transazione, e la risposta contiene anche `aggiunti` | 201, 400, 401 |
 | PUT | /api/viaggi/:id | come POST (viaggio intero) | il viaggio aggiornato | 200, 400, 401, 404 |
 | DELETE | /api/viaggi/:id | — | nessun corpo (lo zaino del viaggio viene cancellato: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
@@ -66,6 +66,12 @@ Regole dei campi del viaggio (* = obbligatorio):
 - `lat_*` tra −90 e 90; `lon_*` tra −180 e 180
 - `dislivello_m` intero 0–9000 (salita di **tutto** il percorso); `distanza_km` 0.1–999 (lunghezza del sentiero, inserita dall'utente)
 - `note` max 1000; `pianificato` booleano (default false) – percorsi da fare in futuro
+- `traccia` elenco di 2–5000 coppie `[lat, lon]`: il percorso lungo i sentieri (di solito quello restituito da `/api/percorso`); errore `BAD_TRACCIA`
+
+## Percorso lungo i sentieri (C3)
+| Metodo | URL | Body | Risposta | Status |
+| --- | --- | --- | --- | --- |
+| GET | /api/percorso?punti=lat,lon;lat,lon;… | — | `{ distanza_km, dislivello_m, traccia: [[lat, lon], …] }` – da 2 a 10 punti (partenza, tappe, arrivo). Il server chiede il percorso a BRouter (profilo `hiking-mountain`, OpenStreetMap) con un limite di 10 secondi e semplifica la traccia (un punto ogni ~20 m) | 200, 400 (`BAD_QUERY`), 401, 404 (`NESSUN_PERCORSO`: nessun sentiero vicino a un punto), 502 (`SERVIZIO_PERCORSI`: BRouter non risponde) |
 
 Blocco `consigli` del dettaglio:
 - `ore_cammino_giorno`: da `?ore_cammino=` se presente (`fonte_ore: "utente"`), altrimenti stimate dal percorso
@@ -76,7 +82,8 @@ Blocco `consigli` del dettaglio:
 - `acqua_litri`: totale del viaggio per tutto il gruppo, da `fn_acqua_consigliata(n_giorni, n_persone, ore, temperatura_max, dislivello_giorno, cucina)`
   = litri a persona al giorno × giorni × persone
 - `acqua_con_temperatura`, `acqua_con_dislivello`, `acqua_con_cucina`: quali fattori sono entrati nel calcolo (il frontend li elenca)
-- `distanza_linea_aria_km`: tra partenza e arrivo (formula di haversine); `null` se mancano le coordinate
+- `distanza_linea_aria_km`: tra partenza e arrivo (formula di haversine); `null` se mancano le coordinate.
+  Il viaggio restituisce anche `traccia` (o `null`), che il frontend disegna sulla mappa
 - `sole`: `{ disponibile: true, alba, tramonto }` in ora italiana, chiesti dal server a sunrise-sunset.org;
   `{ disponibile: false, motivo }` se mancano coordinate/data o se il servizio esterno non risponde entro 3 secondi
 - `meteo`: `{ disponibile: true, temp_max, temp_min, prob_pioggia, vestiario: [...] }` da Open-Meteo per la data e le coordinate di partenza;
@@ -101,11 +108,12 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 
 ## Note sugli status code
 - **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico o troppo grande, JSON malformato) oppure una regola dell'app non rispettata; il `message` spiega cosa correggere.
-  Codici: `VALIDATION_ERROR`, `BAD_ID`, `BAD_QUERY`, `BAD_JSON`, `BAD_INPUT`, `WEAK_PASSWORD`, `BAD_EMAIL`, `BAD_TELEFONO`, `BAD_FOTO`, `QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`.
+  Codici: `VALIDATION_ERROR`, `BAD_ID`, `BAD_QUERY`, `BAD_JSON`, `BAD_INPUT`, `WEAK_PASSWORD`, `BAD_EMAIL`, `BAD_TELEFONO`, `BAD_FOTO`, `BAD_TRACCIA`, `QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`.
 - **401**: non autenticato (manca il cookie, token scaduto o manomesso) oppure credenziali errate al login.
 - **404**: la risorsa non esiste **oppure non è mia**: non riveliamo che esiste (niente 403).
 - **409**: violazione di unicità (email già registrata, nome già nel mio armadio anche con maiuscole diverse, oggetto già nello zaino). Il messaggio dipende dal vincolo violato.
 - **422**: vincolo del database violato che il validatore non ha intercettato (rete di sicurezza, es. `CHECK (peso_g > 0)`). Codici: `CHECK_VIOLATION`, `FK_VIOLATION`, `DOMAIN_RULE`.
+- **502**: un servizio esterno indispensabile per quella richiesta non risponde (solo `/api/percorso`; alba e meteo invece rispondono 200 con "non disponibile").
 - **500**: errore interno; il dettaglio resta nel log del server, al client arriva solo "Errore interno".
 
 ## Scelte da confermare con il tutor
@@ -113,4 +121,4 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 - Svuota checklist: endpoint "azione" `POST /api/viaggi/:id/zaino/svuota` (coerente con `/genera`) invece di una PATCH sull'intera collezione.
 - Acqua: la formula è una stima ragionevole (non una regola medica); i coefficienti stanno in `fn_acqua_persona_giorno` e si cambiano in un punto solo.
 - Oggetti indossati e pezzi posseduti: i controlli (solo abbigliamento, non oltre i posseduti) sono nelle rotte; il frontend li ripete solo per comodità.
-- Km lungo i sentieri calcolati automaticamente: fuori dallo scope di questa settimana (serve un servizio di routing esterno); per ora `distanza_km` è inserita dall'utente.
+- Km lungo i sentieri: calcolati da BRouter (servizio pubblico gratuito, uso moderato) quando si sceglie il percorso sulla mappa; restano modificabili a mano.

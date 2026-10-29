@@ -1,7 +1,7 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { CATEGORIE } from "./categorie.js";
-import { creaMappa, punto, linea } from "./mappa.js";
+import { creaMappa, punto, tracciato, lineaDritta } from "./mappa.js";
 
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
@@ -139,9 +139,9 @@ function renderConsigli() {
   disegnaMappaPercorso(); // C3
 }
 
-// --- C3: la mappa del percorso (partenza, arrivo e linea in linea d'aria) ---
+// --- C3: la mappa del percorso: il tracciato lungo i sentieri se c'è, altrimenti la linea in linea d'aria ---
 let mappaPercorso = null;
-let puntiPercorso = null; // gruppo con punti e linea: si svuota prima di ridisegnare (niente doppioni)
+let puntiPercorso = null; // gruppo con punti e linee: si svuota prima di ridisegnare (niente doppioni)
 function disegnaMappaPercorso() {
   const v = viaggio;
   const elMappa = document.querySelector("#mappa-percorso");
@@ -151,19 +151,20 @@ function disegnaMappaPercorso() {
   }
   elMappa.hidden = false;
   const partenza = [v.lat_partenza, v.lon_partenza];
-  const haArrivo = v.lat_arrivo != null && v.lon_arrivo != null;
+  const arrivo = v.lat_arrivo != null && v.lon_arrivo != null ? [v.lat_arrivo, v.lon_arrivo] : null;
   if (!mappaPercorso) { // una volta sola (renderConsigli può ripartire con "Ricalcola")
     mappaPercorso = creaMappa("mappa-percorso", partenza, 13);
     puntiPercorso = L.layerGroup().addTo(mappaPercorso);
   }
   puntiPercorso.clearLayers();
+  if (v.traccia?.length) tracciato(v.traccia).addTo(puntiPercorso);  // il percorso vero, lungo i sentieri
+  else if (arrivo) lineaDritta([partenza, arrivo]).addTo(puntiPercorso);
   punto(...partenza, "partenza").addTo(puntiPercorso);
-  if (haArrivo) {
-    const arrivo = [v.lat_arrivo, v.lon_arrivo];
-    punto(...arrivo, "arrivo").addTo(puntiPercorso);
-    linea(partenza, arrivo).addTo(puntiPercorso);
-    mappaPercorso.fitBounds([partenza, arrivo], { padding: [30, 30], maxZoom: 14 }); // inquadra tutti e due i punti
-  }
+  if (arrivo) punto(...arrivo, "arrivo").addTo(puntiPercorso);
+
+  // Inquadra tutto: il tracciato, oppure partenza e arrivo
+  const daInquadrare = v.traccia?.length ? v.traccia : arrivo ? [partenza, arrivo] : null;
+  if (daInquadrare) mappaPercorso.fitBounds(daInquadrare, { padding: [25, 25], maxZoom: 15 });
 }
 
 // Ricalcolo dell'acqua con le ore inserite dall'utente (US6 CA1)

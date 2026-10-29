@@ -86,12 +86,21 @@
         </label>
         <label class="check"><input name="serve_cucina" type="checkbox"> Serve la cucina</label>
 
-        <details>
-          <summary>Percorso e mappa (facoltativi)</summary>
-          <!-- C3: tocca la mappa per scegliere partenza e arrivo; le coordinate qui sotto si compilano da sole -->
-          <p class="muto aiuto-mappa">Tocca la mappa: il primo punto è la <strong>partenza</strong>, il secondo l'<strong>arrivo</strong>. Un terzo tocco ricomincia.</p>
+        <!-- C3: il percorso sulla mappa dei sentieri. Tocchi partenza, tappe e arrivo:
+             il server chiede a BRouter il tracciato lungo i sentieri e compila km e dislivello -->
+        <div class="blocco-mappa">
+          <p class="titolo-campo">Percorso sulla mappa <span class="muto">(facoltativo)</span></p>
+          <p class="muto aiuto-mappa">Tocca la <strong>partenza</strong>, poi le eventuali tappe e l'<strong>arrivo</strong>: il percorso segue i sentieri. Per un anello, finisci vicino alla partenza.</p>
           <div class="mappa" id="mappa-scelta"></div>
-          <button type="button" class="secondario btn-piccolo" id="ricomincia-mappa">Cancella i punti</button>
+          <p class="riepilogo-percorso" id="riepilogo-percorso" role="status"></p>
+          <div class="azioni">
+            <button type="button" class="secondario btn-piccolo" id="togli-punto">Togli l'ultimo punto</button>
+            <button type="button" class="secondario btn-piccolo" id="ricomincia-mappa">Cancella il percorso</button>
+          </div>
+        </div>
+
+        <details>
+          <summary>Dettagli del percorso (km, dislivello, coordinate, note)</summary>
           <div class="riga2">
             <label>Lunghezza (km)
               <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">

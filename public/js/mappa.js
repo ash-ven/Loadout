@@ -1,29 +1,43 @@
 // Mappe con Leaflet (C3, stretch 3). Leaflet arriva da un <script> classico nella pagina
 // e crea la variabile globale L; qui ci sono solo le impostazioni comuni alle due pagine.
 
-// OpenTopoMap: mappa topografica con sentieri e curve di livello (gratuita, va citata la fonte)
+// Sfondo: OpenTopoMap, mappa topografica con curve di livello e sentieri
 const SFONDO = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
-const FONTE = 'Dati © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM · Stile © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)';
+// Sopra: Waymarked Trails "hiking", che colora i SENTIERI SEGNATI (CAI e simili) da OpenStreetMap
+const SENTIERI = "https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png";
+const FONTE = 'Dati © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM · ' +
+              'Stile © <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA) · ' +
+              'Sentieri © <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>';
 
 // Centro di partenza se non ci sono punti: l'Appennino modenese
 export const CENTRO_ITALIA = [44.25, 10.7];
 
-export function creaMappa(idElemento, centro = CENTRO_ITALIA, zoom = 9) {
+export function creaMappa(idElemento, centro = CENTRO_ITALIA, zoom = 10) {
   const mappa = L.map(idElemento).setView(centro, zoom);
   L.tileLayer(SFONDO, { maxZoom: 17, attribution: FONTE }).addTo(mappa);
+  L.tileLayer(SENTIERI, { maxZoom: 17, opacity: 0.8 }).addTo(mappa); // trasparente: si vede lo sfondo sotto
   return mappa;
 }
 
-// Un punto colorato (cerchio disegnato, niente immagini da scaricare): partenza muschio, arrivo senape
+// Un punto colorato (cerchio disegnato, niente immagini): partenza muschio, arrivo senape, tappa salvia piccola
 export function punto(lat, lon, tipo) {
-  const colore = tipo === "partenza" ? "#31503f" : "#c8962b";
-  return L.circleMarker([lat, lon], { radius: 9, color: "#fbf6ec", weight: 3, fillColor: colore, fillOpacity: 1 })
-    .bindTooltip(tipo === "partenza" ? "Partenza" : "Arrivo");
+  const stile = {
+    partenza: { radius: 9, fillColor: "#31503f", testo: "Partenza" },
+    arrivo:   { radius: 9, fillColor: "#c8962b", testo: "Arrivo" },
+    tappa:    { radius: 6, fillColor: "#5f8463", testo: "Tappa" },
+  }[tipo];
+  return L.circleMarker([lat, lon], { radius: stile.radius, color: "#fbf6ec", weight: 3, fillColor: stile.fillColor, fillOpacity: 1 })
+    .bindTooltip(stile.testo);
 }
 
-// La linea tratteggiata tra partenza e arrivo (è "in linea d'aria", non il sentiero vero)
-export function linea(partenza, arrivo) {
-  return L.polyline([partenza, arrivo], { color: "#31503f", weight: 3, dashArray: "6 8" });
+// Il percorso vero lungo i sentieri: linea piena
+export function tracciato(traccia) {
+  return L.polyline(traccia, { color: "#31503f", weight: 5, opacity: 0.9 });
+}
+
+// Linea tratteggiata tra i punti (in linea d'aria): si usa quando il percorso sui sentieri non c'è
+export function lineaDritta(punti) {
+  return L.polyline(punti, { color: "#31503f", weight: 3, dashArray: "6 8" });
 }
 
 // Legge un numero da un campo del form: null se vuoto o non valido

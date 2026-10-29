@@ -1,6 +1,6 @@
 import { api, esc, formattaData, oggiISO } from "./api.js";
 import "./menu.js";
-import { creaMappa, punto, linea, numeroDa } from "./mappa.js";
+import { creaMappa, punto, tracciato, lineaDritta, numeroDa } from "./mappa.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -93,6 +93,7 @@ segmenti.addEventListener("click", (e) => {
 // Il browser la chiude da solo anche con il tasto Esc.
 function apriFinestra() {
   finestra.showModal();
+  preparaMappa(); // C3: ora la finestra è visibile e Leaflet può misurare la mappa
   campi.nome.focus(); // il cursore va nel primo campo
 }
 
@@ -113,69 +114,107 @@ finestra.addEventListener("click", (e) => {
 function svuotaForm() {
   form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
   erroreForm.hidden = true;
-  disegnaPunti(); // campi vuoti → mappa senza punti
+  punti = [];      // via anche il percorso sulla mappa
+  traccia = null;
+  mostraRiepilogo("");
+  disegna();
 }
 
 // =====================================================================
-//  C3: MAPPA PER SCEGLIERE PARTENZA E ARRIVO
-//  Lo "stato" sono i 4 campi delle coordinate: il clic sulla mappa li compila,
-//  e disegnaPunti() ridisegna la mappa leggendo i campi (anche se li scrivi a mano).
+//  C3: PERCORSO SULLA MAPPA DEI SENTIERI
+//  Stato: i punti toccati (partenza, tappe, arrivo) e la traccia calcolata.
+//  Ogni volta che i punti cambiano: chiedo il percorso al server (che chiede a BRouter),
+//  compilo km, dislivello e coordinate, e ridisegno la mappa.
 // =====================================================================
-let mappa = null;      // creata solo la prima volta che apri la sezione (Leaflet vuole un contenitore visibile)
-let livelloPunti = null; // gruppo con i punti e la linea: si svuota e si ridisegna
+let mappa = null;         // creata la prima volta che si apre la finestra (Leaflet vuole un contenitore visibile)
+let livello = null;       // gruppo con punti e linee: si svuota e si ridisegna
+let punti = [];           // [[lat, lon], ...] nell'ordine in cui li hai toccati
+let traccia = null;       // il percorso lungo i sentieri arrivato dal server, oppure null
+let ultimaRichiesta = 0;  // numero dell'ultima richiesta: le risposte "vecchie" vengono ignorate
+const riepilogoPercorso = document.querySelector("#riepilogo-percorso");
 
-const sezionePercorso = form.querySelector("details");
-sezionePercorso.addEventListener("toggle", () => {
-  if (!sezionePercorso.open) return;
+function preparaMappa() {
   if (!mappa) {
     mappa = creaMappa("mappa-scelta");
-    livelloPunti = L.layerGroup().addTo(mappa);
-    mappa.on("click", sceltaSullaMappa);
+    livello = L.layerGroup().addTo(mappa);
+    mappa.on("click", (e) => {
+      if (punti.length >= 10) return mostraRiepilogo("Al massimo 10 punti.");
+      punti.push([e.latlng.lat, e.latlng.lng]);
+      cambiatiIPunti();
+    });
   }
-  mappa.invalidateSize(); // il contenitore era nascosto: Leaflet ricalcola le sue misure
-  disegnaPunti();
-});
-
-function sceltaSullaMappa(e) {
-  const { lat, lng } = e.latlng;
-  const haPartenza = campi.lat_partenza.value !== "";
-  const haArrivo = campi.lat_arrivo.value !== "";
-  if (!haPartenza || haArrivo) {
-    // primo tocco, oppure terzo (si ricomincia): questo è la partenza
-    impostaCoordinate("partenza", lat, lng);
-    impostaCoordinate("arrivo", null, null);
-  } else {
-    impostaCoordinate("arrivo", lat, lng);
-  }
-  disegnaPunti();
+  mappa.invalidateSize(); // il contenitore era nascosto (finestra chiusa): Leaflet ricalcola le misure
 }
 
-function impostaCoordinate(tipo, lat, lon) {
-  campi[`lat_${tipo}`].value = lat == null ? "" : lat.toFixed(5); // 5 decimali ≈ 1 metro
-  campi[`lon_${tipo}`].value = lon == null ? "" : lon.toFixed(5);
+async function cambiatiIPunti() {
+  traccia = null;
+  compilaCoordinate();
+  disegna();
+  if (punti.length < 2) return mostraRiepilogo(punti.length === 1 ? "Ora tocca l'arrivo (o una tappa)." : "");
+
+  const questa = ++ultimaRichiesta;
+  mostraRiepilogo("Cerco il percorso sui sentieri…");
+  try {
+    const q = punti.map(([lat, lon]) => `${lat.toFixed(5)},${lon.toFixed(5)}`).join(";");
+    const percorso = await api(`/api/percorso?punti=${q}`);
+    if (questa !== ultimaRichiesta) return; // nel frattempo hai toccato un altro punto: questa risposta è vecchia
+    traccia = percorso.traccia;
+    campi.distanza_km.value = percorso.distanza_km;
+    campi.dislivello_m.value = percorso.dislivello_m;
+    mostraRiepilogo(`${percorso.distanza_km.toLocaleString("it-IT")} km sui sentieri, ${percorso.dislivello_m.toLocaleString("it-IT")} m di salita.`);
+    disegna();
+  } catch (err) {
+    if (questa !== ultimaRichiesta) return;
+    mostraRiepilogo(err.message); // es. "Nessun sentiero trovato vicino a uno dei punti…"
+  }
 }
 
-function disegnaPunti() {
+// Partenza = primo punto, arrivo = ultimo: finiscono nei campi del form (che vengono salvati)
+function compilaCoordinate() {
+  const metti = (tipo, p) => {
+    campi[`lat_${tipo}`].value = p ? p[0].toFixed(5) : "";
+    campi[`lon_${tipo}`].value = p ? p[1].toFixed(5) : "";
+  };
+  metti("partenza", punti[0]);
+  metti("arrivo", punti.length >= 2 ? punti.at(-1) : null);
+}
+
+function disegna() {
   if (!mappa) return;
-  livelloPunti.clearLayers();
-  const partenza = [numeroDa(campi.lat_partenza), numeroDa(campi.lon_partenza)];
-  const arrivo = [numeroDa(campi.lat_arrivo), numeroDa(campi.lon_arrivo)];
-  const ok = (p) => p[0] !== null && p[1] !== null;
-  if (ok(partenza)) punto(...partenza, "partenza").addTo(livelloPunti);
-  if (ok(arrivo)) punto(...arrivo, "arrivo").addTo(livelloPunti);
-  if (ok(partenza) && ok(arrivo)) linea(partenza, arrivo).addTo(livelloPunti);
+  livello.clearLayers();
+  if (traccia) tracciato(traccia).addTo(livello);                     // il percorso vero
+  else if (punti.length >= 2) lineaDritta(punti).addTo(livello);      // in attesa (o se il servizio non c'è)
+  punti.forEach((p, i) => {
+    const tipo = i === 0 ? "partenza" : i === punti.length - 1 ? "arrivo" : "tappa";
+    punto(...p, tipo).addTo(livello);
+  });
+  if (traccia) mappa.fitBounds(traccia, { padding: [20, 20] });       // inquadra tutto il percorso
 }
 
-// Se scrivi le coordinate a mano, la mappa si aggiorna
-for (const nome of ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"]) {
-  campi[nome].addEventListener("change", disegnaPunti);
+function mostraRiepilogo(testo) {
+  riepilogoPercorso.textContent = testo;
 }
-document.querySelector("#ricomincia-mappa").addEventListener("click", () => {
-  impostaCoordinate("partenza", null, null);
-  impostaCoordinate("arrivo", null, null);
-  disegnaPunti();
+
+document.querySelector("#togli-punto").addEventListener("click", () => {
+  punti.pop();
+  cambiatiIPunti();
 });
-finestra.addEventListener("close", svuotaForm);
+document.querySelector("#ricomincia-mappa").addEventListener("click", () => {
+  punti = [];
+  campi.distanza_km.value = "";
+  campi.dislivello_m.value = "";
+  cambiatiIPunti();
+});
+
+// Se scrivi le coordinate a mano: i punti diventano partenza e arrivo dei campi
+for (const nome of ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"]) {
+  campi[nome].addEventListener("change", () => {
+    const partenza = [numeroDa(campi.lat_partenza), numeroDa(campi.lon_partenza)];
+    const arrivo = [numeroDa(campi.lat_arrivo), numeroDa(campi.lon_arrivo)];
+    punti = [partenza, arrivo].filter((p) => p[0] !== null && p[1] !== null);
+    cambiatiIPunti();
+  });
+}
 
 // --- Lettura e validazione del form ---
 function leggiForm() {
@@ -197,6 +236,7 @@ function leggiForm() {
     lon_arrivo: numero("lon_arrivo"),
     note: campi.note.value.trim(),
     pianificato: campi.pianificato.checked,
+    traccia: traccia ?? undefined, // C3: il percorso lungo i sentieri (se c'è)
   };
 }
 

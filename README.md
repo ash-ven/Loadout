@@ -37,6 +37,7 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_indossato.sql` | oggetti indossati: restano in checklist ma non pesano nello zaino |
 | `loadout_stretch_oggetto.sql` | marchio, caratteristiche tecniche e pezzi posseduti degli oggetti |
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, città, contatto di emergenza, foto |
+| `loadout_stretch_traccia.sql` | il tracciato del percorso lungo i sentieri (JSONB) |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
 
@@ -46,6 +47,7 @@ docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_indossato.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_oggetto.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_traccia.sql
 ```
 
 Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` in `/docker-entrypoint-initdb.d`.
@@ -105,7 +107,7 @@ Aggiornato a giovedì 29 ottobre.
 - [x] 4. Percorsi da fare in futuro (`pianificato`) con filtro nella lista
 - [x] 5. Avviso se lo zaino supera il 20% del peso corporeo
 - [ ] 2. Scansione dell'etichetta con la fotocamera (il pulsante c'è: per ora apre il form sul campo "codice etichetta")
-- [x] 3. Mappa con Leaflet (sfondo OpenTopoMap) per scegliere partenza e arrivo; mappa del percorso nella scheda
+- [x] 3. Mappa dei sentieri con Leaflet (OpenTopoMap + Waymarked Trails): tocchi partenza, tappe e arrivo e il percorso segue i sentieri (BRouter, chiamato dal server), con km e dislivello compilati da soli; tracciato salvato e mostrato nella scheda
 
 ### Oltre lo scope (giovedì pomeriggio)
 - [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più), adatti a certe attività (lo zaino generato ne tiene conto)
@@ -114,7 +116,7 @@ Aggiornato a giovedì 29 ottobre.
 - [x] Home con frasi casuali e "vive" sul prossimo viaggio; pagina di consigli generali
 
 ### Da fare
-- [ ] HTTPS (Caddy), helmet (la CSP deve permettere Google Fonts, unpkg.com per Leaflet e le tessere di tile.opentopomap.org), limite tentativi sul login, Dockerfile e compose completo, `.env.example` nella radice (venerdì)
+- [ ] HTTPS (Caddy), helmet (la CSP deve permettere Google Fonts, unpkg.com per Leaflet, le tessere di tile.opentopomap.org e tile.waymarkedtrails.org, le immagini blob/data della foto), limite tentativi sul login, Dockerfile e compose completo, `.env.example` nella radice (venerdì)
 - [ ] Almeno 5 test automatici, `npm audit`, NOTE.md (venerdì)
 
 ## User story MVP
