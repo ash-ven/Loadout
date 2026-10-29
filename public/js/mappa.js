@@ -19,15 +19,19 @@ export function creaMappa(idElemento, centro = CENTRO_ITALIA, zoom = 10) {
   return mappa;
 }
 
-// Un punto colorato (cerchio disegnato, niente immagini): partenza muschio, arrivo senape, tappa salvia piccola
-export function punto(lat, lon, tipo) {
+// Un punto colorato (cerchio disegnato, niente immagini): partenza muschio, arrivo senape, tappa salvia piccola.
+// interattivo: false = il punto NON intercetta i tocchi, che arrivano alla mappa (così si può toccare lì vicino).
+export function punto(lat, lon, tipo, { interattivo = true } = {}) {
   const stile = {
     partenza: { radius: 9, fillColor: "#31503f", testo: "Partenza" },
+    anello:   { radius: 10, fillColor: "#31503f", testo: "Partenza e arrivo (anello)" },
     arrivo:   { radius: 9, fillColor: "#c8962b", testo: "Arrivo" },
     tappa:    { radius: 6, fillColor: "#5f8463", testo: "Tappa" },
   }[tipo];
-  return L.circleMarker([lat, lon], { radius: stile.radius, color: "#fbf6ec", weight: 3, fillColor: stile.fillColor, fillOpacity: 1 })
-    .bindTooltip(stile.testo);
+  const cerchio = L.circleMarker([lat, lon], {
+    radius: stile.radius, color: "#fbf6ec", weight: 3, fillColor: stile.fillColor, fillOpacity: 1, interactive: interattivo,
+  });
+  return interattivo ? cerchio.bindTooltip(stile.testo) : cerchio;
 }
 
 // Il percorso vero lungo i sentieri: linea piena

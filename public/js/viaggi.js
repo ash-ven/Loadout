@@ -178,17 +178,44 @@ function preparaMappa() {
   if (!mappa) {
     mappa = creaMappa("mappa-scelta");
     livello = L.layerGroup().addTo(mappa);
-    mappa.on("click", (e) => {
-      if (punti.length >= 10) return mostraRiepilogo("Al massimo 10 punti.");
-      punti.push([e.latlng.lat, e.latlng.lng]);
-      cambiatiIPunti();
-    });
+    mappa.on("click", (e) => aggiungiPunto([e.latlng.lat, e.latlng.lng]));
   }
   mappa.invalidateSize(); // il contenitore era nascosto (finestra chiusa): Leaflet ricalcola le misure
 }
 
 // daiCampi = true quando i punti arrivano dai campi scritti a mano: in quel caso i campi
 // NON vanno riscritti (cancellerebbero quello che stai ancora scrivendo)
+// --- Anelli ---
+// Distanza approssimata in metri tra due punti [lat, lon] (basta per dire "è lo stesso posto")
+function metri([lat1, lon1], [lat2, lon2]) {
+  const x = (lon2 - lon1) * 111_320 * Math.cos((lat1 * Math.PI) / 180);
+  const y = (lat2 - lat1) * 110_540;
+  return Math.hypot(x, y);
+}
+// È un anello se ci sono almeno 3 punti e l'ultimo coincide con il primo
+const eAnello = () => punti.length >= 3 && metri(punti[0], punti.at(-1)) < 1;
+
+function aggiungiPunto(nuovo) {
+  if (punti.length >= 10) return mostraRiepilogo("Al massimo 10 punti.");
+  if (eAnello()) {
+    // anello già chiuso: la nuova tappa va PRIMA del ritorno alla partenza, così il giro resta chiuso
+    punti.splice(punti.length - 1, 0, nuovo);
+  } else if (punti.length >= 2 && metri(punti[0], nuovo) < 60) {
+    punti.push([...punti[0]]); // tocco a meno di 60 m dalla partenza: è la chiusura dell'anello
+  } else {
+    punti.push(nuovo);
+  }
+  cambiatiIPunti();
+}
+
+function chiudiAnello() {
+  if (eAnello()) return;
+  if (punti.length < 2) return mostraRiepilogo("Per un anello tocca prima la partenza e almeno una tappa.");
+  if (punti.length >= 10) return mostraRiepilogo("Al massimo 10 punti.");
+  punti.push([...punti[0]]); // l'arrivo è la partenza
+  cambiatiIPunti();
+}
+
 async function cambiatiIPunti({ daiCampi = false } = {}) {
   traccia = null;
   if (!daiCampi) compilaCoordinate();
@@ -204,7 +231,12 @@ async function cambiatiIPunti({ daiCampi = false } = {}) {
     traccia = percorso.traccia;
     campi.distanza_km.value = percorso.distanza_km;
     campi.dislivello_m.value = percorso.dislivello_m;
-    mostraRiepilogo(`${percorso.distanza_km.toLocaleString("it-IT")} km sui sentieri, ${percorso.dislivello_m.toLocaleString("it-IT")} m di salita.`);
+    const misure = `${percorso.distanza_km.toLocaleString("it-IT")} km sui sentieri, ${percorso.dislivello_m.toLocaleString("it-IT")} m di salita.`;
+    // Anello con una sola tappa: BRouter va e torna sullo stesso sentiero. Lo diciamo, invece di far finta di niente.
+    const avvisoAndataRitorno = eAnello() && punti.length === 3
+      ? " Con una sola tappa il percorso torna indietro sulla stessa strada: per un vero giro aggiungi una tappa sull'altro versante."
+      : "";
+    mostraRiepilogo((eAnello() ? `Anello: ${misure}` : misure) + avvisoAndataRitorno);
     disegna();
   } catch (err) {
     if (questa !== ultimaRichiesta) return;
@@ -227,9 +259,21 @@ function disegna() {
   livello.clearLayers();
   if (traccia) tracciato(traccia).addTo(livello);                     // il percorso vero
   else if (punti.length >= 2) lineaDritta(punti).addTo(livello);      // in attesa (o se il servizio non c'è)
+  const anello = eAnello();
   punti.forEach((p, i) => {
-    const tipo = i === 0 ? "partenza" : i === punti.length - 1 ? "arrivo" : "tappa";
-    punto(...p, tipo).addTo(livello);
+    const ultimo = i === punti.length - 1;
+    if (anello && ultimo) return; // l'arrivo coincide con la partenza: un pallino solo
+    if (i === 0) {
+      // La partenza è l'unico punto "cliccabile": toccarla di nuovo chiude l'anello
+      const partenza = punto(...p, anello ? "anello" : "partenza");
+      partenza.on("click", (e) => {
+        L.DomEvent.stopPropagation(e); // il tocco è per il pallino: non deve arrivare anche alla mappa
+        chiudiAnello();
+      });
+      partenza.addTo(livello);
+    } else {
+      punto(...p, ultimo ? "arrivo" : "tappa", { interattivo: false }).addTo(livello); // i tocchi passano alla mappa
+    }
   });
   // Inquadra quello che c'è: il percorso, oppure i punti (così un punto scritto a mano si vede subito)
   if (traccia) mappa.fitBounds(traccia, { padding: [20, 20] });
@@ -241,6 +285,7 @@ function mostraRiepilogo(testo) {
   riepilogoPercorso.textContent = testo;
 }
 
+document.querySelector("#chiudi-anello").addEventListener("click", chiudiAnello);
 document.querySelector("#togli-punto").addEventListener("click", () => {
   punti.pop();
   cambiatiIPunti();
