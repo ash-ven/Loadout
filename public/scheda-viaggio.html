@@ -42,36 +42,34 @@
 
     <div class="griglia due-colonne" id="corpo-scheda" hidden>
       <!-- Colonna sinistra: lo zaino -->
-      <section class="card">
-        <div class="intestazione-sezione">
-          <h2><img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Il tuo zaino</h2>
-          <div class="azioni">
-            <button type="button" id="genera">Genera zaino</button>
-            <button type="button" class="secondario" id="svuota">Svuota checklist</button>
+      <div class="colonna-zaino">
+        <section class="card">
+          <div class="intestazione-sezione">
+            <h2><img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Il tuo zaino</h2>
+            <div class="azioni">
+              <button type="button" id="genera">Genera zaino</button>
+              <button type="button" class="secondario" id="svuota">Svuota checklist</button>
+            </div>
           </div>
-        </div>
+          <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti</p>
+          <div class="barra"><div id="barra-riempimento"></div></div>
+          <p class="avviso" id="avviso-peso" hidden><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24"><span id="testo-avviso-peso"></span></p>
+          <p class="muto" id="messaggio-zaino" hidden></p>
+          <p class="errore" id="errore-zaino" hidden></p>
+        </section>
 
-        <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti</p>
-        <div class="barra"><div id="barra-riempimento"></div></div>
-        <p class="avviso" id="avviso-peso" hidden><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24"><span id="testo-avviso-peso"></span></p>
-        <p class="muto" id="messaggio-zaino" hidden></p>
+        <!-- La checklist, divisa per categoria come l'armadio: la riempie scheda-viaggio.js -->
+        <div class="gruppi una-colonna" id="checklist"></div>
 
-        <div class="tabella-scroll">
-          <table id="checklist">
-            <thead>
-              <tr><th><img class="icona" src="/img/icone/spunta.svg" alt="Preso" width="24" height="24"></th><th>Oggetto</th><th>Categoria</th><th>Qtà</th><th>Peso</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <form id="form-aggiungi" class="aggiungi">
-          <select name="oggetto_id" aria-label="Oggetto dall'armadio"></select>
-          <input name="quantita" type="number" min="1" max="99" step="1" value="1" aria-label="Quantità">
-          <button type="submit">Aggiungi</button>
-        </form>
-        <p class="errore" id="errore-zaino" hidden></p>
-      </section>
+        <section class="card">
+          <h3>Aggiungi dall'armadio</h3>
+          <form id="form-aggiungi" class="aggiungi">
+            <select name="oggetto_id" aria-label="Oggetto dall'armadio"></select>
+            <input name="quantita" type="number" min="1" max="99" step="1" value="1" aria-label="Quantità">
+            <button type="submit">Aggiungi</button>
+          </form>
+        </section>
+      </div>
 
       <!-- Colonna destra: i consigli -->
       <section class="card">

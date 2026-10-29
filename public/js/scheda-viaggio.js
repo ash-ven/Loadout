@@ -1,5 +1,6 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
+import { CATEGORIE } from "./categorie.js";
 
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
@@ -22,7 +23,7 @@ const barraRiempimento = document.querySelector("#barra-riempimento");
 const elAvvisoPeso = document.querySelector("#avviso-peso");
 const elTestoAvvisoPeso = document.querySelector("#testo-avviso-peso"); // il testo: l'icona accanto resta fissa
 const elMessaggioZaino = document.querySelector("#messaggio-zaino");
-const tbodyChecklist = document.querySelector("#checklist tbody");
+const elChecklist = document.querySelector("#checklist");
 const formAggiungi = document.querySelector("#form-aggiungi");
 const erroreZaino = document.querySelector("#errore-zaino");
 
@@ -154,24 +155,44 @@ function renderZaino() {
     elTestoAvvisoPeso.textContent = `Lo zaino pesa ${num2(p.peso_totale_kg)} kg: più del 20% del tuo peso corporeo (limite consigliato ${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
   }
 
-  // Checklist
+  // Checklist: un gruppo per categoria, con il peso del gruppo (come nell'armadio)
   if (zaino.oggetti.length === 0) {
-    tbodyChecklist.innerHTML = "";
+    elChecklist.innerHTML = "";
     mostraInfo("Lo zaino è vuoto: premi «Genera zaino» per riempirlo con indispensabili e preferiti, oppure aggiungi un oggetto dall'armadio.");
   } else {
     elMessaggioZaino.hidden = true;
-    tbodyChecklist.innerHTML = zaino.oggetti.map((o) => `
-      <tr data-id="${o.oggetto_id}" class="${o.inserito ? "inserito" : ""}">
-        <td><input type="checkbox" class="spunta" ${o.inserito ? "checked" : ""} aria-label="Inserito nello zaino: ${esc(o.nome)}"></td>
-        <td class="nome-oggetto">${esc(o.nome)}</td>
-        <td>${esc(o.categoria)}</td>
-        <td><input type="number" class="quantita" min="1" max="99" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}"></td>
-        <td>${num(o.peso_riga_g)}&nbsp;g</td>
-        <td><button type="button" class="secondario togli">Togli</button></td>
-      </tr>`).join("");
+    elChecklist.innerHTML = Object.keys(CATEGORIE).map((categoria) => {
+      const delGruppo = zaino.oggetti.filter((o) => o.categoria === categoria);
+      if (delGruppo.length === 0) return "";
+      const pesoGruppo = delGruppo.reduce((somma, o) => somma + o.peso_riga_g, 0);
+      const presi = delGruppo.filter((o) => o.inserito).length;
+      return `
+        <section class="gruppo">
+          <div class="gruppo-testa"><h2>${CATEGORIE[categoria]} · ${presi}/${delGruppo.length}</h2><span>${num(pesoGruppo)}&nbsp;g</span></div>
+          <div class="gruppo-righe">${delGruppo.map(rigaZaino).join("")}</div>
+        </section>`;
+    }).join("");
   }
 
   renderSelettore();
+}
+
+// Una riga della checklist. Qui la riga NON è un pulsante: dentro ci sono già dei controlli
+// (spunta, quantità, togli), e un controllo non può stare dentro un altro.
+function rigaZaino(o) {
+  return `
+    <div class="riga riga-zaino ${o.inserito ? "inserito" : ""}" data-id="${o.oggetto_id}">
+      <input type="checkbox" class="spunta" ${o.inserito ? "checked" : ""} aria-label="Inserito nello zaino: ${esc(o.nome)}">
+      <span class="riquadro-icona"><img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22"></span>
+      <span class="riga-testo">
+        <span class="riga-nome">${esc(o.nome)}</span>
+        <span class="riga-nota">${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}</span>
+      </span>
+      <input type="number" class="quantita" min="1" max="99" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">
+      <button type="button" class="togli" aria-label="Togli ${esc(o.nome)} dallo zaino" title="Togli dallo zaino">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>`;
 }
 
 // Il selettore "aggiungi dall'armadio" mostra solo gli oggetti che NON sono già nello zaino
@@ -215,8 +236,8 @@ bottoneSvuota.addEventListener("click", async () => {
 });
 
 // --- Checkbox "inserito" e quantità: event delegation sull'evento "change" ---
-tbodyChecklist.addEventListener("change", async (e) => {
-  const riga = e.target.closest("tr[data-id]");
+elChecklist.addEventListener("change", async (e) => {
+  const riga = e.target.closest(".riga-zaino[data-id]");
   if (!riga) return;
   const oggettoId = riga.dataset.id;
   nascondiErrore();
@@ -246,10 +267,10 @@ tbodyChecklist.addEventListener("change", async (e) => {
 });
 
 // --- Togli dallo zaino: event delegation sull'evento "click" ---
-tbodyChecklist.addEventListener("click", async (e) => {
+elChecklist.addEventListener("click", async (e) => {
   const bottone = e.target.closest(".togli");
   if (!bottone) return;
-  const oggettoId = bottone.closest("tr[data-id]").dataset.id;
+  const oggettoId = bottone.closest(".riga-zaino[data-id]").dataset.id;
   nascondiErrore();
   try {
     await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "DELETE" });

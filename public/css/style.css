@@ -209,11 +209,6 @@ details > label, details > .riga2 { margin-top: .75rem; }
 .consiglio:first-of-type { border-top: 0; }
 .consiglio h3 { font-size: 1rem; }
 .consiglio ul { margin: .25rem 0 0; padding-left: 1.2rem; }
-#checklist tbody tr { cursor: default; }
-#checklist input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--salvia); }
-#checklist input[type="number"] { width: 4.5rem; }
-tr.inserito td { color: var(--terra); }
-tr.inserito .nome-oggetto { text-decoration: line-through; }
 .barra > div.oltre-soglia { background: var(--rosso); }
 
 /* --- Responsive: due colonne solo sugli schermi larghi --- */
@@ -345,3 +340,18 @@ button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
 .consiglio-generale p { margin: 0; }
 .consiglio-generale ul { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; }
 .nota-consigli { max-width: 40rem; }
+
+/* --- Scheda viaggio: colonna dello zaino e checklist a righe --- */
+.colonna-zaino { display: grid; gap: 1.25rem; align-content: start; }
+.gruppi.una-colonna { grid-template-columns: minmax(0, 1fr); }
+.riga-zaino:hover { background: var(--lana-chiara); }   /* la riga non è cliccabile: solo un accenno */
+.riga-zaino .spunta { flex-shrink: 0; width: 1.4rem; height: 1.4rem; margin: 0; accent-color: var(--salvia); cursor: pointer; }
+.riga-zaino .quantita { flex-shrink: 0; width: 3.6rem; padding: .4rem .45rem; text-align: center; }
+.riga-zaino.inserito .riga-nome { text-decoration: line-through; color: var(--terra); }
+.riga-zaino.inserito .riquadro-icona { opacity: .55; }
+/* Togli: una X tonda e discreta, che diventa rossa al passaggio */
+button.togli { flex-shrink: 0; display: grid; place-items: center; width: 36px; height: 36px; padding: 0;
+               border-radius: 50%; background: transparent; color: var(--terra); }
+button.togli:hover { background: #f6e3df; color: var(--rosso); }
+/* Telefono molto stretto: via l'icona della categoria, il nome ha più spazio */
+@media (max-width: 420px) { .riga-zaino .riquadro-icona { display: none; } }

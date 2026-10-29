@@ -1,5 +1,6 @@
 import { api, esc } from "./api.js";
 import "./menu.js";
+import { CATEGORIE } from "./categorie.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -17,18 +18,6 @@ const finestra = document.querySelector("#finestra");              // il <dialog
 const bottoneNuovo = document.querySelector("#apri-nuovo");        // "Aggiungi" nella testata
 const bottoneScansiona = document.querySelector("#scansiona");     // "Scansiona etichetta" nella testata
 const bottoneChiudi = document.querySelector("#chiudi");           // la X in alto nella finestra
-
-// Le categorie nell'ordine in cui le mostriamo (è la lista chiusa del database) e il nome da mostrare
-const CATEGORIE = {
-  abbigliamento: "Abbigliamento",
-  attrezzatura: "Attrezzatura",
-  cucina: "Cucina",
-  sicurezza: "Sicurezza",
-  igiene: "Igiene",
-  elettronica: "Elettronica",
-  cibo: "Cibo",
-  altro: "Altro",
-};
 
 // --- Stato ---
 let oggetti = [];        // gli oggetti arrivati dall'API (già filtrati dalla ricerca)
