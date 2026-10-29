@@ -2,9 +2,39 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <h1>Loadout funziona! 🎒</h1>
+  <header class="topbar">
+    <a class="logo" href="/">🎒 Loadout</a>
+    <nav>
+      <a href="/armadio.html">Armadio</a>
+      <a href="/viaggi.html">Viaggi</a>
+      <a href="#" id="esci">Esci</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1 id="saluto">Ciao!</h1>
+      <p class="muto">Prepara lo zaino giusto per la tua prossima uscita in montagna.</p>
+    </section>
+
+    <section class="card">
+      <h2>🧥 Il mio armadio</h2>
+      <p>Tutta la tua attrezzatura, con peso, categoria, indispensabili e preferiti.</p>
+      <a class="btn" href="/armadio.html">Apri l'armadio</a>
+    </section>
+
+    <section class="card">
+      <h2>🥾 I miei viaggi</h2>
+      <p>Descrivi l'uscita, genera lo zaino e spunta la checklist prima di partire.</p>
+      <a class="btn" href="/viaggi.html">Vai ai viaggi</a>
+    </section>
+  </main>
+
+  <script type="module" src="/js/index.js"></script>
 </body>
 </html>
