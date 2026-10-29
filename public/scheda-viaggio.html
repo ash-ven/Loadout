@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Scheda viaggio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/">🎒 Loadout</a>
+    <nav>
+      <a href="/armadio.html">Armadio</a>
+      <a href="/viaggi.html">Viaggi</a>
+      <a href="#" id="esci">Esci</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- Intestazione: i dati del viaggio -->
+    <section class="card">
+      <p class="muto"><a href="/viaggi.html">← I miei viaggi</a></p>
+      <h1 id="titolo">Caricamento…</h1>
+      <p class="muto" id="dettagli"></p>
+    </section>
+
+    <div class="griglia due-colonne">
+      <!-- Colonna sinistra: lo zaino -->
+      <section class="card">
+        <div class="intestazione-sezione">
+          <h2>🎒 Il tuo zaino</h2>
+          <div class="azioni">
+            <button type="button" id="genera">Genera zaino</button>
+            <button type="button" class="secondario" id="svuota">Svuota checklist</button>
+          </div>
+        </div>
+
+        <p><strong id="peso-inserito">0.00</strong> kg già nello zaino su <strong id="peso-totale">0.00</strong> kg previsti</p>
+        <div class="barra"><div id="barra-riempimento"></div></div>
+        <p class="avviso" id="avviso-peso" hidden></p>
+        <p class="muto" id="messaggio-zaino" hidden></p>
+
+        <div class="tabella-scroll">
+          <table id="checklist">
+            <thead>
+              <tr><th>✔</th><th>Oggetto</th><th>Categoria</th><th>Qtà</th><th>Peso</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <form id="form-aggiungi" class="aggiungi">
+          <select name="oggetto_id" aria-label="Oggetto dall'armadio"></select>
+          <input name="quantita" type="number" min="1" max="99" step="1" value="1" aria-label="Quantità">
+          <button type="submit">Aggiungi</button>
+        </form>
+        <p class="errore" id="errore-zaino" hidden></p>
+      </section>
+
+      <!-- Colonna destra: i consigli -->
+      <section class="card">
+        <h2>🧭 Consigli per il viaggio</h2>
+        <div class="consiglio">
+          <h3>💧 Acqua</h3>
+          <p id="acqua"></p>
+          <form id="form-ore" class="aggiungi">
+            <label>Ore di cammino al giorno
+              <input name="ore" type="number" min="0.5" max="16" step="0.5">
+            </label>
+            <button type="submit" class="secondario">Ricalcola</button>
+          </form>
+        </div>
+        <div class="consiglio">
+          <h3>🌅 Alba e tramonto</h3>
+          <p id="sole"></p>
+        </div>
+        <div class="consiglio">
+          <h3>🌦️ Meteo</h3>
+          <div id="meteo"></div>
+        </div>
+        <div class="consiglio">
+          <h3>🗺️ Percorso</h3>
+          <p id="percorso"></p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/js/scheda-viaggio.js"></script>
+</body>
+</html>

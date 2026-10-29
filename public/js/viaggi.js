@@ -32,7 +32,7 @@ function render() {
   tbody.innerHTML = viaggi.map((v) => `
     <tr data-id="${v.id}">
       <td>
-        <a href="/viaggio.html?id=${v.id}">${esc(v.nome)}</a>
+        <a href="/scheda-viaggio.html?id=${v.id}">${esc(v.nome)}</a>
         ${v.pianificato ? '<span class="badge preferito">📌 da fare</span>' : ""}
       </td>
       <td>${esc(v.attivita)}</td>
@@ -42,7 +42,7 @@ function render() {
     </tr>`).join("");
 }
 
-// --- Click nella tabella: elimina, oppure apri il viaggio ---
+// --- Click nella tabella: elimina, oppure apri la scheda del viaggio ---
 tbody.addEventListener("click", async (e) => {
   const bottoneElimina = e.target.closest(".elimina");
   if (bottoneElimina) {
@@ -50,7 +50,7 @@ tbody.addEventListener("click", async (e) => {
     return;
   }
   const riga = e.target.closest("tr[data-id]");
-  if (riga) location.href = `/viaggio.html?id=${riga.dataset.id}`;
+  if (riga) location.href = `/scheda-viaggio.html?id=${riga.dataset.id}`;
 });
 
 async function elimina(id) {
@@ -112,7 +112,7 @@ form.addEventListener("submit", async (e) => {
   try {
     const url = campi.genera.checked ? "/api/viaggi?genera=true" : "/api/viaggi";
     const nuovo = await api(url, { method: "POST", body: dati });
-    location.href = `/viaggio.html?id=${nuovo.id}`; // si va subito alla pagina del nuovo viaggio
+    location.href = `/scheda-viaggio.html?id=${nuovo.id}`; // si va subito alla scheda del nuovo viaggio
   } catch (err) {
     mostraErrore(err.message); // US3 CA2: gli errori del server mostrati nel form
     bottoneSalva.disabled = false;
