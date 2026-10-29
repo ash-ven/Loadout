@@ -2,8 +2,8 @@ import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 
 // --- Elementi della pagina ---
-const tbody = document.querySelector("#tabella tbody");
-const filtro = document.querySelector("#filtro-pianificati");
+const lista = document.querySelector("#lista");
+const segmenti = document.querySelector(".segmenti");
 const riepilogo = document.querySelector("#riepilogo");
 const form = document.querySelector("#form-viaggio");
 const campi = form.elements;
@@ -11,62 +11,81 @@ const erroreForm = document.querySelector("#form-errore");
 const bottoneSalva = document.querySelector("#salva");
 const bottoneAnnulla = document.querySelector("#annulla");
 const finestra = document.querySelector("#finestra");          // il <dialog> con il form
-const bottoneNuovo = document.querySelector("#apri-nuovo");    // il pulsante + nella testata
+const bottoneNuovo = document.querySelector("#apri-nuovo");    // "Nuovo viaggio" nella testata
 const bottoneChiudi = document.querySelector("#chiudi");       // la X in alto nella finestra
 
 // --- Stato ---
 let viaggi = [];
+let filtro = "tutti"; // "tutti" | "da-fare" | "organizzati"
 
-// --- Caricamento ---
+// --- Caricamento: tutti i viaggi, il filtro dei segmenti lo applichiamo qui (così i conteggi restano giusti).
+//     Nota: lo stesso filtro esiste anche nell'API (?pianificato=true), utile per curl o per altri client.
 async function carica() {
-  const url = filtro.value ? `/api/viaggi?pianificato=${filtro.value}` : "/api/viaggi";
-  viaggi = await api(url);
+  viaggi = await api("/api/viaggi");
   render();
 }
 
-// --- Render ---
+// --- Render: i viaggi divisi in gruppi ---
 function render() {
-  riepilogo.textContent = viaggi.length === 1 ? "1 viaggio" : `${viaggi.length} viaggi`;
+  riepilogo.innerHTML = `<strong>${viaggi.length} ${viaggi.length === 1 ? "viaggio" : "viaggi"}</strong>`;
+  segmenti.querySelector('[data-filtro="tutti"]').textContent = `Tutti · ${viaggi.length}`;
 
-  if (viaggi.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muto">Nessun viaggio qui. Premi + per prepararne uno.</td></tr>`;
+  const visibili = viaggi.filter((v) =>
+    filtro === "tutti" ? true : filtro === "da-fare" ? v.pianificato : !v.pianificato
+  );
+  if (visibili.length === 0) {
+    lista.innerHTML = `<p class="vuoto">${
+      viaggi.length === 0 ? "Nessun viaggio qui. Premi «Nuovo viaggio» per prepararne uno." : "Nessun viaggio con questo filtro."
+    }</p>`;
     return;
   }
 
-  tbody.innerHTML = viaggi.map((v) => `
-    <tr data-id="${v.id}">
-      <td>
-        <a href="/scheda-viaggio.html?id=${v.id}">${esc(v.nome)}</a>
-        ${v.pianificato ? '<span class="badge preferito"><img class="icona" src="/img/icone/da-fare.svg" alt="">da fare</span>' : ""}
-      </td>
-      <td>${esc(v.attivita)}</td>
-      <td>${v.data_partenza ? formattaData(v.data_partenza) : '<span class="muto">—</span>'}</td>
-      <td>${esc(v.n_persone)} pers. · ${esc(v.n_giorni)} gg</td>
-      <td><button type="button" class="pericolo elimina" data-id="${v.id}">Elimina</button></td>
-    </tr>`).join("");
+  // Tre gruppi: in arrivo (data da oggi in poi), senza data, già fatti.
+  // Le date ISO ("2026-11-08") si confrontano come testo: l'ordine alfabetico è quello cronologico.
+  const oggi = new Date().toISOString().slice(0, 10);
+  const data = (v) => v.data_partenza?.slice(0, 10);
+  const gruppi = [
+    ["In arrivo", visibili.filter((v) => data(v) && data(v) >= oggi)],
+    ["Senza data", visibili.filter((v) => !data(v))],
+    ["Già fatti", visibili.filter((v) => data(v) && data(v) < oggi).reverse()], // il più recente in alto
+  ];
+
+  lista.innerHTML = gruppi.map(([titolo, elenco]) => elenco.length === 0 ? "" : `
+    <section class="gruppo">
+      <div class="gruppo-testa"><h2>${titolo}</h2><span>${elenco.length}</span></div>
+      <div class="gruppo-righe">${elenco.map(rigaViaggio).join("")}</div>
+    </section>`).join("");
 }
 
-// --- Click nella tabella: elimina, oppure apri la scheda del viaggio ---
-tbody.addEventListener("click", async (e) => {
-  const bottoneElimina = e.target.closest(".elimina");
-  if (bottoneElimina) {
-    await elimina(Number(bottoneElimina.dataset.id));
-    return;
-  }
-  const riga = e.target.closest("tr[data-id]");
-  if (riga) location.href = `/scheda-viaggio.html?id=${riga.dataset.id}`;
+// Una riga: è un link alla scheda del viaggio
+function rigaViaggio(v) {
+  const dettagli = [
+    v.attivita,
+    `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`,
+    `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`,
+  ].join(", ");
+  return `
+    <a class="riga" href="/scheda-viaggio.html?id=${v.id}">
+      <span class="riquadro-icona"><img src="/img/icone/viaggi.svg" alt="" width="22" height="22"></span>
+      <span class="riga-testo">
+        <span class="riga-nome">${esc(v.nome)}</span>
+        <span class="riga-dettagli">
+          <span class="riga-nota">${esc(dettagli)}</span>
+          ${v.pianificato ? '<span class="badge preferito">Da fare</span>' : ""}
+        </span>
+      </span>
+      <span class="riga-valore">${v.data_partenza ? formattaData(v.data_partenza) : "—"}</span>
+    </a>`;
+}
+
+// --- Segmenti Tutti / Da fare / Organizzati ---
+segmenti.addEventListener("click", (e) => {
+  const bottone = e.target.closest("button[data-filtro]");
+  if (!bottone) return;
+  filtro = bottone.dataset.filtro;
+  segmenti.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === bottone)));
+  render();
 });
-
-async function elimina(id) {
-  const viaggio = viaggi.find((v) => v.id === id);
-  if (!confirm(`Eliminare il viaggio "${viaggio.nome}"?\nVerrà eliminato anche il suo zaino.`)) return;
-  try {
-    await api(`/api/viaggi/${id}`, { method: "DELETE" });
-    await carica();
-  } catch (err) {
-    alert(err.message);
-  }
-}
 
 // --- La finestra (dialog) con il form ---
 // showModal() la apre sopra la pagina (il resto non è cliccabile); close() la chiude.
@@ -155,8 +174,5 @@ function mostraErrore(testo) {
   erroreForm.textContent = testo;
   erroreForm.hidden = false;
 }
-
-// --- Eventi ---
-filtro.addEventListener("change", carica);
 
 carica();

@@ -9,20 +9,23 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="34" height="34"><span>Load<span class="out">out</span></span></a>
-    <nav>
-      <a href="/armadio.html" title="Armadio"><img src="/img/icone/chiare/armadio.svg" alt="Armadio" width="24" height="24"></a>
-      <a href="/viaggi.html" title="Viaggi"><img src="/img/icone/chiare/viaggi.svg" alt="Viaggi" width="24" height="24"></a>
-      <a href="/profilo.html" title="Profilo"><img src="/img/icone/chiare/profilo.svg" alt="Profilo" width="24" height="24"></a>
-      <a href="#" id="esci" title="Esci"><img src="/img/icone/chiare/esci.svg" alt="Esci" width="24" height="24"></a>
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="38" height="38"><span>Load<span class="out">out</span></span></a>
+    <!-- Menu: sul telefono è la barra fissa in basso, sul computer sta qui in alto (vedi style.css) -->
+    <nav class="menu" aria-label="Navigazione principale">
+      <a href="/armadio.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.2 5.2A1.8 1.8 0 1 1 12 7v1.5"/><path d="M12 8.5 3.6 15a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8Z"/><path d="M8 16.8v2.7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.7"/></svg></span>Armadio</a>
+      <a href="/viaggi.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h6l.6 5.6 4.9 2.2C19 12 21 13.6 21 16v1H3V5a2 2 0 0 1 2-2Z"/><path d="M3 17v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2"/><path d="M7.5 6.5h3.6M8 10h4.6"/></svg></span>Viaggi</a>
+      <a href="/" class="menu-centrale" aria-current="page" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 5a1.5 1.5 0 0 1 3 0"/><path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/><path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/><path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/><path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/><rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#fbf6ec" stroke="none"/></svg></a>
+      <a href="/consigli.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5l2.1-4.9Z"/><path d="M14.6 9.4 13 13 11 11Z" fill="#c8962b" stroke="none"/></svg></span>Consigli</a>
+      <a href="/profilo.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20.5c0-3.9 3.1-7 7-7s7 3.1 7 7"/><rect x="11" y="15.5" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Profilo</a>
     </nav>
+    <a href="#" id="esci" class="esci" aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
   </header>
 
   <!-- Testata: saluto, frase e zaino animato appoggiato sulla cresta -->
-  <section class="testata">
+  <section class="testata testata-home">
     <div class="testata-dentro">
       <h1 id="saluto">Ciao!</h1>
-      <p>Prepara lo zaino giusto per la tua prossima uscita in montagna: niente dimenticato, niente di troppo.</p>
+      <p id="frase">Prepara lo zaino giusto per la tua prossima uscita: niente dimenticato, <em>niente di troppo.</em></p>
       <img class="hero-zaino" src="/img/zaino-animato.svg" alt="" width="150" height="150">
     </div>
   </section>
@@ -30,16 +33,24 @@
   <main class="container">
     <!-- Le due sezioni principali, affiancate sugli schermi larghi -->
     <div class="scorciatoie">
-      <section class="card">
-        <h2><img class="icona" src="/img/icone/armadio.svg" alt="" width="24" height="24">Il mio armadio</h2>
+      <section class="card scorciatoia">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/armadio.svg" alt="" width="22" height="22"></span>
+          <h2>Il mio armadio</h2>
+          <span class="conteggio" id="conta-oggetti"></span>
+        </div>
         <p>Tutta la tua attrezzatura, con peso, categoria, indispensabili e preferiti.</p>
-        <a class="btn" href="/armadio.html">Apri l'armadio</a>
+        <a class="btn" href="/armadio.html">Apri l'armadio <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </section>
 
-      <section class="card">
-        <h2><img class="icona" src="/img/icone/viaggi.svg" alt="" width="24" height="24">I miei viaggi</h2>
+      <section class="card scorciatoia">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/viaggi.svg" alt="" width="22" height="22"></span>
+          <h2>I miei viaggi</h2>
+          <span class="conteggio" id="conta-viaggi"></span>
+        </div>
         <p>Descrivi l'uscita, genera lo zaino e spunta la checklist prima di partire.</p>
-        <a class="btn" href="/viaggi.html">Vai ai viaggi</a>
+        <a class="btn" href="/viaggi.html">Vai ai viaggi <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </section>
     </div>
   </main>

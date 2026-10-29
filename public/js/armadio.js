@@ -2,9 +2,9 @@ import { api, esc } from "./api.js";
 import "./menu.js";
 
 // --- Elementi della pagina ---
-const tbody = document.querySelector("#tabella tbody");
+const lista = document.querySelector("#lista");
 const q = document.querySelector("#q");
-const filtroCategoria = document.querySelector("#filtro-categoria");
+const segmenti = document.querySelector(".segmenti");
 const riepilogo = document.querySelector("#riepilogo");
 const form = document.querySelector("#form-oggetto");
 const campi = form.elements; // i campi del form, per nome: campi.nome, campi.peso_g, ...
@@ -12,59 +12,106 @@ const titoloForm = document.querySelector("#titolo-form");
 const erroreForm = document.querySelector("#form-errore");
 const bottoneSalva = document.querySelector("#salva");
 const bottoneAnnulla = document.querySelector("#annulla");
-const finestra = document.querySelector("#finestra");          // il <dialog> con il form
-const bottoneNuovo = document.querySelector("#apri-nuovo");    // il pulsante + nella testata
-const bottoneChiudi = document.querySelector("#chiudi");       // la X in alto nella finestra
+const bottoneElimina = document.querySelector("#elimina-oggetto"); // dentro la finestra, solo in modifica
+const finestra = document.querySelector("#finestra");              // il <dialog> con il form
+const bottoneNuovo = document.querySelector("#apri-nuovo");        // "Aggiungi" nella testata
+const bottoneScansiona = document.querySelector("#scansiona");     // "Scansiona etichetta" nella testata
+const bottoneChiudi = document.querySelector("#chiudi");           // la X in alto nella finestra
+
+// Le categorie nell'ordine in cui le mostriamo (è la lista chiusa del database) e il nome da mostrare
+const CATEGORIE = {
+  abbigliamento: "Abbigliamento",
+  attrezzatura: "Attrezzatura",
+  cucina: "Cucina",
+  sicurezza: "Sicurezza",
+  igiene: "Igiene",
+  elettronica: "Elettronica",
+  cibo: "Cibo",
+  altro: "Altro",
+};
 
 // --- Stato ---
-let oggetti = [];        // gli oggetti mostrati in tabella
+let oggetti = [];        // gli oggetti arrivati dall'API (già filtrati dalla ricerca)
+let filtro = "tutti";    // "tutti" | "indispensabili" | "preferiti"
 let inModifica = null;   // id dell'oggetto in modifica, oppure null se stiamo creando
 
 // --- Caricamento dall'API: aggiorna lo stato e ridisegna ---
 async function carica() {
   const parametri = new URLSearchParams({ q: q.value, limit: 200 });
-  if (filtroCategoria.value) parametri.set("categoria", filtroCategoria.value);
   oggetti = await api(`/api/oggetti?${parametri}`);
   render();
 }
 
-// --- Render: dallo stato all'HTML della tabella ---
-function render() {
-  const pesoTotale = oggetti.reduce((somma, o) => somma + o.peso_g, 0);
-  // "1 oggetto" / "3 oggetti" e kg in formato italiano con la virgola (0,40 e non 0.40)
-  const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  riepilogo.textContent = `${oggetti.length} ${oggetti.length === 1 ? "oggetto" : "oggetti"}, ${kg} kg in tutto`;
+// 1860 → "1.860 g". useGrouping: "always" serve perché in italiano, di base, i numeri di 4 cifre
+// non hanno il punto delle migliaia. &nbsp; = niente a capo tra il numero e "g".
+const grammi = (g) => `${g.toLocaleString("it-IT", { useGrouping: "always" })}&nbsp;g`;
 
-  if (oggetti.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="muto">Nessun oggetto qui. Premi + per aggiungere il primo.</td></tr>`;
+// --- Render: dallo stato all'HTML ---
+function render() {
+  // Riepilogo nella testata: "4 oggetti, 0,96 kg in tutto"
+  const pesoTotale = oggetti.reduce((somma, o) => somma + o.peso_g, 0);
+  const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  riepilogo.innerHTML = `<strong>${oggetti.length} ${oggetti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
+  segmenti.querySelector('[data-filtro="tutti"]').textContent = `Tutti · ${oggetti.length}`;
+
+  // Filtro dei segmenti: si applica qui, senza richiamare l'API (i dati li abbiamo già)
+  const visibili = oggetti.filter((o) =>
+    filtro === "tutti" ? true : filtro === "indispensabili" ? o.is_indispensabile : o.is_preferito
+  );
+
+  if (visibili.length === 0) {
+    lista.innerHTML = `<p class="vuoto">${
+      oggetti.length === 0 ? "Nessun oggetto qui. Premi «Aggiungi» per inserire il primo." : "Nessun oggetto con questo filtro."
+    }</p>`;
     return;
   }
 
-  tbody.innerHTML = oggetti.map((o) => `
-    <tr data-id="${o.id}" class="${o.id === inModifica ? "selezionata" : ""}">
-      <td>${esc(o.nome)}</td>
-      <td>${esc(o.categoria)}</td>
-      <td>${esc(o.peso_g)}&nbsp;g</td>
-      <td>
-        ${o.is_indispensabile ? '<span class="badge indispensabile">indispensabile</span>' : ""}
-        ${o.is_preferito ? '<span class="badge preferito">preferito</span>' : ""}
-      </td>
-      <td><button type="button" class="pericolo elimina" data-id="${o.id}">Elimina</button></td>
-    </tr>`).join("");
+  // Un gruppo per ogni categoria che ha almeno un oggetto, con il peso totale del gruppo
+  lista.innerHTML = Object.keys(CATEGORIE).map((categoria) => {
+    const delGruppo = visibili.filter((o) => o.categoria === categoria);
+    if (delGruppo.length === 0) return "";
+    const pesoGruppo = delGruppo.reduce((somma, o) => somma + o.peso_g, 0);
+    return `
+      <section class="gruppo">
+        <div class="gruppo-testa"><h2>${CATEGORIE[categoria]}</h2><span>${grammi(pesoGruppo)}</span></div>
+        <div class="gruppo-righe">${delGruppo.map(rigaOggetto).join("")}</div>
+      </section>`;
+  }).join("");
 }
 
-// --- Click nella tabella (event delegation: UN solo listener per tutte le righe) ---
-tbody.addEventListener("click", async (e) => {
-  const bottoneElimina = e.target.closest(".elimina");
-  if (bottoneElimina) {
-    await elimina(Number(bottoneElimina.dataset.id));
-    return;
-  }
-  const riga = e.target.closest("tr[data-id]");
-  if (riga) {
-    const oggetto = oggetti.find((o) => o.id === Number(riga.dataset.id));
-    riempiForm(oggetto);
-  }
+// Una riga della lista: è un <button>, così si può aprire anche da tastiera (Tab + Invio)
+function rigaOggetto(o) {
+  return `
+    <button type="button" class="riga" data-id="${o.id}">
+      <span class="riquadro-icona"><img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22"></span>
+      <span class="riga-testo">
+        <span class="riga-nome">${esc(o.nome)}</span>
+        <span class="riga-dettagli">
+          ${o.note ? `<span class="riga-nota">${esc(o.note)}</span>` : ""}
+          ${o.is_indispensabile ? '<span class="badge indispensabile">Indispensabile</span>' : ""}
+          ${o.is_preferito ? '<span class="badge preferito">Preferito</span>' : ""}
+        </span>
+      </span>
+      <span class="riga-valore">${grammi(o.peso_g)}</span>
+    </button>`;
+}
+
+// --- Clic su un oggetto della lista (event delegation: UN solo listener per tutte le righe) ---
+lista.addEventListener("click", (e) => {
+  const riga = e.target.closest(".riga[data-id]");
+  if (!riga) return;
+  const oggetto = oggetti.find((o) => o.id === Number(riga.dataset.id));
+  riempiForm(oggetto);
+});
+
+// --- Segmenti Tutti / Indispensabili / Preferiti ---
+segmenti.addEventListener("click", (e) => {
+  const bottone = e.target.closest("button[data-filtro]");
+  if (!bottone) return;
+  filtro = bottone.dataset.filtro;
+  // aria-pressed dice (anche ai lettori di schermo) quale segmento è attivo; il CSS lo usa per colorarlo
+  segmenti.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === bottone)));
+  render();
 });
 
 async function elimina(id) {
@@ -72,10 +119,10 @@ async function elimina(id) {
   if (!confirm(`Eliminare "${oggetto.nome}"?\nSparirà anche dagli zaini in cui si trova.`)) return;
   try {
     await api(`/api/oggetti/${id}`, { method: "DELETE" });
-    if (id === inModifica) svuotaForm(); // stavamo modificando proprio quello
+    finestra.close(); // la chiusura svuota anche il form (evento "close")
     await carica();
   } catch (err) {
-    alert(err.message);
+    mostraErrore(err.message);
   }
 }
 
@@ -90,8 +137,8 @@ function riempiForm(o) {
   campi.codice_etichetta.value = o.codice_etichetta ?? "";
   campi.note.value = o.note ?? "";
   titoloForm.textContent = `Modifica: ${o.nome}`;
+  bottoneElimina.hidden = false;
   nascondiErrore();
-  render();       // per colorare la riga selezionata
   apriFinestra();
 }
 
@@ -99,24 +146,30 @@ function svuotaForm() {
   inModifica = null;
   form.reset();
   titoloForm.textContent = "Nuovo oggetto";
+  bottoneElimina.hidden = true;
   nascondiErrore();
-  render();
 }
 
 // --- La finestra (dialog) con il form ---
 // showModal() la apre sopra la pagina (il resto non è cliccabile); close() la chiude.
 // Il browser la chiude da solo anche con il tasto Esc.
-function apriFinestra() {
+function apriFinestra(campoIniziale = campi.nome) {
   finestra.showModal();
-  campi.nome.focus(); // il cursore va nel primo campo
+  campoIniziale.focus(); // il cursore va nel campo indicato (di solito il nome)
 }
 
 bottoneNuovo.addEventListener("click", () => {
   svuotaForm();
   apriFinestra();
 });
+// "Scansiona etichetta": per ora apre il form con il cursore sul codice (la fotocamera arriverà con lo stretch 2)
+bottoneScansiona.addEventListener("click", () => {
+  svuotaForm();
+  apriFinestra(campi.codice_etichetta);
+});
 bottoneChiudi.addEventListener("click", () => finestra.close());
 bottoneAnnulla.addEventListener("click", () => finestra.close());
+bottoneElimina.addEventListener("click", () => elimina(inModifica));
 
 // Clic sullo sfondo scuro fuori dalla finestra: chiude.
 // (Il contenuto è dentro .finestra-contenuto, quindi e.target è il dialog solo se clicchi fuori.)
@@ -182,8 +235,7 @@ function nascondiErrore() {
   erroreForm.hidden = true;
 }
 
-// --- Eventi: ogni volta che cambia la ricerca o il filtro, si ricarica ---
+// --- Ricerca: ogni volta che cambia il testo, si ricarica dall'API ---
 q.addEventListener("input", carica);
-filtroCategoria.addEventListener("change", carica);
 
 carica(); // primo caricamento all'apertura della pagina

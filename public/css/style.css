@@ -1,7 +1,7 @@
 /* public/css/style.css – un solo foglio di stile per tutto il sito
    Tema "Muschio e crema": crema e lana, muschio, senape, un tocco di salvia */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap");
 
 /* --- Variabili: i colori e le misure, definiti una volta sola --- */
 :root {
@@ -20,10 +20,11 @@
   --salvia-chiaro: #dde7d3;
   --ocra-chiaro: #f2e3bf;
   --rosso: #a3312a;
-  --raggio: 20px;            /* schede */
+  --raggio: 24px;            /* schede */
+  --raggio-medio: 20px;      /* gruppi di righe (liste) */
   --raggio-piccolo: 12px;    /* campi, elementi dentro le schede */
   --ombra: 0 1px 2px rgba(49, 80, 63, .05), 0 8px 24px rgba(49, 80, 63, .06);
-  --font: "Inter", system-ui, "Segoe UI", sans-serif;
+  --font: "Figtree", system-ui, "Segoe UI", sans-serif;  /* testo: Figtree, rotondo e leggibile */
   --font-logo: "Newsreader", Georgia, serif;   /* la scritta del logo... */
   --font-titoli: "Newsreader", Georgia, serif; /* ...e i titoli: lo stesso carattere lega titoli e marchio */
 }
@@ -40,21 +41,52 @@ h1 { font-size: 2.2rem; }
 h2 { font-size: 1.55rem; }
 h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
 
-/* --- Barra in alto --- */
-.topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
-          padding: .9rem 1.25rem; background: var(--muschio); color: #f3ecdc; }
+/* --- Barra in alto: logo a sinistra, "esci" a destra (sul computer anche il menu) --- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; height: 68px; padding: 0 1.25rem;
+          background: var(--muschio); border-bottom: 1px solid #3d5f4b; }
 /* Logo: simbolo (immagine SVG) + scritta "Load" crema e "out" salvia chiaro */
-.topbar .logo { display: inline-flex; align-items: center; gap: .55rem; text-decoration: none;
-                font-family: var(--font-logo); font-weight: 600; font-size: 1.6rem; line-height: 1;
-                letter-spacing: -.025em; color: #f6efdf; font-variation-settings: "opsz" 72; }
+.topbar .logo { display: inline-flex; align-items: center; gap: .6rem; text-decoration: none;
+                font-family: var(--font-logo); font-weight: 600; font-size: 1.75rem; line-height: 1;
+                letter-spacing: -.02em; color: #f6efdf; font-variation-settings: "opsz" 72; }
 .topbar .logo img { display: block; }
 .topbar .logo .out { color: var(--salvia-chiaro); }
-/* Menu a icone: ogni voce è un quadratino cliccabile di 40x40 px (comodo anche col dito sul telefono) */
-.topbar nav { display: flex; gap: .35rem; }
-.topbar nav a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px;
-                border-bottom: 2px solid transparent; transition: background-color .15s; }
-.topbar nav a:hover, .topbar nav a:focus-visible { background: rgba(246, 239, 223, .14); border-bottom-color: var(--senape); }
-.topbar nav img { display: block; }
+.esci { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: #f6efdf; flex-shrink: 0; }
+.esci:hover, .esci:focus-visible { background: rgba(246, 239, 223, .12); }
+
+/* --- Menu principale ---
+   Telefono (di base): barra fissa in basso con 5 voci e il pulsante zaino al centro.
+   Le icone sono SVG scritti nell'HTML con stroke="currentColor": prendono il colore del link,
+   così la stessa icona è muschio sulla barra chiara (telefono) e crema sulla barra scura (computer). */
+.menu { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+        display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center;
+        height: calc(80px + env(safe-area-inset-bottom)); padding: 0 .5rem env(safe-area-inset-bottom);
+        background: var(--lana); border-top: 1px solid var(--bordo); border-radius: 28px 28px 0 0;
+        box-shadow: 0 -6px 24px rgba(35, 58, 45, .08); }
+.menu a { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .72rem; font-weight: 600;
+          color: var(--muschio); text-decoration: none; }
+.menu-icona { display: grid; place-items: center; width: 56px; height: 30px; border-radius: 15px; }
+.menu-icona svg { display: block; }
+/* Voce della pagina in cui sei (aria-current="page" è scritto nell'HTML di ogni pagina) */
+.menu a[aria-current="page"] { color: var(--muschio-scuro); font-weight: 700; }
+.menu a[aria-current="page"] .menu-icona { background: var(--salvia-chiaro); }
+/* Il pulsante centrale: cerchio senape che "esce" dalla barra, porta alla home */
+.menu a.menu-centrale { justify-self: center; display: grid; place-items: center; width: 62px; height: 62px; margin-top: -30px;
+                        border-radius: 50%; background: var(--senape); border: 4px solid var(--crema); color: var(--su-senape); }
+.menu a.menu-centrale:hover { background: var(--senape-scuro); }
+/* Spazio in fondo alla pagina, così la barra fissa non copre l'ultimo contenuto */
+body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+/* Computer: il menu torna nella barra in alto, con icona + scritta */
+@media (min-width: 761px) {
+  body { padding-bottom: 0; }
+  .menu { position: static; display: flex; gap: .25rem; height: auto; padding: 0; margin-left: auto;
+          background: none; border: 0; border-radius: 0; box-shadow: none; }
+  .menu a { flex-direction: row; gap: .45rem; padding: .45rem .85rem; border-radius: 999px; font-size: .95rem; color: #e3e9da; }
+  .menu-icona { width: auto; height: auto; background: none !important; }
+  .menu a:hover, .menu a:focus-visible { background: rgba(246, 239, 223, .12); color: #fff; }
+  .menu a[aria-current="page"] { background: rgba(246, 239, 223, .16); color: #fff; }
+  .menu a.menu-centrale { display: none; }   /* sul computer alla home si torna dal logo */
+}
 
 /* --- Contenitore e schede --- */
 .container { max-width: 1040px; margin: 0 auto; padding: 1.25rem 1rem 3rem; display: grid; gap: 1.5rem; }
@@ -78,11 +110,14 @@ h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
 .testata h1 { color: #f6efdf; font-size: clamp(2.3rem, 5vw, 3.4rem); line-height: 1.05; margin-bottom: .5rem;
               font-variation-settings: "opsz" 72; letter-spacing: -.025em; }
 .testata p { color: #d9e2cf; max-width: 36rem; margin: 0; font-size: 1.05rem; }
+/* La chiusura della frase in corsivo, nel carattere del logo (come nel design) */
+.testata p em { font-family: var(--font-titoli); font-style: italic; font-size: 1.12em; color: var(--ocra-chiaro); }
+.testata-home p { max-width: 21rem; color: #f6efdf; }
 .testata .indietro { margin-bottom: .6rem; font-size: .92rem; }
 .testata .indietro a { color: var(--salvia-chiaro); }
 /* Home: lo zaino animato appoggiato sulla cresta, a destra */
 .hero-zaino { position: absolute; right: 1rem; bottom: -5.2rem; width: 150px; height: auto; }
-@media (max-width: 860px) { .hero-zaino { width: 84px; bottom: -4.6rem; } }
+@media (max-width: 860px) { .hero-zaino { width: 92px; bottom: -3.9rem; } }
 /* Scheda viaggio: i dati del viaggio come etichette */
 .etichette { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .9rem; }
 .etichetta { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .8rem; border-radius: 999px; font-size: .9rem;
@@ -92,8 +127,16 @@ h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
 
 /* --- Home: le due sezioni principali affiancate --- */
 .scorciatoie { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
-.scorciatoie .card { display: grid; align-content: start; justify-items: start; gap: .25rem; }
-.scorciatoie .card p { margin: 0 0 .9rem; }
+.scorciatoia { display: grid; align-content: start; justify-items: start; gap: .65rem; }
+.scorciatoia p { margin: 0; font-size: .98rem; }
+.scorciatoia-testa { display: flex; align-items: center; gap: .75rem; width: 100%; }
+.scorciatoia-testa h2 { margin: 0; flex: 1; }
+/* Icona dentro un cerchio salvia chiaro (home) */
+.cerchio-icona { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--salvia-chiaro); flex-shrink: 0; }
+.cerchio-icona img { display: block; }
+/* Il numero accanto al titolo: testo discreto, oppure pillola ocra quando c'è qualcosa "in arrivo" */
+.conteggio { font-size: .82rem; font-weight: 600; color: var(--terra); white-space: nowrap; }
+.conteggio.in-evidenza { padding: .2rem .65rem; border-radius: 999px; background: var(--ocra-chiaro); font-weight: 700; }
 
 /* --- Form --- */
 form { display: grid; gap: .8rem; }
@@ -105,7 +148,7 @@ label.check input { width: auto; accent-color: var(--salvia); }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--salvia); box-shadow: 0 0 0 3px rgba(95, 132, 99, .25); }
 
 /* --- Pulsanti --- */
-button, .btn { display: inline-block; padding: .62rem 1.15rem; border: 1px solid transparent; border-radius: 999px; font: inherit; font-weight: 700;
+button, .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .62rem 1.15rem; border: 1px solid transparent; border-radius: 999px; font: inherit; font-weight: 700;
                cursor: pointer; background: var(--senape); color: var(--su-senape); text-decoration: none; transition: background .15s; }
 button:hover, .btn:hover { background: var(--senape-scuro); }
 button.secondario { background: transparent; color: var(--muschio); border-color: var(--muschio); }
@@ -129,7 +172,7 @@ tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: #f1e8d6; }
 
 /* --- Badge --- */
-.badge { display: inline-block; padding: .14rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.badge { display: inline-block; padding: .12rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
 .badge.indispensabile { background: var(--salvia-chiaro); color: #36573a; }
 .badge.preferito { background: var(--ocra-chiaro); color: #6e4f0f; }
 
@@ -184,7 +227,10 @@ tr.inserito .nome-oggetto { text-decoration: line-through; }
   .card { padding: .9rem; }
   h1 { font-size: 1.8rem; }
   h2 { font-size: 1.35rem; }
-  .testata { padding: 1.1rem .5rem 4.75rem; background-size: 100% 64px, cover, auto; }
+  .testata { padding: 1.1rem .5rem 4rem; background-size: 100% 56px, cover, auto; }
+  .testata-home p { max-width: 15.5rem; }
+  .testata-azioni { gap: .5rem; }
+  .testata-azioni button { padding: .55rem .95rem; font-size: .95rem; }
   .testata p { font-size: .98rem; }
   th, td { padding: .45rem .3rem; font-size: .9rem; }
   td button { padding: .35rem .6rem; font-size: .8rem; }
@@ -210,15 +256,6 @@ h3 > .icona { width: 1.75rem; height: 1.75rem; padding: .3rem; margin-right: .5r
 .dati dt { color: var(--terra); }
 .dati dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }  /* email lunghe vanno a capo */
 
-/* --- Pulsante + (nuovo oggetto / nuovo viaggio) --- */
-.testata-dentro.con-azione { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; }
-.pulsante-aggiungi { flex-shrink: 0; display: grid; place-items: center; width: 60px; height: 60px; padding: 0;
-                     border-radius: 50%; background: var(--senape); color: var(--su-senape);
-                     box-shadow: 0 6px 18px rgba(20, 35, 27, .3); }
-.pulsante-aggiungi:hover { background: var(--senape-scuro); }
-.pulsante-aggiungi:focus-visible { outline: 3px solid #f6efdf; outline-offset: 3px; }
-.pulsante-aggiungi svg { display: block; }
-
 /* --- Finestra (dialog) con il form ---
    ::backdrop è lo sfondo scuro che il browser mette dietro un dialog aperto con showModal() */
 .finestra { width: min(34rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); padding: 0; border: 0;
@@ -235,12 +272,76 @@ button.chiudi { display: grid; place-items: center; width: 40px; height: 40px; p
                 background: transparent; color: var(--muschio); flex-shrink: 0; }
 button.chiudi:hover { background: var(--salvia-chiaro); }
 
-/* Telefono: il + diventa un pulsante fisso in basso a destra (comodo col pollice)
-   e la finestra sale dal basso, a tutta larghezza */
+/* Telefono: la finestra sale dal basso, a tutta larghezza */
 @media (max-width: 600px) {
-  .pulsante-aggiungi { position: fixed; right: 1rem; bottom: 1.25rem; z-index: 10; }
   .finestra { width: 100%; max-width: 100%; margin: auto 0 0; max-height: 92dvh;
               border-radius: var(--raggio) var(--raggio) 0 0; }
   .finestra-contenuto { padding: 1rem 1rem 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) { .finestra[open] { animation: none; } }
+
+/* =====================================================================
+   NUOVO DESIGN: liste a righe (armadio, viaggi), ricerca, segmenti
+   ===================================================================== */
+
+/* Pulsanti nella testata (Aggiungi, Scansiona etichetta) */
+.testata-azioni { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.1rem; }
+.testata-azioni button { min-height: 44px; }
+/* Pulsante "a contorno" pensato per stare sul muschio della testata */
+button.su-scuro { background: transparent; color: #f6efdf; border: 1.5px solid var(--salvia-chiaro); font-weight: 600; }
+button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
+
+/* Ricerca a pillola con la lente: l'input è "trasparente" dentro un'etichetta che fa da contorno */
+.cerca { display: flex; align-items: center; gap: .6rem; height: 48px; padding: 0 1rem; border-radius: 999px;
+         background: var(--lana-chiara); border: 1px solid var(--bordo); color: var(--terra); font-weight: 400; }
+.cerca:focus-within { border-color: var(--salvia); box-shadow: 0 0 0 3px rgba(95, 132, 99, .25); }
+.cerca input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; }
+.cerca input:focus { box-shadow: none; }
+.cerca svg { flex-shrink: 0; }
+
+/* Segmenti (Tutti / Indispensabili / Preferiti): il segmento attivo ha aria-pressed="true" */
+.segmenti { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; max-width: 32rem;
+            border-radius: 999px; background: var(--lana); border: 1px solid var(--bordo); }
+.segmenti button { padding: .55rem .5rem; border-radius: 999px; background: transparent; color: var(--muschio);
+                   font-size: .86rem; font-weight: 600; }
+.segmenti button:hover { background: var(--salvia-chiaro); }
+.segmenti button[aria-pressed="true"] { background: var(--muschio); color: #f6efdf; font-weight: 700; }
+
+/* Gruppi per categoria: due colonne sugli schermi larghi, una sul telefono */
+.gruppi { display: grid; gap: 1.25rem; align-items: start;
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+.gruppo-testa { display: flex; justify-content: space-between; align-items: baseline; padding: 0 .3rem; margin-bottom: .5rem; }
+.gruppo-testa h2 { margin: 0; font-family: var(--font); font-size: .8rem; font-weight: 700; letter-spacing: .06em;
+                   text-transform: uppercase; color: var(--terra); }
+.gruppo-testa span { font-size: .82rem; font-weight: 600; color: var(--terra); }
+.gruppo-righe { overflow: hidden; background: var(--lana); border: 1px solid var(--bordo); border-radius: var(--raggio-medio); }
+
+/* Una riga: icona nel riquadro, nome + dettagli, valore a destra. È un <button> o un <a>: tutta la riga è cliccabile */
+.riga { display: flex; align-items: center; gap: .8rem; width: 100%; min-height: 66px; padding: .6rem .9rem;
+        border: 0; border-bottom: 1px solid var(--bordo); border-radius: 0; background: transparent;
+        color: var(--testo); text-align: left; text-decoration: none; font-weight: 400; }
+.riga:last-child { border-bottom: 0; }
+.riga:hover { background: var(--salvia-chiaro); }
+.riga:hover .riquadro-icona { background: var(--lana-chiara); }
+.riga:focus-visible { outline: 3px solid var(--salvia); outline-offset: -3px; }
+.riquadro-icona { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0;
+                  border-radius: var(--raggio-piccolo); background: var(--crema); }
+.riquadro-icona img { display: block; }
+.riga-testo { flex: 1; min-width: 0; display: grid; gap: .25rem; }
+.riga-nome { font-size: .98rem; font-weight: 600; color: var(--testo); }
+.riga-dettagli { display: flex; align-items: center; flex-wrap: wrap; gap: .35rem; }
+.riga-nota { max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .8rem; color: var(--terra); }
+.riga-valore { white-space: nowrap; font-size: .92rem; font-weight: 700; color: var(--muschio); }
+.vuoto { padding: 2rem 1rem; text-align: center; color: var(--terra); }
+
+/* Nella finestra: "Elimina" spinto a destra, lontano da "Salva" (per non premerlo per sbaglio) */
+.spinto-a-destra { margin-left: auto; }
+
+/* --- Pagina Consigli generali --- */
+.consigli-griglia { display: grid; gap: 1.25rem; align-items: start;
+                    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+.consiglio-generale { display: grid; gap: .6rem; }
+.consiglio-generale h2 { margin: 0; flex: 1; font-size: 1.4rem; }
+.consiglio-generale p { margin: 0; }
+.consiglio-generale ul { margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; }
+.nota-consigli { max-width: 40rem; }

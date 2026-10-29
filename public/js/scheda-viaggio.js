@@ -291,6 +291,17 @@ function nascondiErrore() {
   erroreZaino.hidden = true;
 }
 
+// --- Elimina viaggio (prima era un pulsante nella lista dei viaggi) ---
+document.querySelector("#elimina-viaggio").addEventListener("click", async () => {
+  if (!confirm(`Eliminare il viaggio "${viaggio.nome}"?\nVerrà eliminato anche il suo zaino.`)) return;
+  try {
+    await api(`/api/viaggi/${id}`, { method: "DELETE" });
+    location.href = "/viaggi.html"; // il viaggio non esiste più: torniamo alla lista
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 // =====================================================================
 //  AVVIO
 // =====================================================================
@@ -308,6 +319,7 @@ if (!Number.isInteger(id) || id <= 0) {
     document.querySelector("#corpo-scheda").hidden = false; // tutto ok: mostro zaino e consigli
   } catch (err) {
     titolo.textContent = err.message; // es. "Viaggio 99 non trovato" (anche se è di un altro utente)
+    document.querySelector("#elimina-viaggio").hidden = true; // niente da eliminare
   } finally {
     // finally gira SEMPRE, sia dopo il try riuscito sia dopo il catch
     clearTimeout(timerCaricamento);     // se i dati sono arrivati prima dei 250 ms, l'animazione non parte proprio

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Consigli</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="38" height="38"><span>Load<span class="out">out</span></span></a>
+    <!-- Menu: sul telefono è la barra fissa in basso, sul computer sta qui in alto (vedi style.css) -->
+    <nav class="menu" aria-label="Navigazione principale">
+      <a href="/armadio.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.2 5.2A1.8 1.8 0 1 1 12 7v1.5"/><path d="M12 8.5 3.6 15a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8Z"/><path d="M8 16.8v2.7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.7"/></svg></span>Armadio</a>
+      <a href="/viaggi.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h6l.6 5.6 4.9 2.2C19 12 21 13.6 21 16v1H3V5a2 2 0 0 1 2-2Z"/><path d="M3 17v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2"/><path d="M7.5 6.5h3.6M8 10h4.6"/></svg></span>Viaggi</a>
+      <a href="/" class="menu-centrale" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 5a1.5 1.5 0 0 1 3 0"/><path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/><path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/><path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/><path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/><rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#fbf6ec" stroke="none"/></svg></a>
+      <a href="/consigli.html" aria-current="page"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5l2.1-4.9Z"/><path d="M14.6 9.4 13 13 11 11Z" fill="#c8962b" stroke="none"/></svg></span>Consigli</a>
+      <a href="/profilo.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20.5c0-3.9 3.1-7 7-7s7 3.1 7 7"/><rect x="11" y="15.5" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Profilo</a>
+    </nav>
+    <a href="#" id="esci" class="esci" aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
+  </header>
+
+  <!-- Testata della pagina -->
+  <section class="testata">
+    <div class="testata-dentro">
+      <h1>Consigli</h1>
+      <p>Le regole di base per preparare lo zaino e partire tranquilli.</p>
+    </div>
+  </section>
+
+  <main class="container">
+    <!-- Consigli generali, uguali per tutti: testo fisso, nessuna chiamata all'API -->
+    <div class="consigli-griglia">
+      <section class="card consiglio-generale">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/zaino.svg" alt="" width="22" height="22"></span>
+          <h2>Il peso dello zaino</h2>
+        </div>
+        <p>Una regola diffusa: lo zaino non dovrebbe superare il 20% del tuo peso corporeo. Per le uscite in giornata, meglio restare intorno al 10%.</p>
+        <ul>
+          <li>Gli oggetti più pesanti vanno vicino alla schiena, all'altezza delle scapole.</li>
+          <li>Quello che usi spesso (acqua, snack, mappa) sta nelle tasche esterne.</li>
+        </ul>
+      </section>
+      <section class="card consiglio-generale">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/acqua.svg" alt="" width="22" height="22"></span>
+          <h2>Acqua</h2>
+        </div>
+        <p>Come riferimento, circa mezzo litro per ogni ora di cammino: di più con il caldo e in salita.</p>
+        <ul>
+          <li>Bevi a piccoli sorsi e spesso, senza aspettare di avere sete.</li>
+          <li>Informati su fontane e rifugi lungo il percorso: non serve portare tutto da casa.</li>
+        </ul>
+      </section>
+      <section class="card consiglio-generale">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/armadio.svg" alt="" width="22" height="22"></span>
+          <h2>Vestirsi a strati</h2>
+        </div>
+        <p>Tre strati che si aggiungono o si tolgono durante la giornata:</p>
+        <ul>
+          <li>uno strato a contatto con la pelle che lascia traspirare (meglio evitare il cotone);</li>
+          <li>uno strato caldo, come un pile;</li>
+          <li>un guscio contro vento e pioggia.</li>
+        </ul>
+        <p>Salendo la temperatura scende: circa 6 °C in meno ogni 1.000 metri di dislivello.</p>
+      </section>
+      <section class="card consiglio-generale">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/sole.svg" alt="" width="22" height="22"></span>
+          <h2>Orari e luce</h2>
+        </div>
+        <ul>
+          <li>Parti presto, soprattutto d'estate, quando nel pomeriggio arrivano spesso i temporali.</li>
+          <li>Calcola i tempi per rientrare prima del tramonto: nella scheda di ogni viaggio trovi l'orario.</li>
+          <li>La frontale va sempre nello zaino, anche per le uscite brevi.</li>
+        </ul>
+      </section>
+      <section class="card consiglio-generale">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/meteo.svg" alt="" width="22" height="22"></span>
+          <h2>Meteo</h2>
+        </div>
+        <ul>
+          <li>Controlla le previsioni la sera prima e di nuovo la mattina della partenza.</li>
+          <li>In montagna il tempo cambia in fretta: tornare indietro è una scelta, non una sconfitta.</li>
+        </ul>
+      </section>
+      <section class="card consiglio-generale">
+        <div class="scorciatoia-testa">
+          <span class="cerchio-icona"><img src="/img/icone/consigli.svg" alt="" width="22" height="22"></span>
+          <h2>Sicurezza</h2>
+        </div>
+        <ul>
+          <li>Lascia detto a qualcuno dove vai e a che ora pensi di rientrare.</li>
+          <li>Telefono carico e, se puoi, una batteria esterna.</li>
+          <li>Nello zaino: kit di pronto soccorso e telo termico.</li>
+          <li>In caso di emergenza chiama il <strong>112</strong>, il numero unico di emergenza.</li>
+        </ul>
+      </section>
+    </div>
+    <p class="muto nota-consigli">Questi sono consigli generali. Nella scheda di ogni viaggio trovi quelli calcolati sulla tua uscita: acqua, alba e tramonto, meteo e percorso.</p>
+  </main>
+
+  <script type="module" src="/js/menu.js"></script>
+</body>
+</html>
