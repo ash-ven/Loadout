@@ -25,6 +25,12 @@ const dettaglioNome = document.querySelector("#dettaglio-nome");
 const dettaglioMarchio = document.querySelector("#dettaglio-marchio");
 const dettaglioBadge = document.querySelector("#dettaglio-badge");
 const dettaglioDati = document.querySelector("#dettaglio-dati");
+const dettaglioNota = document.querySelector("#dettaglio-nota");
+const infoForm = document.querySelector("#form-info");
+// La finestra della fotocamera (stretch 2)
+const finestraScanner = document.querySelector("#finestra-scanner");
+const statoScanner = document.querySelector("#stato-scanner");
+const bottoneCercaProdotto = document.querySelector("#cerca-prodotto");
 
 // --- Stato ---
 let oggetti = [];        // gli oggetti arrivati dall'API (già filtrati dalla ricerca)
@@ -116,8 +122,10 @@ lista.addEventListener("click", (e) => {
 });
 
 // --- Scheda di dettaglio (B1): tutto quello che sappiamo dell'oggetto, in sola lettura ---
-function apriDettaglio(o) {
+function apriDettaglio(o, nota = "") {
   aperto = o;
+  dettaglioNota.textContent = nota;
+  dettaglioNota.hidden = !nota;
   dettaglioIcona.innerHTML = `<img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22">`;
   dettaglioNome.textContent = o.nome;
   dettaglioMarchio.textContent = o.marchio ?? "";
@@ -199,6 +207,8 @@ function svuotaForm() {
   form.reset();
   titoloForm.textContent = "Nuovo oggetto";
   bottoneElimina.hidden = true;
+  infoForm.hidden = true;
+  delete campi.categoria.dataset.scelta; // nessuna categoria scelta a mano (vedi cercaProdotto)
   nascondiErrore();
 }
 
@@ -214,11 +224,159 @@ bottoneNuovo.addEventListener("click", () => {
   svuotaForm();
   apriFinestra();
 });
-// "Scansiona etichetta": per ora apre il form con il cursore sul codice (la fotocamera arriverà con lo stretch 2)
-bottoneScansiona.addEventListener("click", () => {
-  svuotaForm();
-  apriFinestra(campi.codice_etichetta);
+// =====================================================================
+//  STRETCH 2: SCANSIONE DELL'ETICHETTA CON LA FOTOCAMERA
+//  La libreria html5-qrcode accende la fotocamera, guarda i fotogrammi e ci chiama
+//  quando legge un codice. Usa il BarcodeDetector del browser dove esiste (Chrome Android, Mac),
+//  altrimenti decodifica da sola (es. Chrome su Windows).
+// =====================================================================
+let lettore = null;  // l'oggetto Html5Qrcode mentre la fotocamera è accesa
+let giaLetto = false; // la libreria può chiamarci più volte di fila con lo stesso codice: teniamo solo il primo
+
+bottoneScansiona.addEventListener("click", apriScanner);
+document.querySelector("#chiudi-scanner").addEventListener("click", () => finestraScanner.close());
+document.querySelector("#scrivi-a-mano").addEventListener("click", () => {
+  finestraScanner.close();
+  apriNuovoConCodice("");
 });
+finestraScanner.addEventListener("close", spegniFotocamera); // comunque si chiuda, la fotocamera si spegne
+
+async function apriScanner() {
+  // La fotocamera c'è solo in un "contesto sicuro" (https o localhost) e se la libreria è arrivata
+  if (!navigator.mediaDevices?.getUserMedia || typeof Html5Qrcode === "undefined") {
+    apriNuovoConCodice("", "Qui la fotocamera non è disponibile (serve https, o localhost sul computer): scrivi il codice a mano.");
+    return;
+  }
+  giaLetto = false;
+  statoScanner.textContent = "Accendo la fotocamera…";
+  finestraScanner.showModal();
+  const f = Html5QrcodeSupportedFormats;
+  const questo = new Html5Qrcode("lettore", {
+    formatsToSupport: [f.EAN_13, f.EAN_8, f.UPC_A, f.UPC_E, f.CODE_128, f.CODE_39, f.QR_CODE], // codici delle etichette
+    useBarCodeDetectorIfSupported: true, // il lettore del browser, dove c'è (è più veloce)
+    verbose: false,
+  });
+  lettore = questo;
+  try {
+    await questo.start(
+      { facingMode: "environment" }, // sul telefono la fotocamera posteriore; sul computer la webcam
+      { fps: 10, qrbox: (larghezza, altezza) => ({ width: Math.min(larghezza * 0.85, 340), height: Math.min(altezza * 0.45, 170) }) },
+      codiceLetto,
+      () => {} // chiamata per ogni fotogramma senza codice: non ci interessa
+    );
+    statoScanner.textContent = "Inquadra il codice a barre…";
+    // Se la finestra è stata chiusa mentre la fotocamera si accendeva, la spegniamo subito
+    if (!finestraScanner.open) { await questo.stop(); questo.clear(); }
+  } catch (err) {
+    statoScanner.textContent = messaggioFotocamera(err);
+  }
+}
+
+async function spegniFotocamera() {
+  try {
+    if (lettore?.isScanning) await lettore.stop(); // spegne la fotocamera (si spegne anche la lucina)
+    lettore?.clear();
+  } catch { /* già spenta */ }
+  lettore = null;
+}
+
+async function codiceLetto(testo) {
+  if (giaLetto) return;
+  giaLetto = true;
+  const codice = testo.trim();
+  finestraScanner.close(); // → spegniFotocamera
+  // L'etichetta serve anche a RITROVARE le cose: se il codice è già nell'armadio, apro quell'oggetto
+  let esistente = null;
+  try {
+    const tutti = await api("/api/oggetti?limit=200");
+    esistente = tutti.find((o) => o.codice_etichetta === codice);
+  } catch { /* se la ricerca fallisce, apriamo comunque il form con il codice */ }
+  if (esistente) {
+    apriDettaglio(esistente, `Codice ${codice}: questo oggetto è già nel tuo armadio.`);
+  } else {
+    apriNuovoConCodice(codice);
+    cercaProdotto(); // e intanto chiediamo al server che prodotto è
+  }
+}
+
+function apriNuovoConCodice(codice, messaggio = "") {
+  svuotaForm();
+  campi.codice_etichetta.value = codice;
+  infoForm.textContent = messaggio;
+  infoForm.hidden = !messaggio;
+  apriFinestra(codice ? campi.nome : campi.codice_etichetta); // con il codice: si parte dal nome
+}
+
+// =====================================================================
+//  CHE PRODOTTO È? Il codice a barre è solo un numero: chiediamo al server (GET /api/prodotti/:codice),
+//  che cerca nelle banche dati gratuite (Open Facts, UPCitemdb).
+//  Regola: riempiamo SOLO i campi ancora vuoti. Quello che hai scritto tu non si tocca.
+// =====================================================================
+bottoneCercaProdotto.addEventListener("click", cercaProdotto);
+// Se scegli tu la categoria, la ricerca non la cambia più
+campi.categoria.addEventListener("change", () => { campi.categoria.dataset.scelta = "1"; });
+
+async function cercaProdotto() {
+  const codice = campi.codice_etichetta.value.trim();
+  if (!/^\d{8,14}$/.test(codice)) {
+    mostraInfo("Per cercare il prodotto serve un codice a barre di 8–14 cifre (quello sotto le barre).");
+    return;
+  }
+  bottoneCercaProdotto.disabled = true;
+  bottoneCercaProdotto.textContent = "Cerco…";
+  mostraInfo(`Codice ${codice}: cerco il prodotto nelle banche dati…`);
+  try {
+    const p = await api(`/api/prodotti/${codice}`);
+    // Nel frattempo la finestra è stata chiusa o il codice è cambiato? Allora la risposta non serve più
+    if (!finestra.open || campi.codice_etichetta.value.trim() !== codice) return;
+
+    if (!p.trovato) {
+      mostraInfo(p.irraggiungibile
+        ? "Non riesco a raggiungere le banche dati dei prodotti (connessione?): completa a mano."
+        : `Codice ${codice}: prodotto non trovato nelle banche dati. Completa nome, categoria e peso a mano.`);
+      return;
+    }
+    const riempiti = [];
+    if (riempiSeVuoto(campi.nome, p.nome)) riempiti.push("nome");
+    if (riempiSeVuoto(campi.marchio, p.marchio)) riempiti.push("marchio");
+    if (riempiSeVuoto(campi.peso_g, p.peso_g)) riempiti.push("peso");
+    if (p.categoria && !inModifica && !campi.categoria.dataset.scelta) {
+      campi.categoria.value = p.categoria;
+      riempiti.push("categoria");
+    }
+    const mancano = ["nome", "peso"].filter((c) => !riempiti.includes(c) && !campi[c === "peso" ? "peso_g" : c].value);
+    mostraInfo(`Trovato su ${p.fonte}: «${p.nome}». `
+      + (riempiti.length ? `Ho compilato: ${riempiti.join(", ")}. Controlla che sia giusto.` : "I campi erano già compilati: non ho cambiato nulla.")
+      + (mancano.length ? ` Manca ancora: ${mancano.join(", ")}.` : ""));
+  } catch (err) {
+    mostraInfo(err.message);
+  } finally {
+    bottoneCercaProdotto.disabled = false;
+    bottoneCercaProdotto.textContent = "Cerca";
+  }
+}
+
+// Mette il valore nel campo solo se il campo è vuoto e il valore esiste. Ritorna true se l'ha messo.
+function riempiSeVuoto(campo, valore) {
+  if (campo.value.trim() || valore == null || valore === "") return false;
+  campo.value = valore;
+  return true;
+}
+
+function mostraInfo(testo) {
+  infoForm.textContent = testo;
+  infoForm.hidden = false;
+}
+
+// La libreria segnala gli errori con testi tecnici in inglese: li traduciamo in qualcosa di utile
+function messaggioFotocamera(err) {
+  const testo = String(err);
+  if (/NotAllowed|Permission/i.test(testo)) return "Accesso alla fotocamera negato. Riattivalo dall'icona accanto all'indirizzo, oppure scrivi il codice a mano.";
+  if (/NotFound|Requested device not found/i.test(testo)) return "Nessuna fotocamera trovata su questo dispositivo: scrivi il codice a mano.";
+  if (/NotReadable|in use/i.test(testo)) return "La fotocamera è usata da un'altra app: chiudila e riprova.";
+  return "Non riesco ad accendere la fotocamera: scrivi il codice a mano.";
+}
+
 bottoneChiudi.addEventListener("click", () => finestra.close());
 bottoneAnnulla.addEventListener("click", () => finestra.close());
 bottoneElimina.addEventListener("click", () => elimina(inModifica));

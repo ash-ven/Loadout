@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "node --watch --env-file=.env src/server.js",
     "start": "node src/server.js",
-    "test": "node --test test/"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

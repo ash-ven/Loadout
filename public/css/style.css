@@ -399,3 +399,12 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 
 
 
+
+/* --- Stretch 2: finestra della fotocamera --- */
+.lettore { width: 100%; min-height: 220px; margin: .5rem 0; overflow: hidden; border-radius: var(--raggio-piccolo); background: var(--muschio-scuro); }
+.lettore video { display: block; width: 100% !important; height: auto !important; object-fit: cover; }
+.stato-scanner { margin: 0 0 .6rem; min-height: 1.4em; font-weight: 600; color: var(--muschio); }
+/* Codice etichetta + pulsante "Cerca" sulla stessa riga */
+.campo-con-pulsante { display: flex; align-items: flex-end; gap: .5rem; }
+.campo-con-pulsante label { flex: 1; min-width: 0; }
+.campo-con-pulsante button { flex-shrink: 0; }

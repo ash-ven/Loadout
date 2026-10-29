@@ -10,6 +10,7 @@ import { requireAuth } from "./middleware/auth.js";
 import { router as authRouter } from "./routes/auth.js";
 import { router as oggettiRouter } from "./routes/oggetti.js";
 import { router as viaggiRouter } from "./routes/viaggi.js";
+import { router as prodottiRouter } from "./routes/prodotti.js";
 
 // Cartella di questo file (api/src) e cartella del frontend (loadout/public)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +32,7 @@ app.get("/api/health", async (req, res) => {
 app.use("/api/auth", authRouter);                        // libera (login, register…)
 app.use("/api/oggetti", requireAuth, oggettiRouter);     // protetta
 app.use("/api/viaggi", requireAuth, viaggiRouter);       // protetta
+app.use("/api/prodotti", requireAuth, prodottiRouter);   // protetta (stretch 2: cerca il prodotto dal codice a barre)
 
 // === 4. CHIUSURA (dopo tutte le rotte) ===
 app.use(notFound);       // nessuna rotta ha risposto → 404

@@ -104,7 +104,7 @@ Aggiornato a giovedì 29 ottobre.
 - [x] 1. Meteo del giorno di partenza (Open-Meteo) e suggerimenti sul vestiario
 - [x] 4. Percorsi da fare in futuro (`pianificato`) con filtro nella lista
 - [x] 5. Avviso se lo zaino supera il 20% del peso corporeo
-- [ ] 2. Scansione dell'etichetta con la fotocamera (il pulsante c'è: per ora apre il form sul campo "codice etichetta")
+- [x] 2. Scansione dell'etichetta con la fotocamera (libreria html5-qrcode 2.3.8 da unpkg: EAN-13/8, UPC, Code 128/39, QR). Se il codice è già nell'armadio apre quell'oggetto, altrimenti il form nuovo con il codice compilato, e il server cerca nome, marchio e peso nelle banche dati gratuite (Open Facts, UPCitemdb: `GET /api/prodotti/:codice`), riempiendo solo i campi vuoti. Il pulsante "Cerca" accanto al codice fa la stessa ricerca per i codici scritti a mano. La fotocamera funziona solo su https o su localhost: altrimenti si scrive il codice a mano
 - [ ] 3. Mappa con Leaflet per scegliere partenza e arrivo: provata (anche con percorso sui sentieri via BRouter e file GPX), poi tolta per scelta di design; da riprogettare
 
 ### Oltre lo scope (giovedì pomeriggio)
@@ -114,8 +114,8 @@ Aggiornato a giovedì 29 ottobre.
 - [x] Home con frasi casuali e "vive" sul prossimo viaggio; pagina di consigli generali
 
 ### Da fare
-- [ ] HTTPS (Caddy), helmet (la CSP deve permettere Google Fonts e le immagini data: della foto), limite tentativi sul login, Dockerfile e compose completo, `.env.example` nella radice (venerdì)
-- [ ] Almeno 5 test automatici, `npm audit`, NOTE.md (venerdì)
+- [ ] HTTPS (Caddy), helmet (la CSP deve permettere Google Fonts, le immagini data: della foto, lo script di unpkg.com per html5-qrcode), limite tentativi sul login, Dockerfile e compose completo, `.env.example` nella radice (venerdì)
+- [ ] Almeno 5 test automatici (i primi 5 ci sono: `api/test/prodotti.test.js`, si lanciano con `npm test` dalla cartella `api`), `npm audit`, NOTE.md (venerdì)
 
 ## User story MVP
 

@@ -28,7 +28,7 @@
       <p id="riepilogo"></p>
       <div class="testata-azioni">
         <button type="button" id="apri-nuovo"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Aggiungi</button>
-        <!-- Per ora apre il form sul campo "codice etichetta"; la scansione con la fotocamera arriverà (stretch 2) -->
+        <!-- Stretch 2: legge il codice a barre con la fotocamera (finestra "Scansiona l'etichetta" qui sotto) -->
         <button type="button" class="su-scuro" id="scansiona"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10"/></svg> Scansiona etichetta</button>
       </div>
     </div>
@@ -49,6 +49,23 @@
     <!-- La lista, divisa per categoria: la riempie armadio.js -->
     <div class="gruppi" id="lista"></div>
 
+    <!-- Stretch 2: finestra della fotocamera per leggere il codice a barre dell'etichetta -->
+    <dialog class="finestra" id="finestra-scanner" aria-labelledby="titolo-scanner">
+      <div class="finestra-contenuto">
+        <div class="finestra-testa">
+          <h2 id="titolo-scanner">Scansiona l'etichetta</h2>
+          <button type="button" class="chiudi" id="chiudi-scanner" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </div>
+        <p class="muto">Inquadra il codice a barre dell'etichetta, ben illuminato: si legge da solo.</p>
+        <!-- Qui la libreria mette il video della fotocamera -->
+        <div class="lettore" id="lettore"></div>
+        <p class="stato-scanner" id="stato-scanner" role="status"></p>
+        <div class="azioni">
+          <button type="button" class="secondario" id="scrivi-a-mano">Scrivi il codice a mano</button>
+        </div>
+      </div>
+    </dialog>
+
     <!-- Scheda di dettaglio di un oggetto (sola lettura): si apre cliccando un oggetto della lista.
          Da qui si passa a "Modifica" (la finestra con il form) o si elimina. La riempie armadio.js -->
     <dialog class="finestra" id="dettaglio" aria-labelledby="dettaglio-nome">
@@ -63,6 +80,7 @@
           </div>
           <button type="button" class="chiudi" id="chiudi-dettaglio" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
         </div>
+        <p class="avviso" id="dettaglio-nota" hidden></p>
         <div class="riga-dettagli" id="dettaglio-badge"></div>
         <dl class="dati" id="dettaglio-dati"></dl>
         <div class="azioni">
@@ -80,6 +98,8 @@
         <button type="button" class="chiudi" id="chiudi" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <form id="form-oggetto" novalidate>
+        <!-- Messaggio dopo una scansione (es. "Codice letto: …"): in cima, così si vede subito -->
+        <p class="avviso" id="form-info" hidden></p>
         <label>Nome
           <input name="nome" type="text" maxlength="120" required>
         </label>
@@ -120,9 +140,13 @@
         <label>Caratteristiche tecniche
           <textarea name="caratteristiche" maxlength="500" rows="2" placeholder="es. Gore-Tex, impermeabile, taglia M"></textarea>
         </label>
-        <label>Codice etichetta
-          <input name="codice_etichetta" type="text" maxlength="64">
-        </label>
+        <!-- Il codice e, accanto, "Cerca": chiede al server nome, marchio e peso del prodotto (stretch 2) -->
+        <div class="campo-con-pulsante">
+          <label>Codice etichetta
+            <input name="codice_etichetta" type="text" maxlength="64" inputmode="numeric">
+          </label>
+          <button type="button" class="secondario" id="cerca-prodotto">Cerca</button>
+        </div>
         <label>Note
           <textarea name="note" maxlength="1000" rows="3"></textarea>
         </label>
@@ -138,6 +162,9 @@
     </dialog>
   </main>
 
+  <!-- Stretch 2: libreria per leggere i codici a barre (usa BarcodeDetector del browser dove c'è, altrimenti
+       decodifica da sola). Script "classico": crea le variabili globali Html5Qrcode e Html5QrcodeSupportedFormats -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script type="module" src="/js/armadio.js"></script>
 </body>
 </html>

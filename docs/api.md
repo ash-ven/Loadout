@@ -99,6 +99,18 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
   Gli oggetti **indossati** non contano in `peso_totale` e `peso_inserito`: il loro peso è in `peso_addosso`
 - `oggetti`: `[ { oggetto_id, nome, categoria, peso_g, quantita, peso_riga_g, inserito, is_indispensabile, is_preferito, indossato, quantita_posseduta, marchio } ]`
 
+## Prodotti (dal codice a barre, stretch 2)
+| Metodo | URL | Body | Risposta | Status |
+| --- | --- | --- | --- | --- |
+| GET | /api/prodotti/:codice | — | `{ trovato: true, fonte, nome, marchio, peso_g, categoria }` oppure `{ trovato: false, irraggiungibile }` | 200, 400 (`BAD_CODICE`: servono 8–14 cifre), 401 |
+
+- Il server cerca il codice in Open Products Facts, Open Food Facts, Open Beauty Facts (in parallelo, vince la prima
+  nell'ordine) e, solo se nessuna lo conosce, in UPCitemdb (prova gratuita, circa 100 ricerche al giorno).
+- `peso_g` e `marchio` possono essere `null`; `categoria` è un suggerimento (`cibo` da Open Food Facts, `igiene` da
+  Open Beauty Facts, altrimenti `null`).
+- `irraggiungibile: true` = nessuna banca dati ha risposto (rete giù). Ogni banca dati ha 5 secondi per rispondere.
+- I risultati restano in memoria (max 500 codici) finché il server è acceso.
+
 ## Note sugli status code
 - **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico o troppo grande, JSON malformato) oppure una regola dell'app non rispettata; il `message` spiega cosa correggere.
   Codici: `VALIDATION_ERROR`, `BAD_ID`, `BAD_QUERY`, `BAD_JSON`, `BAD_INPUT`, `WEAK_PASSWORD`, `BAD_EMAIL`, `BAD_TELEFONO`, `BAD_FOTO`, `QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`.
