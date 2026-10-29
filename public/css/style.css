@@ -45,9 +45,12 @@ h3 { font-size: 1.05rem; font-weight: 700; }
                 letter-spacing: -.025em; color: #f6efdf; font-variation-settings: "opsz" 72; }
 .topbar .logo img { display: block; }
 .topbar .logo .out { color: var(--salvia-chiaro); }
-.topbar nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-.topbar nav a { color: #e3e9da; text-decoration: none; font-weight: 500; padding-bottom: 2px; border-bottom: 2px solid transparent; }
-.topbar nav a:hover { color: #fff; border-bottom-color: var(--senape); }
+/* Menu a icone: ogni voce è un quadratino cliccabile di 40x40 px (comodo anche col dito sul telefono) */
+.topbar nav { display: flex; gap: .35rem; }
+.topbar nav a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px;
+                border-bottom: 2px solid transparent; transition: background-color .15s; }
+.topbar nav a:hover, .topbar nav a:focus-visible { background: rgba(246, 239, 223, .14); border-bottom-color: var(--senape); }
+.topbar nav img { display: block; }
 
 /* --- Contenitore e schede --- */
 .container { max-width: 1040px; margin: 0 auto; padding: 1.5rem 1rem; display: grid; gap: 1.5rem; }
