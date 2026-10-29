@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout – Viaggi</title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-  <!-- Leaflet (mappe, C3): foglio di stile -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -36,7 +34,7 @@
 
   <main class="container">
     <!-- Filtro: tutti, solo quelli "da fare in futuro", solo quelli già organizzati -->
-    <div class="segmenti" role="group" aria-label="Filtra i viaggi">
+    <div class="segmenti" id="filtri-viaggi" role="group" aria-label="Filtra i viaggi">
       <button type="button" data-filtro="tutti" aria-pressed="true">Tutti</button>
       <button type="button" data-filtro="da-fare" aria-pressed="false">Da fare</button>
       <button type="button" data-filtro="organizzati" aria-pressed="false">Organizzati</button>
@@ -86,28 +84,13 @@
         </label>
         <label class="check"><input name="serve_cucina" type="checkbox"> Serve la cucina</label>
 
-        <!-- C3: il percorso sulla mappa dei sentieri. Tocchi partenza, tappe e arrivo:
-             il server chiede a BRouter il tracciato lungo i sentieri e compila km e dislivello -->
-        <div class="blocco-mappa">
-          <p class="titolo-campo">Percorso sulla mappa <span class="muto">(facoltativo)</span></p>
-          <p class="muto aiuto-mappa">Tocca la <strong>partenza</strong>, poi le eventuali tappe e l'<strong>arrivo</strong>: il percorso segue i sentieri.
-            Per un <strong>anello</strong>: tocca le tappe del giro, poi di nuovo la partenza (o «Chiudi l'anello»).</p>
-          <div class="mappa" id="mappa-scelta"></div>
-          <p class="riepilogo-percorso" id="riepilogo-percorso" role="status"></p>
-          <div class="azioni">
-            <button type="button" class="secondario btn-piccolo" id="chiudi-anello">Chiudi l'anello</button>
-            <button type="button" class="secondario btn-piccolo" id="togli-punto">Togli l'ultimo punto</button>
-            <button type="button" class="secondario btn-piccolo" id="ricomincia-mappa">Cancella il percorso</button>
-          </div>
-        </div>
-
         <details>
-          <summary>Dettagli del percorso (km, dislivello, coordinate, note)</summary>
+          <summary>Percorso e coordinate (facoltativi)</summary>
           <div class="riga2">
             <label>Lunghezza (km)
               <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">
             </label>
-            <label>Dislivello (m)
+            <label>Salita totale (m)
               <input name="dislivello_m" type="number" min="0" max="9000" step="1">
             </label>
           </div>
@@ -144,8 +127,6 @@
     </dialog>
   </main>
 
-  <!-- Leaflet: script "classico" (non module) che crea la variabile globale L, prima dei nostri moduli -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="/js/viaggi.js"></script>
 </body>
 </html>

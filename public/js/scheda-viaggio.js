@@ -1,7 +1,6 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { CATEGORIE } from "./categorie.js";
-import { creaMappa, punto, tracciato, lineaDritta } from "./mappa.js";
 
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
@@ -135,36 +134,6 @@ function renderConsigli() {
   elPercorso.textContent = parti.length
     ? parti.join(" · ")
     : "Aggiungi km, dislivello e coordinate per avere più consigli.";
-
-  disegnaMappaPercorso(); // C3
-}
-
-// --- C3: la mappa del percorso: il tracciato lungo i sentieri se c'è, altrimenti la linea in linea d'aria ---
-let mappaPercorso = null;
-let puntiPercorso = null; // gruppo con punti e linee: si svuota prima di ridisegnare (niente doppioni)
-function disegnaMappaPercorso() {
-  const v = viaggio;
-  const elMappa = document.querySelector("#mappa-percorso");
-  if (v.lat_partenza == null || v.lon_partenza == null || typeof L === "undefined") {
-    elMappa.hidden = true; // niente coordinate (o Leaflet non caricato): niente mappa
-    return;
-  }
-  elMappa.hidden = false;
-  const partenza = [v.lat_partenza, v.lon_partenza];
-  const arrivo = v.lat_arrivo != null && v.lon_arrivo != null ? [v.lat_arrivo, v.lon_arrivo] : null;
-  if (!mappaPercorso) { // una volta sola (renderConsigli può ripartire con "Ricalcola")
-    mappaPercorso = creaMappa("mappa-percorso", partenza, 13);
-    puntiPercorso = L.layerGroup().addTo(mappaPercorso);
-  }
-  puntiPercorso.clearLayers();
-  if (v.traccia?.length) tracciato(v.traccia).addTo(puntiPercorso);  // il percorso vero, lungo i sentieri
-  else if (arrivo) lineaDritta([partenza, arrivo]).addTo(puntiPercorso);
-  punto(...partenza, "partenza").addTo(puntiPercorso);
-  if (arrivo) punto(...arrivo, "arrivo").addTo(puntiPercorso);
-
-  // Inquadra tutto: il tracciato, oppure partenza e arrivo
-  const daInquadrare = v.traccia?.length ? v.traccia : arrivo ? [partenza, arrivo] : null;
-  if (daInquadrare) mappaPercorso.fitBounds(daInquadrare, { padding: [25, 25], maxZoom: 15 });
 }
 
 // Ricalcolo dell'acqua con le ore inserite dall'utente (US6 CA1)

@@ -397,17 +397,5 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 .btn.secondario { background: transparent; color: var(--muschio); border-color: var(--muschio); cursor: pointer; }
 .btn.secondario:hover { background: var(--salvia-chiaro); }
 
-/* --- Mappe (C3, Leaflet) ---
-   position + z-index: 0 creano un "contesto di sovrapposizione": i livelli interni di Leaflet
-   (che usano z-index fino a 1000) restano DENTRO la mappa e non coprono il menu in basso */
-.mappa { position: relative; z-index: 0; height: 260px; margin: .6rem 0; overflow: hidden;
-         border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); background: var(--salvia-chiaro); }
-.aiuto-mappa { margin: .6rem 0 0; }
-#mappa-percorso { height: 220px; }
-.leaflet-container { font-family: var(--font); }
 
-/* C3: blocco della mappa nel form del viaggio */
-.blocco-mappa { display: grid; gap: .1rem; }
-.titolo-campo { margin: 0; font-size: .88rem; font-weight: 500; color: var(--terra); }
-.titolo-campo .muto { font-size: .8rem; }
-.riepilogo-percorso { margin: 0 0 .4rem; min-height: 1.4em; font-weight: 600; color: var(--muschio); }
+

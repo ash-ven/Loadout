@@ -1,10 +1,9 @@
 import { api, esc, formattaData, oggiISO } from "./api.js";
 import "./menu.js";
-import { creaMappa, punto, tracciato, lineaDritta, numeroDa } from "./mappa.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
-const segmenti = document.querySelector(".segmenti");
+const segmenti = document.querySelector("#filtri-viaggi"); // con un id: nella pagina ci sono due gruppi di segmenti
 const riepilogo = document.querySelector("#riepilogo");
 const form = document.querySelector("#form-viaggio");
 const campi = form.elements;
@@ -99,7 +98,6 @@ segmenti.addEventListener("click", (e) => {
 // Il browser la chiude da solo anche con il tasto Esc.
 function apriFinestra() {
   finestra.showModal();
-  preparaMappa(); // C3: ora la finestra è visibile e Leaflet può misurare la mappa
   campi.nome.focus(); // il cursore va nel primo campo
 }
 
@@ -124,10 +122,6 @@ function svuotaForm() {
   titoloForm.textContent = "Prepara il tuo cammino";
   bottoneSalva.textContent = "Crea il viaggio";
   rigaGenera.hidden = false;
-  punti = [];      // via anche il percorso sulla mappa
-  traccia = null;
-  mostraRiepilogo("");
-  disegna();
 }
 
 finestra.addEventListener("close", () => {
@@ -153,160 +147,6 @@ function apriModifica(v) {
   campi.serve_cucina.checked = v.serve_cucina;
   campi.pianificato.checked = v.pianificato;
   apriFinestra();
-  // Sulla mappa: il percorso salvato (se c'è) con partenza e arrivo
-  const ok = (lat, lon) => lat != null && lon != null;
-  punti = [[v.lat_partenza, v.lon_partenza], [v.lat_arrivo, v.lon_arrivo]].filter(([lat, lon]) => ok(lat, lon));
-  traccia = v.traccia ?? null;
-  disegna();
-  if (traccia) mostraRiepilogo("Percorso salvato. Per cambiarlo, «Cancella il percorso» e tocca i nuovi punti.");
-}
-
-// =====================================================================
-//  C3: PERCORSO SULLA MAPPA DEI SENTIERI
-//  Stato: i punti toccati (partenza, tappe, arrivo) e la traccia calcolata.
-//  Ogni volta che i punti cambiano: chiedo il percorso al server (che chiede a BRouter),
-//  compilo km, dislivello e coordinate, e ridisegno la mappa.
-// =====================================================================
-let mappa = null;         // creata la prima volta che si apre la finestra (Leaflet vuole un contenitore visibile)
-let livello = null;       // gruppo con punti e linee: si svuota e si ridisegna
-let punti = [];           // [[lat, lon], ...] nell'ordine in cui li hai toccati
-let traccia = null;       // il percorso lungo i sentieri arrivato dal server, oppure null
-let ultimaRichiesta = 0;  // numero dell'ultima richiesta: le risposte "vecchie" vengono ignorate
-const riepilogoPercorso = document.querySelector("#riepilogo-percorso");
-
-function preparaMappa() {
-  if (!mappa) {
-    mappa = creaMappa("mappa-scelta");
-    livello = L.layerGroup().addTo(mappa);
-    mappa.on("click", (e) => aggiungiPunto([e.latlng.lat, e.latlng.lng]));
-  }
-  mappa.invalidateSize(); // il contenitore era nascosto (finestra chiusa): Leaflet ricalcola le misure
-}
-
-// daiCampi = true quando i punti arrivano dai campi scritti a mano: in quel caso i campi
-// NON vanno riscritti (cancellerebbero quello che stai ancora scrivendo)
-// --- Anelli ---
-// Distanza approssimata in metri tra due punti [lat, lon] (basta per dire "è lo stesso posto")
-function metri([lat1, lon1], [lat2, lon2]) {
-  const x = (lon2 - lon1) * 111_320 * Math.cos((lat1 * Math.PI) / 180);
-  const y = (lat2 - lat1) * 110_540;
-  return Math.hypot(x, y);
-}
-// È un anello se ci sono almeno 3 punti e l'ultimo coincide con il primo
-const eAnello = () => punti.length >= 3 && metri(punti[0], punti.at(-1)) < 1;
-
-function aggiungiPunto(nuovo) {
-  if (punti.length >= 10) return mostraRiepilogo("Al massimo 10 punti.");
-  if (eAnello()) {
-    // anello già chiuso: la nuova tappa va PRIMA del ritorno alla partenza, così il giro resta chiuso
-    punti.splice(punti.length - 1, 0, nuovo);
-  } else if (punti.length >= 2 && metri(punti[0], nuovo) < 60) {
-    punti.push([...punti[0]]); // tocco a meno di 60 m dalla partenza: è la chiusura dell'anello
-  } else {
-    punti.push(nuovo);
-  }
-  cambiatiIPunti();
-}
-
-function chiudiAnello() {
-  if (eAnello()) return;
-  if (punti.length < 2) return mostraRiepilogo("Per un anello tocca prima la partenza e almeno una tappa.");
-  if (punti.length >= 10) return mostraRiepilogo("Al massimo 10 punti.");
-  punti.push([...punti[0]]); // l'arrivo è la partenza
-  cambiatiIPunti();
-}
-
-async function cambiatiIPunti({ daiCampi = false } = {}) {
-  traccia = null;
-  if (!daiCampi) compilaCoordinate();
-  disegna();
-  if (punti.length < 2) return mostraRiepilogo(punti.length === 1 ? "Ora tocca l'arrivo (o una tappa)." : "");
-
-  const questa = ++ultimaRichiesta;
-  mostraRiepilogo("Cerco il percorso sui sentieri…");
-  try {
-    const q = punti.map(([lat, lon]) => `${lat.toFixed(5)},${lon.toFixed(5)}`).join(";");
-    const percorso = await api(`/api/percorso?punti=${q}`);
-    if (questa !== ultimaRichiesta) return; // nel frattempo hai toccato un altro punto: questa risposta è vecchia
-    traccia = percorso.traccia;
-    campi.distanza_km.value = percorso.distanza_km;
-    campi.dislivello_m.value = percorso.dislivello_m;
-    const misure = `${percorso.distanza_km.toLocaleString("it-IT")} km sui sentieri, ${percorso.dislivello_m.toLocaleString("it-IT")} m di salita.`;
-    // Anello con una sola tappa: BRouter va e torna sullo stesso sentiero. Lo diciamo, invece di far finta di niente.
-    const avvisoAndataRitorno = eAnello() && punti.length === 3
-      ? " Con una sola tappa il percorso torna indietro sulla stessa strada: per un vero giro aggiungi una tappa sull'altro versante."
-      : "";
-    mostraRiepilogo((eAnello() ? `Anello: ${misure}` : misure) + avvisoAndataRitorno);
-    disegna();
-  } catch (err) {
-    if (questa !== ultimaRichiesta) return;
-    mostraRiepilogo(err.message); // es. "Nessun sentiero trovato vicino a uno dei punti…"
-  }
-}
-
-// Partenza = primo punto, arrivo = ultimo: finiscono nei campi del form (che vengono salvati)
-function compilaCoordinate() {
-  const metti = (tipo, p) => {
-    campi[`lat_${tipo}`].value = p ? p[0].toFixed(5) : "";
-    campi[`lon_${tipo}`].value = p ? p[1].toFixed(5) : "";
-  };
-  metti("partenza", punti[0]);
-  metti("arrivo", punti.length >= 2 ? punti.at(-1) : null);
-}
-
-function disegna() {
-  if (!mappa) return;
-  livello.clearLayers();
-  if (traccia) tracciato(traccia).addTo(livello);                     // il percorso vero
-  else if (punti.length >= 2) lineaDritta(punti).addTo(livello);      // in attesa (o se il servizio non c'è)
-  const anello = eAnello();
-  punti.forEach((p, i) => {
-    const ultimo = i === punti.length - 1;
-    if (anello && ultimo) return; // l'arrivo coincide con la partenza: un pallino solo
-    if (i === 0) {
-      // La partenza è l'unico punto "cliccabile": toccarla di nuovo chiude l'anello
-      const partenza = punto(...p, anello ? "anello" : "partenza");
-      partenza.on("click", (e) => {
-        L.DomEvent.stopPropagation(e); // il tocco è per il pallino: non deve arrivare anche alla mappa
-        chiudiAnello();
-      });
-      partenza.addTo(livello);
-    } else {
-      punto(...p, ultimo ? "arrivo" : "tappa", { interattivo: false }).addTo(livello); // i tocchi passano alla mappa
-    }
-  });
-  // Inquadra quello che c'è: il percorso, oppure i punti (così un punto scritto a mano si vede subito)
-  if (traccia) mappa.fitBounds(traccia, { padding: [20, 20] });
-  else if (punti.length >= 2) mappa.fitBounds(punti, { padding: [30, 30], maxZoom: 14 });
-  else if (punti.length === 1 && !mappa.getBounds().contains(punti[0])) mappa.setView(punti[0], 13);
-}
-
-function mostraRiepilogo(testo) {
-  riepilogoPercorso.textContent = testo;
-}
-
-document.querySelector("#chiudi-anello").addEventListener("click", chiudiAnello);
-document.querySelector("#togli-punto").addEventListener("click", () => {
-  punti.pop();
-  cambiatiIPunti();
-});
-document.querySelector("#ricomincia-mappa").addEventListener("click", () => {
-  punti = [];
-  campi.distanza_km.value = "";
-  campi.dislivello_m.value = "";
-  cambiatiIPunti();
-});
-
-// Se scrivi le coordinate a mano: quando una coppia lat/lon è completa diventa un punto della mappa.
-// I campi si LEGGONO soltanto: finché ne manca uno, la mappa aspetta e non tocca quello che hai scritto.
-for (const nome of ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"]) {
-  campi[nome].addEventListener("change", () => {
-    const partenza = [numeroDa(campi.lat_partenza), numeroDa(campi.lon_partenza)];
-    const arrivo = [numeroDa(campi.lat_arrivo), numeroDa(campi.lon_arrivo)];
-    const completo = (p) => p[0] !== null && p[1] !== null;
-    punti = [partenza, arrivo].filter(completo);
-    cambiatiIPunti({ daiCampi: true });
-  });
 }
 
 // --- Lettura e validazione del form ---
@@ -329,7 +169,6 @@ function leggiForm() {
     lon_arrivo: numero("lon_arrivo"),
     note: campi.note.value.trim(),
     pianificato: campi.pianificato.checked,
-    traccia: traccia ?? undefined, // C3: il percorso lungo i sentieri (se c'è)
   };
 }
 

@@ -25,18 +25,7 @@ const schemaViaggio = {
   distanza_km:   { type: "number", min: 0.1, max: 999 },
   note:          { type: "string", maxLength: 1000 },
   pianificato:   { type: "boolean" },
-  traccia:       { type: "array" },  // C3: [[lat, lon], ...] da /api/percorso, controllata da tracciaValida()
 };
-
-// C3: la traccia deve essere un elenco di 2–5000 coppie [lat, lon] valide
-function tracciaValida(traccia) {
-  return traccia === undefined || (
-    traccia.length >= 2 && traccia.length <= 5000 &&
-    traccia.every((p) => Array.isArray(p) && p.length === 2 &&
-      Number.isFinite(p[0]) && Number.isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180)
-  );
-}
-const ERRORE_TRACCIA = { error: "BAD_TRACCIA", message: "traccia: da 2 a 5000 coppie [lat, lon] valide" };
 
 // === Middleware "guardiano": il viaggio :id esiste ed è mio? ===
 async function caricaViaggio(req, res, next) {
@@ -114,7 +103,6 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
 // === POST /api/viaggi?genera=true (crea; con genera=true riempie anche lo zaino, in una transazione) ===
 router.post("/", validate(schemaViaggio), async (req, res, next) => {
   try {
-    if (!tracciaValida(req.validated.traccia)) return res.status(400).json(ERRORE_TRACCIA);
     const genera = req.query.genera;
     if (genera !== undefined && genera !== "true" && genera !== "false") {
       return res.status(400).json({ error: "BAD_QUERY", message: "genera deve essere true oppure false" });
@@ -133,7 +121,6 @@ router.put("/:id", validate(schemaViaggio), async (req, res, next) => {
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "BAD_ID", message: "id deve essere un intero positivo" });
     }
-    if (!tracciaValida(req.validated.traccia)) return res.status(400).json(ERRORE_TRACCIA);
     const viaggio = await svc.update(req.user.sub, id, req.validated);
     if (!viaggio) return res.status(404).json({ error: "NOT_FOUND", message: `Viaggio ${id} non trovato` });
     res.json(viaggio);
