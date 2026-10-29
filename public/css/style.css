@@ -368,3 +368,11 @@ button.indosso[aria-pressed="true"] { background: var(--salvia-chiaro); color: v
 .riga-zaino.addosso .riga-nota { color: var(--salvia); font-weight: 600; }
 /* Al posto del pulsante "lo indosso" sulle righe non di abbigliamento: stesso spazio, così le colonne restano allineate */
 .indosso-vuoto { flex-shrink: 0; width: 36px; }
+
+/* --- Armadio: scheda di dettaglio di un oggetto (B1) --- */
+.dettaglio-titolo { display: flex; align-items: center; gap: .8rem; min-width: 0; }
+.dettaglio-titolo h2 { margin: 0; }
+.dettaglio-titolo p { margin: .1rem 0 0; }
+#dettaglio .riga-dettagli { margin-bottom: .5rem; }
+#dettaglio .dati { margin: .5rem 0 1.25rem; }
+#dettaglio .dati dd { white-space: pre-line; }   /* le note su più righe restano su più righe */

@@ -18,11 +18,19 @@ const finestra = document.querySelector("#finestra");              // il <dialog
 const bottoneNuovo = document.querySelector("#apri-nuovo");        // "Aggiungi" nella testata
 const bottoneScansiona = document.querySelector("#scansiona");     // "Scansiona etichetta" nella testata
 const bottoneChiudi = document.querySelector("#chiudi");           // la X in alto nella finestra
+// La scheda di dettaglio (B1): un secondo <dialog>, in sola lettura
+const dettaglio = document.querySelector("#dettaglio");
+const dettaglioIcona = document.querySelector("#dettaglio-icona");
+const dettaglioNome = document.querySelector("#dettaglio-nome");
+const dettaglioMarchio = document.querySelector("#dettaglio-marchio");
+const dettaglioBadge = document.querySelector("#dettaglio-badge");
+const dettaglioDati = document.querySelector("#dettaglio-dati");
 
 // --- Stato ---
 let oggetti = [];        // gli oggetti arrivati dall'API (già filtrati dalla ricerca)
 let filtro = "tutti";    // "tutti" | "indispensabili" | "preferiti"
 let inModifica = null;   // id dell'oggetto in modifica, oppure null se stiamo creando
+let aperto = null;       // l'oggetto mostrato nella scheda di dettaglio
 
 // --- Caricamento dall'API: aggiorna lo stato e ridisegna ---
 async function carica() {
@@ -35,10 +43,13 @@ async function carica() {
 // non hanno il punto delle migliaia. &nbsp; = niente a capo tra il numero e "g".
 const grammi = (g) => `${g.toLocaleString("it-IT", { useGrouping: "always" })}&nbsp;g`;
 
+// Peso di un oggetto contando tutti i pezzi che possiedi (B2): 3 paia di calze da 60 g = 180 g
+const pesoTuttiIPezzi = (o) => o.peso_g * (o.quantita_posseduta ?? 1);
+
 // --- Render: dallo stato all'HTML ---
 function render() {
   // Riepilogo nella testata: "4 oggetti, 0,96 kg in tutto"
-  const pesoTotale = oggetti.reduce((somma, o) => somma + o.peso_g, 0);
+  const pesoTotale = oggetti.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
   const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   riepilogo.innerHTML = `<strong>${oggetti.length} ${oggetti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
   segmenti.querySelector('[data-filtro="tutti"]').textContent = `Tutti · ${oggetti.length}`;
@@ -59,7 +70,7 @@ function render() {
   lista.innerHTML = Object.keys(CATEGORIE).map((categoria) => {
     const delGruppo = visibili.filter((o) => o.categoria === categoria);
     if (delGruppo.length === 0) return "";
-    const pesoGruppo = delGruppo.reduce((somma, o) => somma + o.peso_g, 0);
+    const pesoGruppo = delGruppo.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
     return `
       <section class="gruppo">
         <div class="gruppo-testa"><h2>${CATEGORIE[categoria]}</h2><span>${grammi(pesoGruppo)}</span></div>
@@ -76,7 +87,7 @@ function rigaOggetto(o) {
       <span class="riga-testo">
         <span class="riga-nome">${esc(o.nome)}</span>
         <span class="riga-dettagli">
-          ${o.note ? `<span class="riga-nota">${esc(o.note)}</span>` : ""}
+          ${sottotitolo(o) ? `<span class="riga-nota">${esc(sottotitolo(o))}</span>` : ""}
           ${o.is_indispensabile ? '<span class="badge indispensabile">Indispensabile</span>' : ""}
           ${o.is_preferito ? '<span class="badge preferito">Preferito</span>' : ""}
         </span>
@@ -85,12 +96,52 @@ function rigaOggetto(o) {
     </button>`;
 }
 
+// Sotto il nome: marchio e pezzi posseduti (B1, B2); se non ci sono, la nota
+function sottotitolo(o) {
+  const parti = [o.marchio, o.quantita_posseduta > 1 ? `${o.quantita_posseduta} pezzi` : null].filter(Boolean);
+  return parti.length ? parti.join(" · ") : o.note;
+}
+
 // --- Clic su un oggetto della lista (event delegation: UN solo listener per tutte le righe) ---
 lista.addEventListener("click", (e) => {
   const riga = e.target.closest(".riga[data-id]");
   if (!riga) return;
-  const oggetto = oggetti.find((o) => o.id === Number(riga.dataset.id));
-  riempiForm(oggetto);
+  apriDettaglio(oggetti.find((o) => o.id === Number(riga.dataset.id)));
+});
+
+// --- Scheda di dettaglio (B1): tutto quello che sappiamo dell'oggetto, in sola lettura ---
+function apriDettaglio(o) {
+  aperto = o;
+  dettaglioIcona.innerHTML = `<img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22">`;
+  dettaglioNome.textContent = o.nome;
+  dettaglioMarchio.textContent = o.marchio ?? "";
+  dettaglioMarchio.hidden = !o.marchio;
+  dettaglioBadge.innerHTML =
+    (o.is_indispensabile ? '<span class="badge indispensabile">Indispensabile</span>' : "") +
+    (o.is_preferito ? '<span class="badge preferito">Preferito</span>' : "");
+
+  // Solo le voci che hanno un valore: [etichetta, valore]
+  const voci = [
+    ["Categoria", CATEGORIE[o.categoria]],
+    ["Peso", `${o.peso_g.toLocaleString("it-IT", { useGrouping: "always" })} g`],
+    ["Pezzi", o.quantita_posseduta],
+    ["Caratteristiche", o.caratteristiche],
+    ["Codice etichetta", o.codice_etichetta],
+    ["Note", o.note],
+  ].filter(([, valore]) => valore !== null && valore !== undefined && valore !== "");
+  dettaglioDati.innerHTML = voci.map(([etichetta, valore]) => `<dt>${etichetta}</dt><dd>${esc(valore)}</dd>`).join("");
+
+  dettaglio.showModal();
+}
+
+document.querySelector("#dettaglio-modifica").addEventListener("click", () => {
+  dettaglio.close();
+  riempiForm(aperto); // dalla scheda alla finestra con il form, già compilato
+});
+document.querySelector("#dettaglio-elimina").addEventListener("click", () => elimina(aperto.id));
+document.querySelector("#chiudi-dettaglio").addEventListener("click", () => dettaglio.close());
+dettaglio.addEventListener("click", (e) => {
+  if (e.target === dettaglio) dettaglio.close(); // clic sullo sfondo scuro
 });
 
 // --- Segmenti Tutti / Indispensabili / Preferiti ---
@@ -108,10 +159,11 @@ async function elimina(id) {
   if (!confirm(`Eliminare "${oggetto.nome}"?\nSparirà anche dagli zaini in cui si trova.`)) return;
   try {
     await api(`/api/oggetti/${id}`, { method: "DELETE" });
-    finestra.close(); // la chiusura svuota anche il form (evento "close")
+    finestra.close();  // la chiusura svuota anche il form (evento "close")
+    dettaglio.close(); // se l'hai eliminato dalla scheda di dettaglio (chiudere un dialog già chiuso non fa nulla)
     await carica();
   } catch (err) {
-    mostraErrore(err.message);
+    alert(err.message);
   }
 }
 
@@ -121,6 +173,9 @@ function riempiForm(o) {
   campi.nome.value = o.nome;
   campi.categoria.value = o.categoria;
   campi.peso_g.value = o.peso_g;
+  campi.marchio.value = o.marchio ?? "";
+  campi.quantita_posseduta.value = o.quantita_posseduta ?? 1;
+  campi.caratteristiche.value = o.caratteristiche ?? "";
   campi.is_indispensabile.checked = o.is_indispensabile;
   campi.is_preferito.checked = o.is_preferito;
   campi.codice_etichetta.value = o.codice_etichetta ?? "";
@@ -176,6 +231,9 @@ function leggiForm() {
     nome: campi.nome.value.trim(),
     categoria: campi.categoria.value,
     peso_g: Number(campi.peso_g.value),
+    marchio: campi.marchio.value.trim(),
+    quantita_posseduta: Number(campi.quantita_posseduta.value || 1),
+    caratteristiche: campi.caratteristiche.value.trim(),
     is_indispensabile: campi.is_indispensabile.checked,
     is_preferito: campi.is_preferito.checked,
     codice_etichetta: campi.codice_etichetta.value.trim(),
@@ -187,6 +245,9 @@ function validaLatoClient(dati) {
   const errori = [];
   if (!dati.nome) errori.push("Il nome è obbligatorio");
   if (!Number.isInteger(dati.peso_g) || dati.peso_g < 1) errori.push("Il peso deve essere un numero intero di almeno 1 grammo");
+  if (!Number.isInteger(dati.quantita_posseduta) || dati.quantita_posseduta < 1 || dati.quantita_posseduta > 99) {
+    errori.push("I pezzi posseduti devono essere tra 1 e 99");
+  }
   return errori;
 }
 

@@ -171,6 +171,14 @@ const schemaModifica = {
   indossato: { type: "boolean" }, // B3: lo porto addosso, non pesa nello zaino
 };
 
+// B2: la risposta quando chiedi più pezzi di quanti ne possiedi
+function troppi(posseduti) {
+  return {
+    error: "QUANTITA_OLTRE_POSSEDUTI",
+    message: posseduti === 1 ? "Nell'armadio ne hai solo uno" : `Nell'armadio ne hai solo ${posseduti}`,
+  };
+}
+
 // legge :oggettoId dall'URL; null se non è un intero positivo
 function leggiOggettoId(req) {
   const id = Number(req.params.oggettoId);
@@ -181,6 +189,10 @@ function leggiOggettoId(req) {
 router.post("/:id/zaino", caricaViaggio, validate(schemaAggiungi), async (req, res, next) => {
   try {
     const { oggetto_id, quantita = 1 } = req.validated;
+    // B2: non puoi metterne più di quanti ne possiedi
+    const posseduti = await zaino.posseduti(req.user.sub, oggetto_id);
+    if (posseduti == null) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggetto_id} non trovato` });
+    if (quantita > posseduti) return res.status(400).json(troppi(posseduti));
     const riga = await zaino.aggiungi(req.user.sub, req.viaggio.id, oggetto_id, quantita);
     if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggetto_id} non trovato` });
     res.status(201).json(riga);
@@ -195,13 +207,15 @@ router.patch("/:id/zaino/:oggettoId", caricaViaggio, validate(schemaModifica), a
     if (Object.keys(req.validated).length === 0) {
       return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito', 'quantita' o 'indossato'" });
     }
-    // B3: si può indossare solo l'abbigliamento (il frontend mostra il pulsante solo lì, ma decide il server)
-    if (req.validated.indossato === true) {
-      const categoria = await zaino.categoria(req.viaggio.id, oggettoId);
-      if (!categoria) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
-      if (categoria !== "abbigliamento") {
+    // Controlli sull'oggetto (il frontend aiuta, ma decide il server):
+    // B3 si può indossare solo l'abbigliamento; B2 non più pezzi di quanti ne possiedi
+    if (req.validated.indossato === true || req.validated.quantita !== undefined) {
+      const info = await zaino.infoNelloZaino(req.viaggio.id, oggettoId);
+      if (!info) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
+      if (req.validated.indossato === true && info.categoria !== "abbigliamento") {
         return res.status(400).json({ error: "NON_INDOSSABILE", message: "Si può indossare solo l'abbigliamento" });
       }
+      if (req.validated.quantita > info.quantita_posseduta) return res.status(400).json(troppi(info.quantita_posseduta));
     }
     const riga = await zaino.modifica(req.viaggio.id, oggettoId, req.validated);
     if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });

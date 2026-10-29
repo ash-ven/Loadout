@@ -14,6 +14,9 @@ const schemaOggetto = {
   is_preferito:      { type: "boolean" },
   codice_etichetta:  { type: "string", maxLength: 64 },
   note:              { type: "string", maxLength: 1000 },
+  marchio:           { type: "string", maxLength: 80 },                         // B1
+  caratteristiche:   { type: "string", maxLength: 500 },                        // B1
+  quantita_posseduta:{ type: "number", integer: true, min: 1, max: 99 },        // B2
 };
 
 // === GET /api/oggetti?q=&categoria=&limit=&offset= (lista) ===

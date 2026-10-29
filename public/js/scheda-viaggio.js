@@ -208,10 +208,11 @@ function rigaZaino(o) {
       <span class="riquadro-icona"><img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22"></span>
       <span class="riga-testo">
         <span class="riga-nome">${esc(o.nome)}</span>
-        <span class="riga-nota">${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}${o.indossato ? " · addosso" : ""}</span>
+        <span class="riga-nota">${o.marchio ? `${esc(o.marchio)} · ` : ""}${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}${o.indossato ? " · addosso" : ""}</span>
       </span>
       ${o.categoria === "abbigliamento" ? pulsanteIndosso(o) : '<span class="indosso-vuoto"></span>'}
-      <input type="number" class="quantita" min="1" max="99" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">
+      <!-- max = pezzi che possiedi (B2): le frecce del campo non vanno oltre -->
+      <input type="number" class="quantita" min="1" max="${o.quantita_posseduta}" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">
       <button type="button" class="togli" aria-label="Togli ${esc(o.nome)} dallo zaino" title="Togli dallo zaino">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
@@ -279,9 +280,15 @@ elChecklist.addEventListener("change", async (e) => {
     modifica = { inserito: e.target.checked };
   } else if (e.target.matches(".quantita")) {
     const quantita = Number(e.target.value);
-    if (!Number.isInteger(quantita) || quantita < 1 || quantita > 99) {
-      mostraErrore("La quantità deve essere un numero intero tra 1 e 99");
+    const posseduti = Number(e.target.max); // B2: quanti ne hai nell'armadio
+    if (!Number.isInteger(quantita) || quantita < 1) {
+      mostraErrore("La quantità deve essere un numero intero, almeno 1");
       renderZaino(); // rimette il valore giusto
+      return;
+    }
+    if (quantita > posseduti) {
+      mostraErrore(posseduti === 1 ? "Nell'armadio ne hai solo uno" : `Nell'armadio ne hai solo ${posseduti}`);
+      renderZaino();
       return;
     }
     modifica = { quantita };
@@ -318,6 +325,13 @@ elChecklist.addEventListener("click", async (e) => {
   } catch (err) {
     mostraErrore(err.message);
   }
+});
+
+// B2: scegliendo un oggetto, il campo quantità non può superare i pezzi che ne possiedi
+formAggiungi.elements.oggetto_id.addEventListener("change", () => {
+  const scelto = armadio.find((o) => o.id === Number(formAggiungi.elements.oggetto_id.value));
+  formAggiungi.elements.quantita.max = scelto ? scelto.quantita_posseduta : 99;
+  formAggiungi.elements.quantita.value = 1;
 });
 
 // --- Aggiungi un oggetto dall'armadio (US5 CA3) ---

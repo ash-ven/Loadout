@@ -55,17 +55,26 @@ export async function modifica(viaggioId, oggettoId, { inserito, quantita, indos
   return rows[0] ?? null;
 }
 
-// La categoria di un oggetto che sta nello zaino del viaggio (null se non c'è):
-// serve per controllare che si possa indossare (B3: solo l'abbigliamento)
-export async function categoria(viaggioId, oggettoId) {
+// Categoria e pezzi posseduti di un oggetto che sta nello zaino del viaggio (null se non c'è).
+// Servono per due controlli: si può indossare? (B3) e ne hai abbastanza? (B2)
+export async function infoNelloZaino(viaggioId, oggettoId) {
   const { rows } = await query(
-    `SELECT o.categoria
+    `SELECT o.categoria, o.quantita_posseduta
      FROM viaggio_oggetto vo
      JOIN oggetto o ON o.id = vo.oggetto_id
      WHERE vo.viaggio_id = $1 AND vo.oggetto_id = $2`,
     [viaggioId, oggettoId]
   );
-  return rows[0]?.categoria ?? null;
+  return rows[0] ?? null;
+}
+
+// Pezzi posseduti di un oggetto dell'utente (null se l'oggetto non è suo o non esiste): B2
+export async function posseduti(utenteId, oggettoId) {
+  const { rows } = await query(
+    "SELECT quantita_posseduta FROM oggetto WHERE id = $1 AND utente_id = $2",
+    [oggettoId, utenteId]
+  );
+  return rows[0]?.quantita_posseduta ?? null;
 }
 
 // Toglie un oggetto dallo zaino (l'oggetto resta nell'armadio)

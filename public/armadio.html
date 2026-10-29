@@ -49,6 +49,29 @@
     <!-- La lista, divisa per categoria: la riempie armadio.js -->
     <div class="gruppi" id="lista"></div>
 
+    <!-- Scheda di dettaglio di un oggetto (sola lettura): si apre cliccando un oggetto della lista.
+         Da qui si passa a "Modifica" (la finestra con il form) o si elimina. La riempie armadio.js -->
+    <dialog class="finestra" id="dettaglio" aria-labelledby="dettaglio-nome">
+      <div class="finestra-contenuto">
+        <div class="finestra-testa">
+          <div class="dettaglio-titolo">
+            <span class="riquadro-icona" id="dettaglio-icona"></span>
+            <div>
+              <h2 id="dettaglio-nome"></h2>
+              <p class="muto" id="dettaglio-marchio"></p>
+            </div>
+          </div>
+          <button type="button" class="chiudi" id="chiudi-dettaglio" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </div>
+        <div class="riga-dettagli" id="dettaglio-badge"></div>
+        <dl class="dati" id="dettaglio-dati"></dl>
+        <div class="azioni">
+          <button type="button" id="dettaglio-modifica">Modifica</button>
+          <button type="button" class="pericolo spinto-a-destra" id="dettaglio-elimina">Elimina</button>
+        </div>
+      </div>
+    </dialog>
+
     <!-- Finestra (dialog) con il form nuovo / modifica: si apre con Aggiungi, Scansiona o cliccando un oggetto -->
     <dialog class="finestra" id="finestra" aria-labelledby="titolo-form">
       <div class="finestra-contenuto">
@@ -72,11 +95,22 @@
             <option value="altro">Altro</option>
           </select>
         </label>
-        <label>Peso (grammi)
-          <input name="peso_g" type="number" min="1" step="1" required>
+        <label>Marchio
+          <input name="marchio" type="text" maxlength="80" placeholder="es. Salewa">
         </label>
+        <div class="riga2">
+          <label>Peso (grammi)
+            <input name="peso_g" type="number" min="1" step="1" required>
+          </label>
+          <label>Quanti ne hai
+            <input name="quantita_posseduta" type="number" min="1" max="99" step="1" value="1">
+          </label>
+        </div>
         <label class="check"><input name="is_indispensabile" type="checkbox"> Indispensabile</label>
         <label class="check"><input name="is_preferito" type="checkbox"> Preferito</label>
+        <label>Caratteristiche tecniche
+          <textarea name="caratteristiche" maxlength="500" rows="2" placeholder="es. Gore-Tex, impermeabile, taglia M"></textarea>
+        </label>
         <label>Codice etichetta
           <input name="codice_etichetta" type="text" maxlength="64">
         </label>
