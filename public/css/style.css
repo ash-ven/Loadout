@@ -166,3 +166,4 @@ tr.inserito .nome-oggetto { text-decoration: line-through; }
 th .icona { display: block; margin: 0; width: 18px; height: 18px; }  /* nelle intestazioni il testo è piccolo: misura fissa */
 .avviso { display: flex; align-items: flex-start; gap: .55rem; }
 .avviso .icona { width: 1.4em; height: 1.4em; margin: 0; flex-shrink: 0; }
+label.check .icona { margin: 0; width: 1.3em; height: 1.3em; }  /* nelle checkbox lo spazio lo dà già il gap del flex */

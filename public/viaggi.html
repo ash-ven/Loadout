@@ -20,7 +20,7 @@
   <main class="container due-colonne">
     <!-- Colonna sinistra: i miei viaggi -->
     <section class="card">
-      <h1>I miei viaggi</h1>
+      <h1><img class="icona" src="/img/icone/viaggi.svg" alt="" width="24" height="24">I miei viaggi</h1>
       <div class="filtri">
         <select id="filtro-pianificati" aria-label="Filtra i viaggi">
           <option value="">Tutti i viaggi</option>
@@ -41,7 +41,7 @@
 
     <!-- Colonna destra: prepara il tuo cammino -->
     <section class="card">
-      <h2>Prepara il tuo cammino</h2>
+      <h2><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24">Prepara il tuo cammino</h2>
       <form id="form-viaggio" novalidate>
         <label>Nome dell'uscita
           <input name="nome" type="text" maxlength="150" required>
@@ -107,8 +107,8 @@
           </label>
         </details>
 
-        <label class="check"><input name="pianificato" type="checkbox"> Percorso da fare in futuro</label>
-        <label class="check"><input name="genera" type="checkbox" checked> Genera subito lo zaino</label>
+        <label class="check"><input name="pianificato" type="checkbox"> <img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Percorso da fare in futuro</label>
+        <label class="check"><input name="genera" type="checkbox" checked> <img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Genera subito lo zaino</label>
         <p class="errore" id="form-errore" hidden></p>
         <button type="submit" id="salva">Crea il viaggio</button>
       </form>
