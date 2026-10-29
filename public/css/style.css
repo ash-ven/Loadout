@@ -360,3 +360,11 @@ button.togli:hover { background: #f6e3df; color: var(--rosso); }
 .dato-grande { margin: .15rem 0 .35rem; font-family: var(--font-titoli); font-size: 2.3rem; font-weight: 600;
                line-height: 1; color: var(--muschio); font-variation-settings: "opsz" 72; }
 .dato-grande span { font-family: var(--font); font-size: .95rem; font-weight: 500; color: var(--terra); }
+/* B3 "lo indosso": pulsante tondo con la maglietta; acceso (aria-pressed="true") diventa salvia */
+button.indosso { flex-shrink: 0; display: grid; place-items: center; width: 36px; height: 36px; padding: 0;
+                 border-radius: 50%; background: transparent; color: var(--terra); border: 1.5px dashed var(--bordo); }
+button.indosso:hover { background: var(--salvia-chiaro); color: var(--muschio); }
+button.indosso[aria-pressed="true"] { background: var(--salvia-chiaro); color: var(--muschio); border: 1.5px solid var(--salvia); }
+.riga-zaino.addosso .riga-nota { color: var(--salvia); font-weight: 600; }
+/* Al posto del pulsante "lo indosso" sulle righe non di abbigliamento: stesso spazio, così le colonne restano allineate */
+.indosso-vuoto { flex-shrink: 0; width: 36px; }

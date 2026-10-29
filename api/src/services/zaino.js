@@ -15,11 +15,13 @@ export async function dettaglio(viaggioId) {
   return rows;
 }
 
-// Il peso: totale e già inserito, in grammi e in kg con 2 decimali
+// Il peso: totale e già inserito, in grammi e in kg con 2 decimali.
+// Gli oggetti indossati NON contano nel peso dello zaino: stanno a parte in peso_addosso (B3).
 export async function peso(viaggioId) {
   const { rows } = await query(
     `SELECT n_oggetti, peso_totale_g, peso_inserito_g, peso_totale_kg,
-            ROUND(peso_inserito_g / 1000.0, 2) AS peso_inserito_kg
+            ROUND(peso_inserito_g / 1000.0, 2) AS peso_inserito_kg,
+            peso_addosso_g, ROUND(peso_addosso_g / 1000.0, 2) AS peso_addosso_kg
      FROM v_zaino_peso
      WHERE viaggio_id = $1`,
     [viaggioId]
@@ -38,16 +40,32 @@ export async function aggiungi(utenteId, viaggioId, oggettoId, quantita) {
   return rows[0] ?? null;
 }
 
-// Cambia "inserito" e/o la quantità (solo i campi inviati)
-export async function modifica(viaggioId, oggettoId, { inserito, quantita }) {
+// Cambia "inserito", la quantità e/o "indossato" (solo i campi inviati:
+// COALESCE($n, colonna) = "se non me l'hai mandato, lascia il valore che c'è")
+export async function modifica(viaggioId, oggettoId, { inserito, quantita, indossato }) {
   const { rows } = await query(
     `UPDATE viaggio_oggetto
-     SET inserito = COALESCE($3, inserito), quantita = COALESCE($4, quantita)
+     SET inserito  = COALESCE($3, inserito),
+         quantita  = COALESCE($4, quantita),
+         indossato = COALESCE($5, indossato)
      WHERE viaggio_id = $1 AND oggetto_id = $2
      RETURNING *`,
-    [viaggioId, oggettoId, inserito ?? null, quantita ?? null]
+    [viaggioId, oggettoId, inserito ?? null, quantita ?? null, indossato ?? null]
   );
   return rows[0] ?? null;
+}
+
+// La categoria di un oggetto che sta nello zaino del viaggio (null se non c'è):
+// serve per controllare che si possa indossare (B3: solo l'abbigliamento)
+export async function categoria(viaggioId, oggettoId) {
+  const { rows } = await query(
+    `SELECT o.categoria
+     FROM viaggio_oggetto vo
+     JOIN oggetto o ON o.id = vo.oggetto_id
+     WHERE vo.viaggio_id = $1 AND vo.oggetto_id = $2`,
+    [viaggioId, oggettoId]
+  );
+  return rows[0]?.categoria ?? null;
 }
 
 // Toglie un oggetto dallo zaino (l'oggetto resta nell'armadio)

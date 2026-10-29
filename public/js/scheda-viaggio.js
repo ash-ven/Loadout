@@ -20,6 +20,7 @@ const bottoneGenera = document.querySelector("#genera");
 const bottoneSvuota = document.querySelector("#svuota");
 const elPesoInserito = document.querySelector("#peso-inserito");
 const elPesoTotale = document.querySelector("#peso-totale");
+const elPesoAddosso = document.querySelector("#peso-addosso"); // B3: quello che indossi, a parte
 const barraRiempimento = document.querySelector("#barra-riempimento");
 const elAvvisoPeso = document.querySelector("#avviso-peso");
 const elTestoAvvisoPeso = document.querySelector("#testo-avviso-peso"); // il testo: l'icona accanto resta fissa
@@ -156,6 +157,9 @@ function renderZaino() {
   elPesoTotale.textContent = num2(p.peso_totale_kg);
   const percentuale = p.peso_totale_g > 0 ? Math.round((p.peso_inserito_g / p.peso_totale_g) * 100) : 0;
   barraRiempimento.style.width = `${percentuale}%`;
+  // B3: quello che indossi non pesa nello zaino, ma lo mostriamo a parte
+  elPesoAddosso.hidden = !(p.peso_addosso_g > 0);
+  elPesoAddosso.textContent = ` · più ${num2(p.peso_addosso_kg)} kg addosso`;
 
   // Avviso peso (stretch 5): la soglia arriva dal dettaglio del viaggio, il peso è quello aggiornato
   const avviso = viaggio?.consigli.avviso_peso;
@@ -175,7 +179,8 @@ function renderZaino() {
     elChecklist.innerHTML = Object.keys(CATEGORIE).map((categoria) => {
       const delGruppo = zaino.oggetti.filter((o) => o.categoria === categoria);
       if (delGruppo.length === 0) return "";
-      const pesoGruppo = delGruppo.reduce((somma, o) => somma + o.peso_riga_g, 0);
+      // peso del gruppo DENTRO lo zaino: gli oggetti indossati non contano (B3)
+      const pesoGruppo = delGruppo.filter((o) => !o.indossato).reduce((somma, o) => somma + o.peso_riga_g, 0);
       const presi = delGruppo.filter((o) => o.inserito).length;
       return `
         <section class="gruppo">
@@ -192,18 +197,28 @@ function renderZaino() {
 // (spunta, quantità, togli), e un controllo non può stare dentro un altro.
 function rigaZaino(o) {
   return `
-    <div class="riga riga-zaino ${o.inserito ? "inserito" : ""}" data-id="${o.oggetto_id}">
+    <div class="riga riga-zaino ${o.inserito ? "inserito" : ""} ${o.indossato ? "addosso" : ""}" data-id="${o.oggetto_id}">
       <input type="checkbox" class="spunta" ${o.inserito ? "checked" : ""} aria-label="Inserito nello zaino: ${esc(o.nome)}">
       <span class="riquadro-icona"><img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22"></span>
       <span class="riga-testo">
         <span class="riga-nome">${esc(o.nome)}</span>
-        <span class="riga-nota">${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}</span>
+        <span class="riga-nota">${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}${o.indossato ? " · addosso" : ""}</span>
       </span>
+      ${o.categoria === "abbigliamento" ? pulsanteIndosso(o) : '<span class="indosso-vuoto"></span>'}
       <input type="number" class="quantita" min="1" max="99" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">
       <button type="button" class="togli" aria-label="Togli ${esc(o.nome)} dallo zaino" title="Togli dallo zaino">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
     </div>`;
+}
+
+// B3: il pulsante "lo indosso" (solo per l'abbigliamento).
+// aria-pressed dice se è attivo ("true"/"false"), come i segmenti dell'armadio
+function pulsanteIndosso(o) {
+  return `
+      <button type="button" class="indosso" aria-pressed="${o.indossato}" aria-label="Lo indosso: ${esc(o.nome)}" title="Lo indosso (non pesa nello zaino)">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3.5 4 6l1.8 3.6L8 8.6V20.5h8V8.6l2.2 1L20 6l-4.5-2.5c-.6 1.4-1.9 2.2-3.5 2.2s-2.9-.8-3.5-2.2Z"/></svg>
+      </button>`;
 }
 
 // Il selettore "aggiungi dall'armadio" mostra solo gli oggetti che NON sono già nello zaino
@@ -277,14 +292,22 @@ elChecklist.addEventListener("change", async (e) => {
   }
 });
 
-// --- Togli dallo zaino: event delegation sull'evento "click" ---
+// --- Clic sui pulsanti della riga (event delegation sull'evento "click"):
+//     "lo indosso" (B3) cambia indossato con PATCH, la X toglie dallo zaino con DELETE ---
 elChecklist.addEventListener("click", async (e) => {
-  const bottone = e.target.closest(".togli");
-  if (!bottone) return;
-  const oggettoId = bottone.closest(".riga-zaino[data-id]").dataset.id;
+  const bottoneIndosso = e.target.closest(".indosso");
+  const bottoneTogli = e.target.closest(".togli");
+  if (!bottoneIndosso && !bottoneTogli) return;
+  const oggettoId = e.target.closest(".riga-zaino[data-id]").dataset.id;
   nascondiErrore();
   try {
-    await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "DELETE" });
+    if (bottoneIndosso) {
+      // aria-pressed è testo ("true"/"false"): mando il contrario di com'è adesso
+      const indossato = bottoneIndosso.getAttribute("aria-pressed") !== "true";
+      await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "PATCH", body: { indossato } });
+    } else {
+      await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "DELETE" });
+    }
     await caricaZaino();
   } catch (err) {
     mostraErrore(err.message);

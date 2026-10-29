@@ -163,8 +163,9 @@ const schemaAggiungi = {
 };
 
 const schemaModifica = {
-  inserito: { type: "boolean" },
-  quantita: { type: "number", integer: true, min: 1, max: 99 },
+  inserito:  { type: "boolean" },
+  quantita:  { type: "number", integer: true, min: 1, max: 99 },
+  indossato: { type: "boolean" }, // B3: lo porto addosso, non pesa nello zaino
 };
 
 // legge :oggettoId dall'URL; null se non è un intero positivo
@@ -183,13 +184,21 @@ router.post("/:id/zaino", caricaViaggio, validate(schemaAggiungi), async (req, r
   } catch (err) { next(err); }
 });
 
-// === PATCH /api/viaggi/:id/zaino/:oggettoId (checkbox "inserito" e/o quantità) ===
+// === PATCH /api/viaggi/:id/zaino/:oggettoId (checkbox "inserito", quantità e/o "indossato") ===
 router.patch("/:id/zaino/:oggettoId", caricaViaggio, validate(schemaModifica), async (req, res, next) => {
   try {
     const oggettoId = leggiOggettoId(req);
     if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
     if (Object.keys(req.validated).length === 0) {
-      return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito' o 'quantita'" });
+      return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito', 'quantita' o 'indossato'" });
+    }
+    // B3: si può indossare solo l'abbigliamento (il frontend mostra il pulsante solo lì, ma decide il server)
+    if (req.validated.indossato === true) {
+      const categoria = await zaino.categoria(req.viaggio.id, oggettoId);
+      if (!categoria) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
+      if (categoria !== "abbigliamento") {
+        return res.status(400).json({ error: "NON_INDOSSABILE", message: "Si può indossare solo l'abbigliamento" });
+      }
     }
     const riga = await zaino.modifica(req.viaggio.id, oggettoId, req.validated);
     if (!riga) return res.status(404).json({ error: "NOT_FOUND", message: `Oggetto ${oggettoId} non presente nello zaino` });
