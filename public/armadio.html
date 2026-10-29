@@ -106,6 +106,15 @@
             <input name="quantita_posseduta" type="number" min="1" max="99" step="1" value="1">
           </label>
         </div>
+        <!-- C2: per quali attività va bene. Nessuna spunta = va bene per tutte -->
+        <fieldset class="scelte">
+          <legend>Adatto a <span class="muto">(nessuna spunta = tutte le attività)</span></legend>
+          <label class="check"><input name="attivita_adatte" type="checkbox" value="escursione"> Escursione</label>
+          <label class="check"><input name="attivita_adatte" type="checkbox" value="trekking"> Trekking</label>
+          <label class="check"><input name="attivita_adatte" type="checkbox" value="alpinismo"> Alpinismo</label>
+          <label class="check"><input name="attivita_adatte" type="checkbox" value="ciaspolata"> Ciaspolata</label>
+          <label class="check"><input name="attivita_adatte" type="checkbox" value="ferrata"> Ferrata</label>
+        </fieldset>
         <label class="check"><input name="is_indispensabile" type="checkbox"> Indispensabile</label>
         <label class="check"><input name="is_preferito" type="checkbox"> Preferito</label>
         <label>Caratteristiche tecniche

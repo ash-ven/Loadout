@@ -245,9 +245,10 @@ bottoneGenera.addEventListener("click", async () => {
   try {
     const { aggiunti } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
     await caricaZaino();
+    // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
     mostraInfo(aggiunti > 0
-      ? `Aggiunti ${aggiunti} oggetti tra indispensabili e preferiti.`
-      : "Nessun oggetto nuovo: lo zaino contiene già tutti i tuoi indispensabili e preferiti.");
+      ? `Aggiunti ${aggiunti} ${aggiunti === 1 ? "oggetto" : "oggetti"} tra indispensabili e preferiti adatti a: ${viaggio.attivita}.`
+      : `Nessun oggetto nuovo: lo zaino contiene già i tuoi indispensabili e preferiti adatti a: ${viaggio.attivita}.`);
   } catch (err) {
     mostraErrore(err.message);
   } finally {

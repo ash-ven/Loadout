@@ -376,3 +376,9 @@ button.indosso[aria-pressed="true"] { background: var(--salvia-chiaro); color: v
 #dettaglio .riga-dettagli { margin-bottom: .5rem; }
 #dettaglio .dati { margin: .5rem 0 1.25rem; }
 #dettaglio .dati dd { white-space: pre-line; }   /* le note su più righe restano su più righe */
+
+/* C2: gruppo di checkbox "Adatto a" (fieldset = un gruppo di campi con un titolo, legend) */
+fieldset.scelte { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin: 0; padding: .7rem .9rem .8rem;
+                  border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); background: var(--lana-chiara); }
+fieldset.scelte legend { padding: 0 .3rem; font-size: .88rem; font-weight: 500; color: var(--terra); }
+fieldset.scelte legend .muto { font-size: .8rem; }

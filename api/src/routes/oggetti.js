@@ -5,6 +5,7 @@ import { validate } from "../middleware/validate.js";
 export const router = Router();
 
 const CATEGORIE = ["abbigliamento", "attrezzatura", "cucina", "sicurezza", "igiene", "elettronica", "cibo", "altro"];
+const ATTIVITA = ["escursione", "trekking", "alpinismo", "ciaspolata", "ferrata"];
 
 const schemaOggetto = {
   nome:              { type: "string", required: true, maxLength: 120 },
@@ -17,6 +18,7 @@ const schemaOggetto = {
   marchio:           { type: "string", maxLength: 80 },                         // B1
   caratteristiche:   { type: "string", maxLength: 500 },                        // B1
   quantita_posseduta:{ type: "number", integer: true, min: 1, max: 99 },        // B2
+  attivita_adatte:   { type: "array", items: { enum: ATTIVITA } },               // C2: [] = tutte
 };
 
 // === GET /api/oggetti?q=&categoria=&limit=&offset= (lista) ===

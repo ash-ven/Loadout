@@ -58,29 +58,59 @@ router.post("/logout", (req, res) => {
   res.clearCookie("token").status(204).end();
 });
 
-// === GET /api/auth/me (dati aggiornati dal database, mai il password_hash) ===
+// Le colonne del profilo che restituiamo (mai il password_hash; la foto ha un indirizzo suo)
+const CAMPI_PROFILO = `id, email, nome, peso_corporeo_kg, livello_esperienza, citta,
+                       emergenza_nome, emergenza_telefono, (foto IS NOT NULL) AS ha_foto`;
+
+// === GET /api/auth/me (dati aggiornati dal database) ===
 router.get("/me", requireAuth, async (req, res, next) => {
   try {
-    const { rows } = await query(
-      "SELECT id, email, nome, peso_corporeo_kg FROM utente WHERE id = $1",
-      [req.user.sub]
-    );
+    const { rows } = await query(`SELECT ${CAMPI_PROFILO} FROM utente WHERE id = $1`, [req.user.sub]);
     if (!rows[0]) throw new HttpError(401, "UNAUTHENTICATED", "Effettua il login"); // utente cancellato nel frattempo
     res.json(rows[0]);
   } catch (err) { next(err); }
 });
 
-// === PATCH /api/auth/me (stretch 5: imposta il proprio peso corporeo) ===
+// === PATCH /api/auth/me (modifica parziale del profilo: solo i campi inviati) ===
+// "" o null su un campo nullable = svuotalo (es. togliere la foto o il contatto di emergenza)
 const schemaProfilo = {
-  peso_corporeo_kg: { type: "number", required: true, min: 20, max: 300 },
+  peso_corporeo_kg:   { type: "number", min: 20, max: 300, nullable: true },     // stretch 5
+  livello_esperienza: { type: "string", enum: ["principiante", "intermedio", "esperto"], nullable: true }, // C1
+  citta:              { type: "string", maxLength: 100, nullable: true },
+  emergenza_nome:     { type: "string", maxLength: 100, nullable: true },
+  emergenza_telefono: { type: "string", maxLength: 30, nullable: true },
+  foto:               { type: "string", maxLength: 200000, nullable: true },
 };
 
 router.patch("/me", requireAuth, validate(schemaProfilo), async (req, res, next) => {
   try {
+    const dati = req.validated;
+    const nomi = Object.keys(dati); // solo nomi presi dallo schema qui sopra: è sicuro metterli nella query
+    if (nomi.length === 0) throw new HttpError(400, "VALIDATION_ERROR", "Nessun campo da modificare");
+    if (dati.emergenza_telefono && !/^\+?[0-9 ]{6,20}$/.test(dati.emergenza_telefono)) {
+      throw new HttpError(400, "BAD_TELEFONO", "Numero di telefono non valido (solo cifre, spazi e un + iniziale)");
+    }
+    if (dati.foto && !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(dati.foto)) {
+      throw new HttpError(400, "BAD_FOTO", "La foto deve essere un'immagine JPEG, PNG o WebP");
+    }
+    // SET peso_corporeo_kg = $1, citta = $2, ...  (i VALORI restano parametri $n, mai dentro la stringa)
+    const set = nomi.map((nome, i) => `${nome} = $${i + 1}`).join(", ");
     const { rows } = await query(
-      "UPDATE utente SET peso_corporeo_kg = $1 WHERE id = $2 RETURNING id, email, nome, peso_corporeo_kg",
-      [req.validated.peso_corporeo_kg, req.user.sub]
+      `UPDATE utente SET ${set} WHERE id = $${nomi.length + 1} RETURNING ${CAMPI_PROFILO}`,
+      [...nomi.map((nome) => dati[nome]), req.user.sub]
     );
     res.json(rows[0]);
+  } catch (err) { next(err); }
+});
+
+// === GET /api/auth/me/foto (la foto come immagine vera: si usa direttamente in <img src>) ===
+router.get("/me/foto", requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await query("SELECT foto FROM utente WHERE id = $1", [req.user.sub]);
+    const foto = rows[0]?.foto;
+    if (!foto) return res.status(404).json({ error: "NOT_FOUND", message: "Nessuna foto" });
+    // "data:image/jpeg;base64,AAAA" → tipo "image/jpeg" + i byte decodificati dal base64
+    const [, tipo, base64] = foto.match(/^data:(image\/[a-z]+);base64,(.*)$/);
+    res.set("Cache-Control", "private, no-cache").type(tipo).send(Buffer.from(base64, "base64"));
   } catch (err) { next(err); }
 });

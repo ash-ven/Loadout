@@ -10,6 +10,8 @@ export function validate(schema) {
 
       if (v === undefined || v === null || v === "") {
         if (rule.required) errors.push(`'${field}' è obbligatorio`);
+        // nullable: mandare "" o null vuol dire "svuota questo campo" (non mandarlo vuol dire "lascialo com'è")
+        else if (rule.nullable && v !== undefined) out[field] = null;
         continue;
       }
 
@@ -24,11 +26,20 @@ export function validate(schema) {
         if (typeof v !== "string" || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) errors.push(`'${field}' deve essere una data valida (AAAA-MM-GG)`);
       }
       if (rule.type === "string" && typeof v !== "string") errors.push(`'${field}' deve essere testo`);
+      if (rule.type === "array") {
+        if (!Array.isArray(v)) errors.push(`'${field}' deve essere un elenco`);
+        else {
+          if (rule.items?.enum && v.some((x) => !rule.items.enum.includes(x))) {
+            errors.push(`'${field}' può contenere solo: ${rule.items.enum.join(", ")}`);
+          }
+          v = [...new Set(v)]; // niente doppioni
+        }
+      }
 
       if (rule.maxLength && String(v).length > rule.maxLength) errors.push(`'${field}' troppo lungo (max ${rule.maxLength})`);
       if (rule.min !== undefined && v < rule.min) errors.push(`'${field}' deve essere ≥ ${rule.min}`);
       if (rule.max !== undefined && v > rule.max) errors.push(`'${field}' deve essere ≤ ${rule.max}`);
-      if (rule.enum && !rule.enum.includes(v)) errors.push(`'${field}' deve essere uno tra: ${rule.enum.join(", ")}`);
+      if (rule.enum && rule.type !== "array" && !rule.enum.includes(v)) errors.push(`'${field}' deve essere uno tra: ${rule.enum.join(", ")}`);
 
       out[field] = typeof v === "string" ? v.trim() : v;
     }
