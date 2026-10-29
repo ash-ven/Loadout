@@ -149,7 +149,7 @@ function renderZaino() {
         <td class="nome-oggetto">${esc(o.nome)}</td>
         <td>${esc(o.categoria)}</td>
         <td><input type="number" class="quantita" min="1" max="99" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}"></td>
-        <td>${num(o.peso_riga_g)} g</td>
+        <td>${num(o.peso_riga_g        <td>${num(o.peso_riga_g)}&nbsp;g</td>)} g</td>
         <td><button type="button" class="secondario togli">Togli</button></td>
       </tr>`).join("");
   }

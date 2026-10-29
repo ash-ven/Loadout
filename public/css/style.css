@@ -105,3 +105,13 @@ details > label, details > .riga2 { margin-top: .75rem; }
 tr.inserito td { color: var(--grigio); }
 tr.inserito .nome-oggetto { text-decoration: line-through; }
 .barra > div.oltre-soglia { background: var(--rosso); }
+
+/* --- Schermi piccoli (telefono): tabelle più compatte --- */
+@media (max-width: 600px) {
+  .container { padding: .75rem; gap: 1rem; }
+  .card { padding: .75rem; }
+  h1 { font-size: 1.5rem; }
+  th, td { padding: .4rem .3rem; font-size: .9rem; }
+  td button { padding: .35rem .6rem; font-size: .8rem; }
+  .badge { font-size: .7rem; }
+}

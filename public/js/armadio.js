@@ -39,7 +39,7 @@ function render() {
     <tr data-id="${o.id}" class="${o.id === inModifica ? "selezionata" : ""}">
       <td>${esc(o.nome)}</td>
       <td>${esc(o.categoria)}</td>
-      <td>${esc(o.peso_g)} g</td>
+      <td>${esc(o.peso_g)}&nbsp;g</td>
       <td>
         ${o.is_indispensabile ? '<span class="badge indispensabile">indispensabile</span>' : ""}
         ${o.is_preferito ? '<span class="badge preferito">preferito</span>' : ""}
