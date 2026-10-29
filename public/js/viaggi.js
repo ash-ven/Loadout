@@ -1,4 +1,4 @@
-import { api, esc, formattaData } from "./api.js";
+import { api, esc, formattaData, oggiISO } from "./api.js";
 import "./menu.js";
 
 // --- Elementi della pagina ---
@@ -42,7 +42,7 @@ function render() {
 
   // Tre gruppi: in arrivo (data da oggi in poi), senza data, già fatti.
   // Le date ISO ("2026-11-08") si confrontano come testo: l'ordine alfabetico è quello cronologico.
-  const oggi = new Date().toISOString().slice(0, 10);
+  const oggi = oggiISO();
   const data = (v) => v.data_partenza?.slice(0, 10);
   const gruppi = [
     ["In arrivo", visibili.filter((v) => data(v) && data(v) >= oggi)],

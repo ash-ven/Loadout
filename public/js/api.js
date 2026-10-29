@@ -36,3 +36,15 @@ export function formattaData(iso) {
   const [anno, mese, giorno] = iso.split("-");
   return `${giorno}/${mese}/${anno}`;
 }
+// Oggi come testo "2026-10-29", nel fuso orario di chi usa l'app.
+// (new Date().toISOString() userebbe l'ora di Greenwich: in Italia, tra mezzanotte e l'una, darebbe ancora "ieri")
+export function oggiISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Quanti giorni da una data all'altra, entrambe "AAAA-MM-GG".
+// Date.parse le legge tutte e due come mezzanotte UTC: niente sorprese con l'ora legale.
+export function giorniTra(da, a) {
+  return Math.round((Date.parse(a) - Date.parse(da)) / 86_400_000); // 86.400.000 ms = un giorno
+}
