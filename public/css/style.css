@@ -167,3 +167,9 @@ th .icona { display: block; margin: 0; width: 18px; height: 18px; }  /* nelle in
 .avviso { display: flex; align-items: flex-start; gap: .55rem; }
 .avviso .icona { width: 1.4em; height: 1.4em; margin: 0; flex-shrink: 0; }
 label.check .icona { margin: 0; width: 1.3em; height: 1.3em; }  /* nelle checkbox lo spazio lo dà già il gap del flex */
+
+/* --- Pagina profilo --- */
+.container.stretta { max-width: 640px; }
+.dati { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1.25rem; margin: .75rem 0 1.25rem; }
+.dati dt { color: var(--terra); }
+.dati dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }  /* email lunghe vanno a capo */

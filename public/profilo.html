@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Profilo</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="34" height="34"><span>Load<span class="out">out</span></span></a>
+    <nav>
+      <a href="/armadio.html">Armadio</a>
+      <a href="/viaggi.html">Viaggi</a>
+      <a href="/profilo.html">Profilo</a>
+      <a href="#" id="esci">Esci</a>
+    </nav>
+  </header>
+
+  <main class="container stretta">
+    <!-- I dati dell'account: solo lettura (l'API non permette di cambiare nome ed email) -->
+    <section class="card">
+      <h1><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Il tuo profilo</h1>
+      <dl class="dati">
+        <dt>Nome</dt>
+        <dd id="nome">…</dd>
+        <dt>Email</dt>
+        <dd id="email">…</dd>
+      </dl>
+      <button type="button" class="secondario" id="bottone-esci">Esci dall'account</button>
+    </section>
+
+    <!-- Peso corporeo e soglia dello zaino (stretch 5) -->
+    <section class="card">
+      <h2><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24">Peso corporeo</h2>
+      <p class="muto">Lo zaino non dovrebbe superare il 20% del tuo peso. Con il peso impostato, Loadout ti avvisa nella scheda di ogni viaggio.</p>
+      <form id="form-profilo" class="aggiungi" novalidate>
+        <label>Peso corporeo (kg)
+          <input name="peso_corporeo_kg" type="number" min="20" max="300" step="0.1">
+        </label>
+        <button type="submit">Salva</button>
+      </form>
+      <p class="avviso" id="profilo-info" hidden></p>
+      <p class="errore" id="profilo-errore" hidden></p>
+    </section>
+  </main>
+
+  <script type="module" src="/js/profilo.js"></script>
+</body>
+</html>

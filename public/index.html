@@ -13,6 +13,7 @@
     <nav>
       <a href="/armadio.html">Armadio</a>
       <a href="/viaggi.html">Viaggi</a>
+      <a href="/profilo.html">Profilo</a>
       <a href="#" id="esci">Esci</a>
     </nav>
   </header>
@@ -42,18 +43,6 @@
       <a class="btn" href="/viaggi.html">Vai ai viaggi</a>
     </section>
 
-    <section class="card">
-      <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Il tuo profilo</h2>
-      <p class="muto">Con il tuo peso corporeo, Loadout ti avvisa se lo zaino supera il 20% (il limite consigliato).</p>
-      <form id="form-profilo" class="aggiungi" novalidate>
-        <label>Peso corporeo (kg)
-          <input name="peso_corporeo_kg" type="number" min="20" max="300" step="0.1">
-        </label>
-        <button type="submit">Salva</button>
-      </form>
-      <p class="muto" id="profilo-info" hidden></p>
-      <p class="errore" id="profilo-errore" hidden></p>
-    </section>
   </main>
 
   <script type="module" src="/js/index.js"></script>
