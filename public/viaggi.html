@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Viaggi</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/">🎒 Loadout</a>
+    <nav>
+      <a href="/armadio.html">Armadio</a>
+      <a href="/viaggi.html">Viaggi</a>
+      <a href="#" id="esci">Esci</a>
+    </nav>
+  </header>
+
+  <main class="container due-colonne">
+    <!-- Colonna sinistra: i miei viaggi -->
+    <section class="card">
+      <h1>I miei viaggi</h1>
+      <div class="filtri">
+        <select id="filtro-pianificati" aria-label="Filtra i viaggi">
+          <option value="">Tutti i viaggi</option>
+          <option value="true">📌 Percorsi da fare in futuro</option>
+          <option value="false">Già organizzati</option>
+        </select>
+      </div>
+      <p class="muto" id="riepilogo"></p>
+      <div class="tabella-scroll">
+        <table id="tabella">
+          <thead>
+            <tr><th>Viaggio</th><th>Attività</th><th>Partenza</th><th>Gruppo</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Colonna destra: prepara il tuo cammino -->
+    <section class="card">
+      <h2>Prepara il tuo cammino</h2>
+      <form id="form-viaggio" novalidate>
+        <label>Nome dell'uscita
+          <input name="nome" type="text" maxlength="150" required>
+        </label>
+        <label>Attività
+          <select name="attivita" required>
+            <option value="escursione">Escursione</option>
+            <option value="trekking">Trekking</option>
+            <option value="alpinismo">Alpinismo</option>
+            <option value="ciaspolata">Ciaspolata</option>
+            <option value="ferrata">Ferrata</option>
+          </select>
+        </label>
+        <div class="riga2">
+          <label>Persone
+            <input name="n_persone" type="number" min="1" max="50" step="1" value="1">
+          </label>
+          <label>Giorni
+            <input name="n_giorni" type="number" min="1" max="60" step="1" value="1">
+          </label>
+        </div>
+        <label>Pernotto
+          <select name="pernotto">
+            <option value="nessuno">Nessuno (in giornata)</option>
+            <option value="rifugio">Rifugio</option>
+            <option value="tenda">Tenda</option>
+            <option value="bivacco">Bivacco</option>
+          </select>
+        </label>
+        <label>Data di partenza
+          <input name="data_partenza" type="date">
+        </label>
+        <label class="check"><input name="serve_cucina" type="checkbox"> Serve la cucina</label>
+
+        <details>
+          <summary>Percorso e coordinate (facoltativi)</summary>
+          <div class="riga2">
+            <label>Lunghezza (km)
+              <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">
+            </label>
+            <label>Dislivello (m)
+              <input name="dislivello_m" type="number" min="0" max="9000" step="1">
+            </label>
+          </div>
+          <div class="riga2">
+            <label>Latitudine partenza
+              <input name="lat_partenza" type="number" min="-90" max="90" step="any" placeholder="es. 44.22">
+            </label>
+            <label>Longitudine partenza
+              <input name="lon_partenza" type="number" min="-180" max="180" step="any" placeholder="es. 10.99">
+            </label>
+          </div>
+          <div class="riga2">
+            <label>Latitudine arrivo
+              <input name="lat_arrivo" type="number" min="-90" max="90" step="any">
+            </label>
+            <label>Longitudine arrivo
+              <input name="lon_arrivo" type="number" min="-180" max="180" step="any">
+            </label>
+          </div>
+          <label>Note
+            <textarea name="note" maxlength="1000" rows="2"></textarea>
+          </label>
+        </details>
+
+        <label class="check"><input name="pianificato" type="checkbox"> 📌 Percorso da fare in futuro</label>
+        <label class="check"><input name="genera" type="checkbox" checked> 🎒 Genera subito lo zaino</label>
+        <p class="errore" id="form-errore" hidden></p>
+        <button type="submit" id="salva">Crea il viaggio</button>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="/js/viaggi.js"></script>
+</body>
+</html>

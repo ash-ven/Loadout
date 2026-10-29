@@ -81,3 +81,10 @@ tbody tr:hover { background: #f8faf7; }
 .azioni { display: flex; gap: .5rem; flex-wrap: wrap; }
 tbody tr { cursor: pointer; }
 tr.selezionata { background: #e3efe8; }
+
+/* --- Sezioni a scomparsa e campi affiancati (form dei viaggi) --- */
+details { border: 1px dashed var(--bordo); border-radius: 6px; padding: .5rem .75rem; }
+details[open] { padding-bottom: .75rem; }
+summary { cursor: pointer; color: var(--verde); font-weight: 600; }
+details > label, details > .riga2 { margin-top: .75rem; }
+.riga2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
