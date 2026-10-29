@@ -159,3 +159,10 @@ tr.inserito .nome-oggetto { text-decoration: line-through; }
   td button { padding: .35rem .6rem; font-size: .8rem; }
   .badge { font-size: .7rem; }
 }
+/* --- Icone (file SVG in /img/icone) ---
+   Misurate in em: seguono la grandezza del testo intorno (più grandi negli h2, più piccole nei badge) */
+.icona { width: 1.15em; height: 1.15em; vertical-align: -.2em; margin-right: .45em; }
+.badge .icona { width: 1.35em; height: 1.35em; vertical-align: -.35em; margin-right: .25em; }
+th .icona { display: block; margin: 0; width: 18px; height: 18px; }  /* nelle intestazioni il testo è piccolo: misura fissa */
+.avviso { display: flex; align-items: flex-start; gap: .55rem; }
+.avviso .icona { width: 1.4em; height: 1.4em; margin: 0; flex-shrink: 0; }

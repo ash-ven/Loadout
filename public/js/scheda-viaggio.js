@@ -20,6 +20,7 @@ const elPesoInserito = document.querySelector("#peso-inserito");
 const elPesoTotale = document.querySelector("#peso-totale");
 const barraRiempimento = document.querySelector("#barra-riempimento");
 const elAvvisoPeso = document.querySelector("#avviso-peso");
+const elTestoAvvisoPeso = document.querySelector("#testo-avviso-peso"); // il testo: l'icona accanto resta fissa
 const elMessaggioZaino = document.querySelector("#messaggio-zaino");
 const tbodyChecklist = document.querySelector("#checklist tbody");
 const formAggiungi = document.querySelector("#form-aggiungi");
@@ -57,8 +58,19 @@ function renderIntestazione() {
     v.pernotto === "nessuno" ? "in giornata" : `pernotto in ${v.pernotto}`,
     v.serve_cucina ? "con cucina" : "senza cucina",
   ];
-  if (v.pianificato) parti.push("da fare in futuro");
   dettagli.textContent = parti.join(" · ");
+  // Viaggio da fare in futuro: aggiungo il badge con l'icona costruendo gli elementi a mano
+  // (createElement + textContent: nessun rischio XSS, non uso innerHTML)
+  if (v.pianificato) {
+    const badge = document.createElement("span");
+    badge.className = "badge preferito";
+    const icona = document.createElement("img");
+    icona.className = "icona";
+    icona.src = "/img/icone/da-fare.svg";
+    icona.alt = "";
+    badge.append(icona, "da fare in futuro");
+    dettagli.append(" ", badge);
+  }
 }
 
 function renderConsigli() {
@@ -134,7 +146,7 @@ function renderZaino() {
   elAvvisoPeso.hidden = !troppoPesante;
   barraRiempimento.classList.toggle("oltre-soglia", Boolean(troppoPesante));
   if (troppoPesante) {
-    elAvvisoPeso.textContent = `Lo zaino pesa ${num2(p.peso_totale_kg)} kg: più del 20% del tuo peso corporeo (limite consigliato ${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
+    elTestoAvvisoPeso.textContent = `Lo zaino pesa ${num2(p.peso_totale_kg)} kg: più del 20% del tuo peso corporeo (limite consigliato ${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
   }
 
   // Checklist

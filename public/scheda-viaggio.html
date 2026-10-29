@@ -35,7 +35,7 @@
       <!-- Colonna sinistra: lo zaino -->
       <section class="card">
         <div class="intestazione-sezione">
-          <h2>Il tuo zaino</h2>
+          <h2><img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Il tuo zaino</h2>
           <div class="azioni">
             <button type="button" id="genera">Genera zaino</button>
             <button type="button" class="secondario" id="svuota">Svuota checklist</button>
@@ -44,13 +44,13 @@
 
         <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti</p>
         <div class="barra"><div id="barra-riempimento"></div></div>
-        <p class="avviso" id="avviso-peso" hidden></p>
+        <p class="avviso" id="avviso-peso" hidden><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24"><span id="testo-avviso-peso"></span></p>
         <p class="muto" id="messaggio-zaino" hidden></p>
 
         <div class="tabella-scroll">
           <table id="checklist">
             <thead>
-              <tr><th aria-label="Preso"></th><th>Oggetto</th><th>Categoria</th><th>Qtà</th><th>Peso</th><th></th></tr>
+              <tr><th><img class="icona" src="/img/icone/spunta.svg" alt="Preso" width="24" height="24"></th><th>Oggetto</th><th>Categoria</th><th>Qtà</th><th>Peso</th><th></th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -66,9 +66,9 @@
 
       <!-- Colonna destra: i consigli -->
       <section class="card">
-        <h2>Consigli per il viaggio</h2>
+        <h2><img class="icona" src="/img/icone/consigli.svg" alt="" width="24" height="24">Consigli per il viaggio</h2>
         <div class="consiglio">
-          <h3>Acqua</h3>
+          <h3><img class="icona" src="/img/icone/acqua.svg" alt="" width="24" height="24">Acqua</h3>
           <p id="acqua"></p>
           <form id="form-ore" class="aggiungi">
             <label>Ore di cammino al giorno
@@ -78,15 +78,15 @@
           </form>
         </div>
         <div class="consiglio">
-          <h3>Alba e tramonto</h3>
+          <h3><img class="icona" src="/img/icone/sole.svg" alt="" width="24" height="24">Alba e tramonto</h3>
           <p id="sole"></p>
         </div>
         <div class="consiglio">
-          <h3>Meteo</h3>
+          <h3><img class="icona" src="/img/icone/meteo.svg" alt="" width="24" height="24">Meteo</h3>
           <div id="meteo"></div>
         </div>
         <div class="consiglio">
-          <h3>Percorso</h3>
+          <h3><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24">Percorso</h3>
           <p id="percorso"></p>
         </div>
       </section>
