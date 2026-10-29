@@ -69,12 +69,7 @@ tbody tr:hover { background: #f8faf7; }
 .barra { height: 14px; background: var(--bordo); border-radius: 999px; overflow: hidden; }
 .barra > div { height: 100%; width: 0; background: var(--verde); transition: width .3s; }
 
-/* --- Responsive: due colonne solo sugli schermi larghi --- */
-@media (min-width: 768px) {
-  .due-colonne { grid-template-columns: 2fr 1fr; align-items: start; }
-}
-
-/* --- Riga di filtri e riga di pulsanti --- */
+/* --- Riga di filtri e riga di pulsanti (armadio, viaggi) --- */
 .filtri { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
 .filtri input { flex: 2 1 12rem; }
 .filtri select { flex: 1 1 10rem; }
@@ -89,7 +84,7 @@ summary { cursor: pointer; color: var(--verde); font-weight: 600; }
 details > label, details > .riga2 { margin-top: .75rem; }
 .riga2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 
-/* --- Pagina del viaggio --- */
+/* --- Scheda del viaggio --- */
 .griglia { display: grid; gap: 1.5rem; }
 .intestazione-sezione { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
 .aggiungi { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-top: .75rem; }
@@ -105,6 +100,11 @@ details > label, details > .riga2 { margin-top: .75rem; }
 tr.inserito td { color: var(--grigio); }
 tr.inserito .nome-oggetto { text-decoration: line-through; }
 .barra > div.oltre-soglia { background: var(--rosso); }
+
+/* --- Responsive: due colonne solo sugli schermi larghi --- */
+@media (min-width: 768px) {
+  .due-colonne { grid-template-columns: 2fr 1fr; align-items: start; }
+}
 
 /* --- Schermi piccoli (telefono): tabelle più compatte --- */
 @media (max-width: 600px) {

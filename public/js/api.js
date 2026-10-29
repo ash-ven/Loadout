@@ -30,6 +30,7 @@ export function esc(valore) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
 // "2026-11-08" → "08/11/2026": l'API usa il formato ISO, l'utente vede quello italiano
 export function formattaData(iso) {
   const [anno, mese, giorno] = iso.split("-");
