@@ -1,73 +1,103 @@
-/* public/css/style.css – un solo foglio di stile per tutto il sito */
+/* public/css/style.css – un solo foglio di stile per tutto il sito
+   Tema "Muschio e crema": crema e lana, muschio, senape, un tocco di salvia */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,600&display=swap");
 
 /* --- Variabili: i colori e le misure, definiti una volta sola --- */
 :root {
-  --verde: #2f6b4f;
-  --verde-scuro: #1f4a36;
-  --sabbia: #f4f1ea;
-  --testo: #26312b;
-  --grigio: #66736b;
-  --bordo: #d9ddd5;
-  --rosso: #b23a32;
-  --arancio: #c77d1a;
-  --bianco: #ffffff;
-  --raggio: 8px;
+  --crema: #ece3cf;          /* sfondo della pagina */
+  --lana: #f6efdf;           /* schede */
+  --lana-chiara: #fbf6ec;    /* campi dei form */
+  --muschio: #31503f;        /* barra in alto, titoli, riquadro della home */
+  --muschio-scuro: #233a2d;
+  --testo: #2e3a2f;
+  --terra: #6d6553;          /* testo secondario */
+  --bordo: #ddd2bb;
+  --senape: #c8962b;         /* pulsanti: l'unico colore "acceso" */
+  --senape-scuro: #a97b1c;
+  --su-senape: #2b1f05;      /* testo sopra la senape */
+  --salvia: #5f8463;         /* il tocco di verde */
+  --salvia-chiaro: #dde7d3;
+  --ocra-chiaro: #f2e3bf;
+  --rosso: #a3312a;
+  --raggio: 16px;
+  --ombra: 0 1px 2px rgba(49, 80, 63, .06), 0 10px 30px rgba(49, 80, 63, .07);
+  --font: "Inter", system-ui, "Segoe UI", sans-serif;
+  --font-logo: "Newsreader", Georgia, serif;   /* solo per la scritta del logo */
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, "Segoe UI", sans-serif; color: var(--testo); background: var(--sabbia); line-height: 1.5; }
-a { color: var(--verde); }
-h1, h2, h3 { margin: 0 0 .5rem; line-height: 1.2; }
+body { margin: 0; font-family: var(--font); color: var(--testo); background: var(--crema); line-height: 1.55; }
+a { color: var(--muschio); font-weight: 500; }
+h1, h2, h3 { margin: 0 0 .5rem; line-height: 1.15; color: var(--muschio); font-weight: 800; letter-spacing: -.02em; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.35rem; font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 700; }
 
-/* --- Barra in alto (Flexbox: elementi in riga) --- */
+/* --- Barra in alto --- */
 .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
-          padding: .75rem 1rem; background: var(--verde-scuro); color: var(--bianco); }
-.topbar .logo { font-weight: 700; font-size: 1.1rem; color: var(--bianco); text-decoration: none; }
-.topbar nav { display: flex; gap: 1rem; flex-wrap: wrap; }
-.topbar nav a { color: var(--bianco); text-decoration: none; }
-.topbar nav a:hover { text-decoration: underline; }
+          padding: .9rem 1.25rem; background: var(--muschio); color: #f3ecdc; }
+/* Logo: simbolo (immagine SVG) + scritta "Load" crema e "out" salvia chiaro */
+.topbar .logo { display: inline-flex; align-items: center; gap: .55rem; text-decoration: none;
+                font-family: var(--font-logo); font-weight: 600; font-size: 1.6rem; line-height: 1;
+                letter-spacing: -.025em; color: #f6efdf; font-variation-settings: "opsz" 72; }
+.topbar .logo img { display: block; }
+.topbar .logo .out { color: var(--salvia-chiaro); }
+.topbar nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+.topbar nav a { color: #e3e9da; text-decoration: none; font-weight: 500; padding-bottom: 2px; border-bottom: 2px solid transparent; }
+.topbar nav a:hover { color: #fff; border-bottom-color: var(--senape); }
 
-/* --- Contenitore e schede (Grid: elementi incolonnati con spazio regolare) --- */
-.container { max-width: 1000px; margin: 0 auto; padding: 1rem; display: grid; gap: 1.5rem; }
-.card { background: var(--bianco); border: 1px solid var(--bordo); border-radius: var(--raggio); padding: 1rem; }
-.centrato { max-width: 400px; margin: 3rem auto; }
+/* --- Contenitore e schede --- */
+.container { max-width: 1040px; margin: 0 auto; padding: 1.5rem 1rem; display: grid; gap: 1.5rem; }
+.card { background: var(--lana); border: 1px solid var(--bordo); border-radius: var(--raggio); padding: 1.25rem; box-shadow: var(--ombra); }
+.centrato { max-width: 420px; margin: 3rem auto; }
+
+/* --- Riquadro iniziale della home (ispirato alle pagine di avvio delle app outdoor) --- */
+.hero { position: relative; overflow: hidden; border-radius: var(--raggio); background: var(--muschio);
+        padding: 2.25rem 1.75rem 6.5rem; box-shadow: var(--ombra); }
+.hero h1 { color: #f6efdf; font-size: 2.4rem; margin-bottom: .5rem; }
+.hero p { color: #d9e2cf; max-width: 34rem; margin: 0; font-size: 1.05rem; }
+.hero svg { position: absolute; left: 0; bottom: 0; width: 100%; height: 110px; display: block; }
 
 /* --- Form --- */
-form { display: grid; gap: .75rem; }
-label { display: grid; gap: .25rem; font-size: .9rem; color: var(--grigio); }
-label.check { display: flex; align-items: center; gap: .5rem; color: var(--testo); }
-input, select, textarea { width: 100%; padding: .55rem; border: 1px solid var(--bordo); border-radius: 6px; font: inherit; background: var(--bianco); }
-label.check input { width: auto; }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--verde); outline-offset: 1px; }
+form { display: grid; gap: .8rem; }
+label { display: grid; gap: .3rem; font-size: .88rem; color: var(--terra); font-weight: 500; }
+label.check { display: flex; align-items: center; gap: .55rem; color: var(--testo); font-weight: 400; }
+input, select, textarea { width: 100%; padding: .6rem .75rem; border: 1px solid var(--bordo); border-radius: 12px;
+                          font: inherit; color: var(--testo); background: var(--lana-chiara); }
+label.check input { width: auto; accent-color: var(--salvia); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--salvia); box-shadow: 0 0 0 3px rgba(95, 132, 99, .25); }
 
 /* --- Pulsanti --- */
-button, .btn { display: inline-block; padding: .55rem 1rem; border: 0; border-radius: 6px; font: inherit; cursor: pointer;
-               background: var(--verde); color: var(--bianco); text-decoration: none; }
-button:hover, .btn:hover { background: var(--verde-scuro); }
-button.secondario { background: var(--bianco); color: var(--verde); border: 1px solid var(--verde); }
-button.pericolo { background: var(--rosso); }
+button, .btn { display: inline-block; padding: .62rem 1.15rem; border: 1px solid transparent; border-radius: 999px; font: inherit; font-weight: 700;
+               cursor: pointer; background: var(--senape); color: var(--su-senape); text-decoration: none; transition: background .15s; }
+button:hover, .btn:hover { background: var(--senape-scuro); }
+button.secondario { background: transparent; color: var(--muschio); border-color: var(--muschio); }
+button.secondario:hover { background: var(--salvia-chiaro); }
+button.pericolo { background: transparent; color: var(--rosso); border-color: #e2c2bc; font-weight: 600; }
+button.pericolo:hover { background: #f6e3df; }
 button:disabled { opacity: .6; cursor: wait; }
 
 /* --- Messaggi --- */
-.errore { color: var(--rosso); margin: 0; }
-.avviso { background: #fdf3e3; border-left: 4px solid var(--arancio); padding: .5rem .75rem; border-radius: 4px; }
-.muto { color: var(--grigio); font-size: .9rem; }
+.errore { color: var(--rosso); margin: 0; font-size: .92rem; }
+.avviso { background: var(--ocra-chiaro); border-left: 4px solid var(--senape); padding: .6rem .8rem; border-radius: 0; }
+.muto { color: var(--terra); font-size: .9rem; }
 
 /* --- Tabelle --- */
 .tabella-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: .5rem; border-bottom: 1px solid var(--bordo); }
-th { font-size: .85rem; color: var(--grigio); font-weight: 600; }
-tbody tr:hover { background: #f8faf7; }
+th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--bordo); }
+th { font-size: .72rem; color: var(--terra); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+tbody tr:hover { background: #f1e8d6; }
 
-/* --- Badge (etichette colorate: indispensabile / preferito) --- */
-.badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
-.badge.indispensabile { background: #e3efe8; color: var(--verde-scuro); }
-.badge.preferito { background: #fdf0d9; color: #8a5a10; }
+/* --- Badge --- */
+.badge { display: inline-block; padding: .14rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.badge.indispensabile { background: var(--salvia-chiaro); color: #36573a; }
+.badge.preferito { background: var(--ocra-chiaro); color: #6e4f0f; }
 
 /* --- Barra del peso dello zaino --- */
-.barra { height: 14px; background: var(--bordo); border-radius: 999px; overflow: hidden; }
-.barra > div { height: 100%; width: 0; background: var(--verde); transition: width .3s; }
+.barra { height: 12px; background: #e2d8c2; border-radius: 999px; overflow: hidden; }
+.barra > div { height: 100%; width: 0; background: var(--salvia); border-radius: 999px; transition: width .35s ease; }
 
 /* --- Riga di filtri e riga di pulsanti (armadio, viaggi) --- */
 .filtri { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
@@ -75,12 +105,12 @@ tbody tr:hover { background: #f8faf7; }
 .filtri select { flex: 1 1 10rem; }
 .azioni { display: flex; gap: .5rem; flex-wrap: wrap; }
 tbody tr { cursor: pointer; }
-tr.selezionata { background: #e3efe8; }
+tr.selezionata { background: var(--salvia-chiaro); }
 
 /* --- Sezioni a scomparsa e campi affiancati (form dei viaggi) --- */
-details { border: 1px dashed var(--bordo); border-radius: 6px; padding: .5rem .75rem; }
-details[open] { padding-bottom: .75rem; }
-summary { cursor: pointer; color: var(--verde); font-weight: 600; }
+details { border: 1px dashed var(--bordo); border-radius: 12px; padding: .6rem .8rem; background: var(--lana-chiara); }
+details[open] { padding-bottom: .8rem; }
+summary { cursor: pointer; color: var(--muschio); font-weight: 700; }
 details > label, details > .riga2 { margin-top: .75rem; }
 .riga2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 
@@ -89,15 +119,15 @@ details > label, details > .riga2 { margin-top: .75rem; }
 .intestazione-sezione { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
 .aggiungi { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-top: .75rem; }
 .aggiungi select { flex: 1 1 12rem; width: auto; }
-.aggiungi input[type="number"] { width: 5.5rem; }
-.consiglio { padding: .75rem 0; border-top: 1px solid var(--bordo); }
+.aggiungi input[type="number"] { width: 6rem; }
+.consiglio { padding: .9rem 0; border-top: 1px solid var(--bordo); }
 .consiglio:first-of-type { border-top: 0; }
 .consiglio h3 { font-size: 1rem; }
 .consiglio ul { margin: .25rem 0 0; padding-left: 1.2rem; }
 #checklist tbody tr { cursor: default; }
-#checklist input[type="checkbox"] { width: 1.2rem; height: 1.2rem; }
+#checklist input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--salvia); }
 #checklist input[type="number"] { width: 4.5rem; }
-tr.inserito td { color: var(--grigio); }
+tr.inserito td { color: var(--terra); }
 tr.inserito .nome-oggetto { text-decoration: line-through; }
 .barra > div.oltre-soglia { background: var(--rosso); }
 
@@ -106,12 +136,15 @@ tr.inserito .nome-oggetto { text-decoration: line-through; }
   .due-colonne { grid-template-columns: 2fr 1fr; align-items: start; }
 }
 
-/* --- Schermi piccoli (telefono): tabelle più compatte --- */
+/* --- Schermi piccoli (telefono) --- */
 @media (max-width: 600px) {
-  .container { padding: .75rem; gap: 1rem; }
-  .card { padding: .75rem; }
-  h1 { font-size: 1.5rem; }
-  th, td { padding: .4rem .3rem; font-size: .9rem; }
+  .container { padding: 1rem .75rem; gap: 1rem; }
+  .card { padding: .9rem; }
+  h1 { font-size: 1.6rem; }
+  .hero { padding: 1.5rem 1.25rem 5rem; }
+  .hero h1 { font-size: 1.8rem; }
+  .hero svg { height: 80px; }
+  th, td { padding: .45rem .3rem; font-size: .9rem; }
   td button { padding: .35rem .6rem; font-size: .8rem; }
   .badge { font-size: .7rem; }
 }

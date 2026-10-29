@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="logo" href="/">🎒 Loadout</a>
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="34" height="34"><span>Load<span class="out">out</span></span></a>
     <nav>
       <a href="/armadio.html">Armadio</a>
       <a href="/viaggi.html">Viaggi</a>
@@ -17,25 +18,31 @@
   </header>
 
   <main class="container">
-    <section class="card">
+    <!-- Riquadro iniziale con le montagne -->
+    <section class="hero">
       <h1 id="saluto">Ciao!</h1>
-      <p class="muto">Prepara lo zaino giusto per la tua prossima uscita in montagna.</p>
+      <p>Prepara lo zaino giusto per la tua prossima uscita in montagna: niente dimenticato, niente di troppo.</p>
+      <svg viewBox="0 0 1200 110" preserveAspectRatio="none" aria-hidden="true">
+        <polygon points="0,110 0,70 140,25 260,62 380,18 520,70 650,30 780,64 900,22 1040,66 1200,35 1200,110" fill="#4b6b54"/>
+        <polygon points="0,110 0,88 120,58 250,86 400,52 560,90 700,60 860,92 1000,62 1120,86 1200,70 1200,110" fill="#5f8463"/>
+        <polygon points="0,110 0,100 200,92 420,102 640,94 880,103 1080,95 1200,100 1200,110" fill="#ece3cf"/>
+      </svg>
     </section>
 
     <section class="card">
-      <h2>🧥 Il mio armadio</h2>
+      <h2>Il mio armadio</h2>
       <p>Tutta la tua attrezzatura, con peso, categoria, indispensabili e preferiti.</p>
       <a class="btn" href="/armadio.html">Apri l'armadio</a>
     </section>
 
     <section class="card">
-      <h2>🥾 I miei viaggi</h2>
+      <h2>I miei viaggi</h2>
       <p>Descrivi l'uscita, genera lo zaino e spunta la checklist prima di partire.</p>
       <a class="btn" href="/viaggi.html">Vai ai viaggi</a>
     </section>
 
     <section class="card">
-      <h2>⚖️ Il tuo profilo</h2>
+      <h2>Il tuo profilo</h2>
       <p class="muto">Con il tuo peso corporeo, Loadout ti avvisa se lo zaino supera il 20% (il limite consigliato).</p>
       <form id="form-profilo" class="aggiungi" novalidate>
         <label>Peso corporeo (kg)

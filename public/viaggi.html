@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout – Viaggi</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="logo" href="/">🎒 Loadout</a>
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="34" height="34"><span>Load<span class="out">out</span></span></a>
     <nav>
       <a href="/armadio.html">Armadio</a>
       <a href="/viaggi.html">Viaggi</a>
@@ -23,7 +24,7 @@
       <div class="filtri">
         <select id="filtro-pianificati" aria-label="Filtra i viaggi">
           <option value="">Tutti i viaggi</option>
-          <option value="true">📌 Percorsi da fare in futuro</option>
+          <option value="true">Percorsi da fare in futuro</option>
           <option value="false">Già organizzati</option>
         </select>
       </div>
@@ -106,8 +107,8 @@
           </label>
         </details>
 
-        <label class="check"><input name="pianificato" type="checkbox"> 📌 Percorso da fare in futuro</label>
-        <label class="check"><input name="genera" type="checkbox" checked> 🎒 Genera subito lo zaino</label>
+        <label class="check"><input name="pianificato" type="checkbox"> Percorso da fare in futuro</label>
+        <label class="check"><input name="genera" type="checkbox" checked> Genera subito lo zaino</label>
         <p class="errore" id="form-errore" hidden></p>
         <button type="submit" id="salva">Crea il viaggio</button>
       </form>

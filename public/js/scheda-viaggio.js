@@ -57,7 +57,7 @@ function renderIntestazione() {
     v.pernotto === "nessuno" ? "in giornata" : `pernotto in ${v.pernotto}`,
     v.serve_cucina ? "con cucina" : "senza cucina",
   ];
-  if (v.pianificato) parti.push("📌 da fare in futuro");
+  if (v.pianificato) parti.push("da fare in futuro");
   dettagli.textContent = parti.join(" · ");
 }
 
@@ -134,7 +134,7 @@ function renderZaino() {
   elAvvisoPeso.hidden = !troppoPesante;
   barraRiempimento.classList.toggle("oltre-soglia", Boolean(troppoPesante));
   if (troppoPesante) {
-    elAvvisoPeso.textContent = `⚠️ Lo zaino pesa ${num2(p.peso_totale_kg)} kg: più del 20% del tuo peso corporeo (limite consigliato ${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
+    elAvvisoPeso.textContent = `Lo zaino pesa ${num2(p.peso_totale_kg)} kg: più del 20% del tuo peso corporeo (limite consigliato ${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
   }
 
   // Checklist

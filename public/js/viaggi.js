@@ -33,7 +33,7 @@ function render() {
     <tr data-id="${v.id}">
       <td>
         <a href="/scheda-viaggio.html?id=${v.id}">${esc(v.nome)}</a>
-        ${v.pianificato ? '<span class="badge preferito">📌 da fare</span>' : ""}
+        ${v.pianificato ? '<span class="badge preferito">da fare</span>' : ""}
       </td>
       <td>${esc(v.attivita)}</td>
       <td>${v.data_partenza ? formattaData(v.data_partenza) : '<span class="muto">—</span>'}</td>

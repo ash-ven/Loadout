@@ -1,0 +1,15 @@
+<!-- Icona della scheda del browser: l'icona app (quadrato muschio con lo zaino chiaro) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="28" fill="#31503f"/>
+  <g transform="translate(9 9) scale(.85)">
+    <mask id="corpo"><path d="M44 20 H76 C83 20 87 24 87 31 L94 100 C95 108 89 113 82 113 H38 C31 113 25 108 26 100 L33 31 C33 24 37 20 44 20 Z" fill="#fff"/></mask>
+    <path d="M51 22 C51 9 69 9 69 22" fill="none" stroke="#f6efdf" stroke-width="12" stroke-linecap="round"/>
+    <path d="M32 72 H22 C18 72 15 76 15.5 80 L17 106 C17.5 110 21 113 25 113 H32 Z" fill="#f6efdf"/>
+    <path d="M88 72 H98 C102 72 105 76 104.5 80 L103 106 C102.5 110 99 113 95 113 H88 Z" fill="#f6efdf"/>
+    <path d="M44 20 H76 C83 20 87 24 87 31 L94 100 C95 108 89 113 82 113 H38 C31 113 25 108 26 100 L33 31 C33 24 37 20 44 20 Z" fill="#31503f"/>
+    <g mask="url(#corpo)"><path d="M10 126 V82 L72 56 L110 86 V126 Z" fill="#dde7d3"/></g>
+    <path d="M44 20 H76 C83 20 87 24 87 31 L94 100 C95 108 89 113 82 113 H38 C31 113 25 108 26 100 L33 31 C33 24 37 20 44 20 Z" fill="none" stroke="#f6efdf" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M33 31 C33 24 37 20 44 20 H76 C83 20 87 24 87 31 L88.4 46 C80 50 72 52 60 52 C48 52 40 50 31.6 46 Z" fill="#f6efdf"/>
+    <rect x="51" y="46" width="18" height="18" rx="4" fill="#c8962b"/>
+  </g>
+</svg>

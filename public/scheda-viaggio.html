@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout – Scheda viaggio</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="logo" href="/">🎒 Loadout</a>
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="34" height="34"><span>Load<span class="out">out</span></span></a>
     <nav>
       <a href="/armadio.html">Armadio</a>
       <a href="/viaggi.html">Viaggi</a>
@@ -28,7 +29,7 @@
       <!-- Colonna sinistra: lo zaino -->
       <section class="card">
         <div class="intestazione-sezione">
-          <h2>🎒 Il tuo zaino</h2>
+          <h2>Il tuo zaino</h2>
           <div class="azioni">
             <button type="button" id="genera">Genera zaino</button>
             <button type="button" class="secondario" id="svuota">Svuota checklist</button>
@@ -43,7 +44,7 @@
         <div class="tabella-scroll">
           <table id="checklist">
             <thead>
-              <tr><th>✔</th><th>Oggetto</th><th>Categoria</th><th>Qtà</th><th>Peso</th><th></th></tr>
+              <tr><th aria-label="Preso"></th><th>Oggetto</th><th>Categoria</th><th>Qtà</th><th>Peso</th><th></th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -59,9 +60,9 @@
 
       <!-- Colonna destra: i consigli -->
       <section class="card">
-        <h2>🧭 Consigli per il viaggio</h2>
+        <h2>Consigli per il viaggio</h2>
         <div class="consiglio">
-          <h3>💧 Acqua</h3>
+          <h3>Acqua</h3>
           <p id="acqua"></p>
           <form id="form-ore" class="aggiungi">
             <label>Ore di cammino al giorno
@@ -71,15 +72,15 @@
           </form>
         </div>
         <div class="consiglio">
-          <h3>🌅 Alba e tramonto</h3>
+          <h3>Alba e tramonto</h3>
           <p id="sole"></p>
         </div>
         <div class="consiglio">
-          <h3>🌦️ Meteo</h3>
+          <h3>Meteo</h3>
           <div id="meteo"></div>
         </div>
         <div class="consiglio">
-          <h3>🗺️ Percorso</h3>
+          <h3>Percorso</h3>
           <p id="percorso"></p>
         </div>
       </section>
