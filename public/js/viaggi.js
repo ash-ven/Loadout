@@ -187,9 +187,11 @@ function preparaMappa() {
   mappa.invalidateSize(); // il contenitore era nascosto (finestra chiusa): Leaflet ricalcola le misure
 }
 
-async function cambiatiIPunti() {
+// daiCampi = true quando i punti arrivano dai campi scritti a mano: in quel caso i campi
+// NON vanno riscritti (cancellerebbero quello che stai ancora scrivendo)
+async function cambiatiIPunti({ daiCampi = false } = {}) {
   traccia = null;
-  compilaCoordinate();
+  if (!daiCampi) compilaCoordinate();
   disegna();
   if (punti.length < 2) return mostraRiepilogo(punti.length === 1 ? "Ora tocca l'arrivo (o una tappa)." : "");
 
@@ -229,7 +231,10 @@ function disegna() {
     const tipo = i === 0 ? "partenza" : i === punti.length - 1 ? "arrivo" : "tappa";
     punto(...p, tipo).addTo(livello);
   });
-  if (traccia) mappa.fitBounds(traccia, { padding: [20, 20] });       // inquadra tutto il percorso
+  // Inquadra quello che c'è: il percorso, oppure i punti (così un punto scritto a mano si vede subito)
+  if (traccia) mappa.fitBounds(traccia, { padding: [20, 20] });
+  else if (punti.length >= 2) mappa.fitBounds(punti, { padding: [30, 30], maxZoom: 14 });
+  else if (punti.length === 1 && !mappa.getBounds().contains(punti[0])) mappa.setView(punti[0], 13);
 }
 
 function mostraRiepilogo(testo) {
@@ -247,13 +252,15 @@ document.querySelector("#ricomincia-mappa").addEventListener("click", () => {
   cambiatiIPunti();
 });
 
-// Se scrivi le coordinate a mano: i punti diventano partenza e arrivo dei campi
+// Se scrivi le coordinate a mano: quando una coppia lat/lon è completa diventa un punto della mappa.
+// I campi si LEGGONO soltanto: finché ne manca uno, la mappa aspetta e non tocca quello che hai scritto.
 for (const nome of ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"]) {
   campi[nome].addEventListener("change", () => {
     const partenza = [numeroDa(campi.lat_partenza), numeroDa(campi.lon_partenza)];
     const arrivo = [numeroDa(campi.lat_arrivo), numeroDa(campi.lon_arrivo)];
-    punti = [partenza, arrivo].filter((p) => p[0] !== null && p[1] !== null);
-    cambiatiIPunti();
+    const completo = (p) => p[0] !== null && p[1] !== null;
+    punti = [partenza, arrivo].filter(completo);
+    cambiatiIPunti({ daiCampi: true });
   });
 }
 

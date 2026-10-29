@@ -15,7 +15,7 @@ export const CENTRO_ITALIA = [44.25, 10.7];
 export function creaMappa(idElemento, centro = CENTRO_ITALIA, zoom = 10) {
   const mappa = L.map(idElemento).setView(centro, zoom);
   L.tileLayer(SFONDO, { maxZoom: 17, attribution: FONTE }).addTo(mappa);
-  L.tileLayer(SENTIERI, { maxZoom: 17, opacity: 0.8 }).addTo(mappa); // trasparente: si vede lo sfondo sotto
+  L.tileLayer(SENTIERI, { maxZoom: 17 }).addTo(mappa); // immagini trasparenti con solo i sentieri: si vede lo sfondo sotto
   return mappa;
 }
 
