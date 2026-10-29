@@ -1,0 +1,30 @@
+<!-- Lo zaino che si riempie di montagne e la fibbia che scatta (versione per fondo scuro).
+     L'animazione è CSS dentro l'SVG: funziona anche caricando il file con <img>. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <style>
+    @keyframes riempi-dietro { 0% { transform: translateY(62px) } 30% { transform: translateY(0) } 80% { transform: translateY(0) } 93%, 100% { transform: translateY(62px) } }
+    @keyframes riempi-davanti { 0%, 12% { transform: translateY(48px) } 42% { transform: translateY(0) } 80% { transform: translateY(0) } 93%, 100% { transform: translateY(48px) } }
+    @keyframes scatto { 0%, 44% { transform: scale(1) } 50% { transform: scale(1.3) } 57%, 100% { transform: scale(1) } }
+    .dietro  { animation: riempi-dietro 4.2s cubic-bezier(.3, .7, .2, 1) infinite; }
+    .davanti { animation: riempi-davanti 4.2s cubic-bezier(.3, .7, .2, 1) infinite; }
+    .fibbia  { transform-box: fill-box; transform-origin: center; animation: scatto 4.2s ease-in-out infinite; }
+    /* Chi ha chiesto al sistema "meno movimento" vede lo zaino già pieno, fermo */
+    @media (prefers-reduced-motion: reduce) { .dietro, .davanti, .fibbia { animation: none; } }
+  </style>
+  <mask id="corpo"><path d="M44 20 H76 C83 20 87 24 87 31 L94 100 C95 108 89 113 82 113 H38 C31 113 25 108 26 100 L33 31 C33 24 37 20 44 20 Z" fill="#fff"/></mask>
+  <!-- maniglia e tasche laterali -->
+  <path d="M51 22 C51 9 69 9 69 22" fill="none" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/>
+  <path d="M32 76 H23 C19 76 17 79 17.5 83 L19 104 C19.5 108 22 111 26 111 H32 Z" fill="#f6efdf"/>
+  <path d="M88 76 H97 C101 76 103 79 102.5 83 L101 104 C100.5 108 98 111 94 111 H88 Z" fill="#f6efdf"/>
+  <!-- interno dello zaino (vuoto) -->
+  <path d="M44 20 H76 C83 20 87 24 87 31 L94 100 C95 108 89 113 82 113 H38 C31 113 25 108 26 100 L33 31 C33 24 37 20 44 20 Z" fill="#233a2d"/>
+  <!-- le montagne salgono, ritagliate dalla forma dello zaino (mask) -->
+  <g mask="url(#corpo)">
+    <g class="dietro"><path d="M10 126 V86 L38 66 L52 76 L72 62 L110 90 V126 Z" fill="#5f8463" stroke="#5f8463" stroke-width="2" stroke-linejoin="round"/></g>
+    <g class="davanti"><path d="M10 126 V100 L34 90 L52 102 L76 88 L110 104 V126 Z" fill="#dde7d3" stroke="#dde7d3" stroke-width="2" stroke-linejoin="round"/></g>
+  </g>
+  <!-- contorno, patta e fibbia -->
+  <path d="M44 20 H76 C83 20 87 24 87 31 L94 100 C95 108 89 113 82 113 H38 C31 113 25 108 26 100 L33 31 C33 24 37 20 44 20 Z" fill="none" stroke="#f6efdf" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M33 31 C33 24 37 20 44 20 H76 C83 20 87 24 87 31 L88.4 44 C80 50 72 54 66 54 H54 C48 54 40 50 31.6 44 Z" fill="#f6efdf"/>
+  <rect class="fibbia" x="54" y="49" width="12" height="14" rx="3.5" fill="#c8962b"/>
+</svg>
