@@ -280,11 +280,21 @@ function nascondiErrore() {
 if (!Number.isInteger(id) || id <= 0) {
   location.href = "/viaggi.html"; // URL senza un id valido: torniamo alla lista
 } else {
+  const elCaricamento = document.querySelector("#caricamento");
+  // Lo zaino animato compare solo se i dati tardano più di 250 ms:
+  // in locale arrivano subito, e un lampo di animazione sarebbe solo fastidioso.
+  const timerCaricamento = setTimeout(() => { elCaricamento.hidden = false; }, 250);
   try {
     await caricaViaggio();
     armadio = await api("/api/oggetti?limit=200");
     await caricaZaino();
+    document.querySelector("#corpo-scheda").hidden = false; // tutto ok: mostro zaino e consigli
   } catch (err) {
     titolo.textContent = err.message; // es. "Viaggio 99 non trovato" (anche se è di un altro utente)
+  } finally {
+    // finally gira SEMPRE, sia dopo il try riuscito sia dopo il catch
+    clearTimeout(timerCaricamento);     // se i dati sono arrivati prima dei 250 ms, l'animazione non parte proprio
+    elCaricamento.hidden = true;
+    document.querySelector("#intestazione").hidden = false; // titolo o messaggio d'errore
   }
 }

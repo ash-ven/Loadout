@@ -18,14 +18,20 @@
   </header>
 
   <main class="container">
-    <!-- Intestazione: i dati del viaggio -->
-    <section class="card">
+    <!-- Indicatore di caricamento: compare solo se i dati tardano (vedi AVVIO in scheda-viaggio.js) -->
+    <div class="caricamento" id="caricamento" hidden>
+      <img src="/img/zaino-animato-chiaro.svg" alt="" width="120" height="120">
+      <p class="muto" role="status">Sto preparando lo zaino…</p>
+    </div>
+
+    <!-- Intestazione: i dati del viaggio (nascosta finché non arrivano) -->
+    <section class="card" id="intestazione" hidden>
       <p class="muto"><a href="/viaggi.html">← I miei viaggi</a></p>
-      <h1 id="titolo">Caricamento…</h1>
+      <h1 id="titolo"></h1>
       <p class="muto" id="dettagli"></p>
     </section>
 
-    <div class="griglia due-colonne">
+    <div class="griglia due-colonne" id="corpo-scheda" hidden>
       <!-- Colonna sinistra: lo zaino -->
       <section class="card">
         <div class="intestazione-sezione">

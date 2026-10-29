@@ -27,6 +27,8 @@
 }
 
 * { box-sizing: border-box; }
+/* L'attributo hidden deve vincere anche su elementi con display: grid/flex (es. .griglia) */
+[hidden] { display: none !important; }
 body { margin: 0; font-family: var(--font); color: var(--testo); background: var(--crema); line-height: 1.55; }
 a { color: var(--muschio); font-weight: 500; }
 h1, h2, h3 { margin: 0 0 .5rem; line-height: 1.15; color: var(--muschio); font-weight: 800; letter-spacing: -.02em; }
@@ -51,6 +53,11 @@ h3 { font-size: 1.05rem; font-weight: 700; }
 .container { max-width: 1040px; margin: 0 auto; padding: 1.5rem 1rem; display: grid; gap: 1.5rem; }
 .card { background: var(--lana); border: 1px solid var(--bordo); border-radius: var(--raggio); padding: 1.25rem; box-shadow: var(--ombra); }
 .centrato { max-width: 420px; margin: 3rem auto; }
+/* Zaino animato sopra il modulo di login/registrazione */
+.benvenuto { display: block; margin: 0 auto .5rem; }
+.centrato h1 { text-align: center; }
+/* Indicatore di caricamento della scheda viaggio */
+.caricamento { display: grid; justify-items: center; gap: .5rem; padding: 4rem 1rem; }
 
 /* --- Riquadro iniziale della home (ispirato alle pagine di avvio delle app outdoor) --- */
 .hero { position: relative; overflow: hidden; border-radius: var(--raggio); background: var(--muschio);
