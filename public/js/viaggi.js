@@ -11,6 +11,8 @@ const campi = form.elements;
 const erroreForm = document.querySelector("#form-errore");
 const bottoneSalva = document.querySelector("#salva");
 const bottoneAnnulla = document.querySelector("#annulla");
+const titoloForm = document.querySelector("#titolo-form");
+const rigaGenera = document.querySelector("#riga-genera"); // "Genera subito lo zaino": solo quando crei
 const finestra = document.querySelector("#finestra");          // il <dialog> con il form
 const bottoneNuovo = document.querySelector("#apri-nuovo");    // "Nuovo viaggio" nella testata
 const bottoneChiudi = document.querySelector("#chiudi");       // la X in alto nella finestra
@@ -18,6 +20,10 @@ const bottoneChiudi = document.querySelector("#chiudi");       // la X in alto n
 // --- Stato ---
 let viaggi = [];
 let filtro = "tutti"; // "tutti" | "da-fare" | "organizzati"
+let inModifica = null; // id del viaggio in modifica (arrivo dalla scheda con ?modifica=ID), oppure null se creo
+
+// "Modifica viaggio" nella scheda porta qui con ?modifica=7: apriamo la finestra già compilata
+const daModificare = Number(new URLSearchParams(location.search).get("modifica")) || null;
 
 // --- Caricamento: tutti i viaggi, il filtro dei segmenti lo applichiamo qui (così i conteggi restano giusti).
 //     Nota: lo stesso filtro esiste anche nell'API (?pianificato=true), utile per curl o per altri client.
@@ -114,10 +120,45 @@ finestra.addEventListener("click", (e) => {
 function svuotaForm() {
   form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
   erroreForm.hidden = true;
+  inModifica = null;
+  titoloForm.textContent = "Prepara il tuo cammino";
+  bottoneSalva.textContent = "Crea il viaggio";
+  rigaGenera.hidden = false;
   punti = [];      // via anche il percorso sulla mappa
   traccia = null;
   mostraRiepilogo("");
   disegna();
+}
+
+finestra.addEventListener("close", () => {
+  // Se eri arrivata dalla scheda per modificare il viaggio, chiudendo (Annulla, X, Esc) ci torni
+  if (daModificare) {
+    location.href = `/scheda-viaggio.html?id=${daModificare}`;
+    return;
+  }
+  svuotaForm();
+});
+
+// --- Modifica: riempie il form con i dati del viaggio e apre la finestra ---
+function apriModifica(v) {
+  svuotaForm();
+  inModifica = v.id;
+  titoloForm.textContent = `Modifica: ${v.nome}`;
+  bottoneSalva.textContent = "Salva le modifiche";
+  rigaGenera.hidden = true; // lo zaino c'è già: "genera" lo trovi nella scheda
+  for (const nome of ["nome", "attivita", "n_persone", "n_giorni", "pernotto", "data_partenza", "distanza_km",
+                      "dislivello_m", "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo", "note"]) {
+    campi[nome].value = v[nome] ?? "";
+  }
+  campi.serve_cucina.checked = v.serve_cucina;
+  campi.pianificato.checked = v.pianificato;
+  apriFinestra();
+  // Sulla mappa: il percorso salvato (se c'è) con partenza e arrivo
+  const ok = (lat, lon) => lat != null && lon != null;
+  punti = [[v.lat_partenza, v.lon_partenza], [v.lat_arrivo, v.lon_arrivo]].filter(([lat, lon]) => ok(lat, lon));
+  traccia = v.traccia ?? null;
+  disegna();
+  if (traccia) mostraRiepilogo("Percorso salvato. Per cambiarlo, «Cancella il percorso» e tocca i nuovi punti.");
 }
 
 // =====================================================================
@@ -263,9 +304,15 @@ form.addEventListener("submit", async (e) => {
 
   bottoneSalva.disabled = true;
   try {
-    const url = campi.genera.checked ? "/api/viaggi?genera=true" : "/api/viaggi";
-    const nuovo = await api(url, { method: "POST", body: dati });
-    location.href = `/scheda-viaggio.html?id=${nuovo.id}`; // si va subito alla scheda del nuovo viaggio
+    let id = inModifica;
+    if (inModifica) {
+      // Modifica: PUT con il viaggio intero (lo zaino non cambia)
+      await api(`/api/viaggi/${inModifica}`, { method: "PUT", body: dati });
+    } else {
+      const url = campi.genera.checked ? "/api/viaggi?genera=true" : "/api/viaggi";
+      id = (await api(url, { method: "POST", body: dati })).id;
+    }
+    location.href = `/scheda-viaggio.html?id=${id}`; // si va (o si torna) alla scheda del viaggio
   } catch (err) {
     mostraErrore(err.message); // US3 CA2: gli errori del server mostrati nel form
     bottoneSalva.disabled = false;
@@ -277,4 +324,9 @@ function mostraErrore(testo) {
   erroreForm.hidden = false;
 }
 
-carica();
+await carica();
+if (daModificare) {
+  const v = viaggi.find((x) => x.id === daModificare);
+  if (v) apriModifica(v);
+  else location.href = "/viaggi.html"; // id sbagliato o viaggio non mio: torno alla lista
+}

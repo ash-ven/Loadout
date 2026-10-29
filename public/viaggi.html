@@ -49,7 +49,7 @@
     <dialog class="finestra" id="finestra" aria-labelledby="titolo-form">
       <div class="finestra-contenuto">
       <div class="finestra-testa">
-        <h2 id="titolo-form"><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24">Prepara il tuo cammino</h2>
+        <h2><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24"><span id="titolo-form">Prepara il tuo cammino</span></h2>
         <button type="button" class="chiudi" id="chiudi" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <form id="form-viaggio" novalidate>
@@ -131,7 +131,7 @@
         </details>
 
         <label class="check"><input name="pianificato" type="checkbox"> <img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Percorso da fare in futuro</label>
-        <label class="check"><input name="genera" type="checkbox" checked> <img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Genera subito lo zaino</label>
+        <label class="check" id="riga-genera"><input name="genera" type="checkbox" checked> <img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Genera subito lo zaino</label>
         <p class="errore" id="form-errore" hidden></p>
         <div class="azioni">
           <button type="submit" id="salva">Crea il viaggio</button>

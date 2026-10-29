@@ -411,6 +411,11 @@ function mostraEmergenza(utente) {
   elEmergenza.innerHTML = `In caso di emergenza chiama il <strong>112</strong>. Avvisa anche ${chi}${numero}.`;
 }
 
+// --- Modifica viaggio: usa la finestra della pagina Viaggi, già compilata ---
+document.querySelector("#modifica-viaggio").addEventListener("click", () => {
+  location.href = `/viaggi.html?modifica=${id}`;
+});
+
 // --- Elimina viaggio (prima era un pulsante nella lista dei viaggi) ---
 document.querySelector("#elimina-viaggio").addEventListener("click", async () => {
   if (!confirm(`Eliminare il viaggio "${viaggio.nome}"?\nVerrà eliminato anche il suo zaino.`)) return;
@@ -441,6 +446,7 @@ if (!Number.isInteger(id) || id <= 0) {
   } catch (err) {
     titolo.textContent = err.message; // es. "Viaggio 99 non trovato" (anche se è di un altro utente)
     document.querySelector("#elimina-viaggio").hidden = true; // niente da eliminare
+    document.querySelector("#modifica-viaggio").hidden = true; // né da modificare
   } finally {
     // finally gira SEMPRE, sia dopo il try riuscito sia dopo il catch
     clearTimeout(timerCaricamento);     // se i dati sono arrivati prima dei 250 ms, l'animazione non parte proprio

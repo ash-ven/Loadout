@@ -71,8 +71,8 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (dopo la registrazione entra da sola) |
 | `index.html` | `index.js` | home: saluto, frase casuale (anche "viva" sul prossimo viaggio), conteggi di oggetti e viaggi in arrivo |
 | `armadio.html` | `armadio.js` | lista per categoria con ricerca e filtri Tutti/Indispensabili/Preferiti, scheda di dettaglio, aggiungi/modifica/elimina in una finestra |
-| `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" con mappa per scegliere partenza e arrivo |
-| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | zaino con checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, consigli con mappa del percorso ed emergenza, elimina viaggio |
+| `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" con il percorso sulla mappa dei sentieri; con `?modifica=ID` la stessa finestra modifica un viaggio |
+| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | zaino con checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, consigli con mappa del percorso ed emergenza, modifica ed elimina viaggio |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
 | `profilo.html` | `profilo.js` | foto, dati personali (esperienza, città, contatto di emergenza), peso corporeo e soglia dello zaino, esci |
 
