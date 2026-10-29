@@ -20,15 +20,21 @@ Il browser lo rimanda da solo: tutte le rotte di Armadio, Viaggi e Zaino lo rich
 | POST | /api/auth/register | `{ email*, password*, nome* }` – email valida (max 255), password ≥ 8 caratteri, nome max 100 | `{ id, email, nome }` (mai la password né l'hash) | 201, 400 (`BAD_EMAIL`, `WEAK_PASSWORD`, `VALIDATION_ERROR`), 409 (email già usata) |
 | POST | /api/auth/login | `{ email*, password* }` | `{ id, nome }` + cookie `token` | 200, 400, 401 ("Email o password errati", stesso messaggio per email inesistente e password sbagliata) |
 | POST | /api/auth/logout | — | nessun corpo, cookie cancellato | 204 |
-| GET | /api/auth/me | — | `{ id, email, nome, peso_corporeo_kg }`, letti dal database (così il peso è sempre quello aggiornato) | 200, 401 |
-| PATCH | /api/auth/me | `{ peso_corporeo_kg* }` – tra 20 e 300 | `{ id, email, nome, peso_corporeo_kg }` | 200, 400, 401 |
+| GET | /api/auth/me | — | il profilo, letto dal database: `{ id, email, nome, peso_corporeo_kg, livello_esperienza, citta, emergenza_nome, emergenza_telefono, ha_foto }` (la foto ha un indirizzo suo, sotto) | 200, 401 |
+| PATCH | /api/auth/me | uno o più tra `{ peso_corporeo_kg, livello_esperienza, citta, emergenza_nome, emergenza_telefono, foto }` – modifica **parziale**: cambia solo i campi inviati; `""` o `null` svuota il campo. Regole sotto | il profilo aggiornato (come GET) | 200, 400 (`VALIDATION_ERROR`, `BAD_TELEFONO`, `BAD_FOTO`), 401 |
+| GET | /api/auth/me/foto | — | l'immagine (byte veri, `Content-Type: image/jpeg` o png/webp), da usare in `<img src>` | 200, 401, 404 (nessuna foto) |
+
+Regole dei campi del profilo:
+- `peso_corporeo_kg` tra 20 e 300; `livello_esperienza` tra principiante, intermedio, esperto
+- `citta` max 100; `emergenza_nome` max 100; `emergenza_telefono` max 30, solo cifre, spazi e un `+` iniziale
+- `foto`: data URL `data:image/(jpeg|png|webp);base64,...`, max 200.000 caratteri (il frontend la riduce a 256×256 prima di mandarla). Body JSON massimo 300 kB
 
 ## Armadio (oggetti dell'utente loggato)
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
 | GET | /api/oggetti?q=&categoria=&limit=&offset= | — | array dei miei oggetti, ordinati per categoria e nome; `q` cerca nel nome; `categoria` tra quelle ammesse; limit 1–200 (default 50), offset ≥ 0 | 200, 400, 401 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
-| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
+| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta, attivita_adatte }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
 | PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano al valore di default) | l'oggetto aggiornato. Se `quantita_posseduta` scende sotto la quantità messa in qualche zaino, in quegli zaini la quantità scende allo stesso valore (stessa query, atomica) | 200, 400, 401, 404, 409 |
 | DELETE | /api/oggetti/:id | — | nessun corpo (sparisce anche dagli zaini: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
@@ -40,6 +46,8 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 - `codice_etichetta` max 64; `note` max 1000
 - `marchio` max 80; `caratteristiche` max 500 (caratteristiche tecniche, testo libero)
 - `quantita_posseduta` intero 1–99 (default 1): quanti pezzi ne possiedo
+- `attivita_adatte` elenco (array) di attività tra escursione, trekking, alpinismo, ciaspolata, ferrata; senza doppioni.
+  **Vuoto (default) = adatto a tutte le attività**
 
 ## Viaggi
 | Metodo | URL | Body | Risposta | Status |
@@ -79,7 +87,7 @@ Blocco `consigli` del dettaglio:
 ## Zaino
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| POST | /api/viaggi/:id/genera | — | `{ aggiunti: n }` – indispensabili + preferiti, cucina solo se `serve_cucina`; generare di nuovo non duplica | 200, 400, 401, 404 |
+| POST | /api/viaggi/:id/genera | — | `{ aggiunti: n }` – indispensabili + preferiti, cucina solo se `serve_cucina`, solo oggetti adatti all'attività del viaggio (o adatti a tutte); generare di nuovo non duplica | 200, 400, 401, 404 |
 | GET | /api/viaggi/:id/zaino | — | `{ peso, oggetti }` – vedi sotto | 200, 400, 401, 404 |
 | POST | /api/viaggi/:id/zaino | `{ oggetto_id*, quantita }` – quantita intero 1–99 (default 1) e non oltre i pezzi posseduti; l'oggetto deve essere mio | la riga dello zaino | 201, 400 (`QUANTITA_OLTRE_POSSEDUTI`), 401, 404, 409 (già nello zaino) |
 | PATCH | /api/viaggi/:id/zaino/:oggettoId | `{ inserito, quantita, indossato }` – almeno uno; cambia solo i campi inviati. `quantita` non oltre i pezzi posseduti; `indossato: true` solo per l'abbigliamento | la riga aggiornata | 200, 400 (`QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`), 401, 404 |
@@ -93,7 +101,7 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 
 ## Note sugli status code
 - **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico o troppo grande, JSON malformato) oppure una regola dell'app non rispettata; il `message` spiega cosa correggere.
-  Codici: `VALIDATION_ERROR`, `BAD_ID`, `BAD_QUERY`, `BAD_JSON`, `BAD_INPUT`, `WEAK_PASSWORD`, `BAD_EMAIL`, `QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`.
+  Codici: `VALIDATION_ERROR`, `BAD_ID`, `BAD_QUERY`, `BAD_JSON`, `BAD_INPUT`, `WEAK_PASSWORD`, `BAD_EMAIL`, `BAD_TELEFONO`, `BAD_FOTO`, `QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`.
 - **401**: non autenticato (manca il cookie, token scaduto o manomesso) oppure credenziali errate al login.
 - **404**: la risorsa non esiste **oppure non è mia**: non riveliamo che esiste (niente 403).
 - **409**: violazione di unicità (email già registrata, nome già nel mio armadio anche con maiuscole diverse, oggetto già nello zaino). Il messaggio dipende dal vincolo violato.

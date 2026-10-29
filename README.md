@@ -33,15 +33,19 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_schema.sql` | schema fornito, viste, funzioni, dati di esempio |
 | `loadout_stretch.sql` | peso corporeo, viaggi pianificati, km del percorso, acqua con la temperatura, nome unico senza distinguere maiuscole |
 | `loadout_stretch_acqua.sql` | acqua a persona al giorno (salita, caldo, cucina) |
+| `loadout_stretch_attivita.sql` | oggetti adatti a certe attività; lo zaino generato ne tiene conto |
 | `loadout_stretch_indossato.sql` | oggetti indossati: restano in checklist ma non pesano nello zaino |
 | `loadout_stretch_oggetto.sql` | marchio, caratteristiche tecniche e pezzi posseduti degli oggetti |
+| `loadout_stretch_profilo.sql` | profilo: livello di esperienza, città, contatto di emergenza, foto |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
 
 ```powershell
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_acqua.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_attivita.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_indossato.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_oggetto.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo.sql
 ```
 
 Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` in `/docker-entrypoint-initdb.d`.
@@ -65,12 +69,12 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (dopo la registrazione entra da sola) |
 | `index.html` | `index.js` | home: saluto, frase casuale (anche "viva" sul prossimo viaggio), conteggi di oggetti e viaggi in arrivo |
 | `armadio.html` | `armadio.js` | lista per categoria con ricerca e filtri Tutti/Indispensabili/Preferiti, scheda di dettaglio, aggiungi/modifica/elimina in una finestra |
-| `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" |
-| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | zaino con checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, consigli, elimina viaggio |
+| `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" con mappa per scegliere partenza e arrivo |
+| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | zaino con checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, consigli con mappa del percorso ed emergenza, elimina viaggio |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
-| `profilo.html` | `profilo.js` | dati dell'account, peso corporeo e soglia dello zaino, esci |
+| `profilo.html` | `profilo.js` | foto, dati personali (esperienza, città, contatto di emergenza), peso corporeo e soglia dello zaino, esci |
 
-Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie).
+Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/mappa.js` (impostazioni delle mappe Leaflet + OpenTopoMap).
 Stile: un solo foglio, `css/style.css`. Immagini: logo, icone e sfondi SVG in `img/`.
 Sul telefono il menu è una barra in basso; sul computer sta nella barra in alto.
 
@@ -101,10 +105,16 @@ Aggiornato a giovedì 29 ottobre.
 - [x] 4. Percorsi da fare in futuro (`pianificato`) con filtro nella lista
 - [x] 5. Avviso se lo zaino supera il 20% del peso corporeo
 - [ ] 2. Scansione dell'etichetta con la fotocamera (il pulsante c'è: per ora apre il form sul campo "codice etichetta")
-- [ ] 3. Mappa con Leaflet per scegliere partenza e arrivo
+- [x] 3. Mappa con Leaflet (sfondo OpenTopoMap) per scegliere partenza e arrivo; mappa del percorso nella scheda
+
+### Oltre lo scope (giovedì pomeriggio)
+- [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più), adatti a certe attività (lo zaino generato ne tiene conto)
+- [x] Zaino: oggetti indossati (solo abbigliamento) fuori dal peso; acqua a persona al giorno con salita, caldo e cucina
+- [x] Profilo: foto (ridotta nel browser), esperienza, città, contatto di emergenza (mostrato nella scheda del viaggio)
+- [x] Home con frasi casuali e "vive" sul prossimo viaggio; pagina di consigli generali
 
 ### Da fare
-- [ ] HTTPS (Caddy), helmet (con Google Fonts permessi nella CSP), limite tentativi sul login, Dockerfile e compose completo, `.env.example` nella radice (venerdì)
+- [ ] HTTPS (Caddy), helmet (la CSP deve permettere Google Fonts, unpkg.com per Leaflet e le tessere di tile.opentopomap.org), limite tentativi sul login, Dockerfile e compose completo, `.env.example` nella radice (venerdì)
 - [ ] Almeno 5 test automatici, `npm audit`, NOTE.md (venerdì)
 
 ## User story MVP
