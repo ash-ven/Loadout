@@ -262,6 +262,13 @@ function mostraErrore(testo) {
 await carica();
 if (daModificare) {
   const v = viaggi.find((x) => x.id === daModificare);
-  if (v) apriModifica(v);
-  else location.href = "/viaggi.html"; // id sbagliato o viaggio non mio: torno alla lista
+  if (v) {
+    apriModifica(v);
+    // "Disegna la mappa" della scheda (?mappa=1): apro subito «Percorso e coordinate», dove si disegna la mappa
+    if (new URLSearchParams(location.search).has("mappa")) {
+      const percorso = form.querySelector("details");
+      percorso.open = true;
+      percorso.scrollIntoView({ block: "start" });
+    }
+  } else location.href = "/viaggi.html"; // id sbagliato o viaggio non mio: torno alla lista
 }

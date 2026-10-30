@@ -1,0 +1,352 @@
+import { api, esc } from "./api.js";
+import "./menu.js";
+import { CATEGORIE } from "./categorie.js";
+
+// Pagina dello zaino di un'uscita: zaino.html?id=7 (prima stava dentro la scheda del viaggio).
+// Con &genera=1 (pulsante "Genera lo zaino" della scheda) lo zaino si riempie appena la pagina si apre.
+const id = Number(new URLSearchParams(location.search).get("id"));
+
+// --- Elementi della pagina ---
+const titolo = document.querySelector("#titolo");
+const linkTorna = document.querySelector("#torna");
+const bottoneGenera = document.querySelector("#genera");
+const bottoneSvuota = document.querySelector("#svuota");
+const elPesoInserito = document.querySelector("#peso-inserito");
+const elPesoTotale = document.querySelector("#peso-totale");
+const elPesoAddosso = document.querySelector("#peso-addosso"); // B3: quello che indossi, a parte
+const barraRiempimento = document.querySelector("#barra-riempimento");
+const elAvvisoPeso = document.querySelector("#avviso-peso");
+const elPesoAcqua = document.querySelector("#peso-acqua"); // B4
+const elTestoAvvisoPeso = document.querySelector("#testo-avviso-peso"); // il testo: l'icona accanto resta fissa
+const elMessaggioZaino = document.querySelector("#messaggio-zaino");
+const elChecklist = document.querySelector("#checklist");
+const formAggiungi = document.querySelector("#form-aggiungi");
+const erroreZaino = document.querySelector("#errore-zaino");
+
+// --- Stato ---
+let viaggio = null;                       // il viaggio (serve per la soglia del peso, l'acqua e il pernotto)
+let zaino = { peso: null, oggetti: [] };  // la checklist (GET /api/viaggi/:id/zaino)
+let armadio = [];                         // tutti i miei oggetti, per il selettore "aggiungi"
+
+// Numeri in formato italiano: 3.5 → "3,5"; e con 2 decimali: 5.6 → "5,60"
+const num = (n) => Number(n).toLocaleString("it-IT", { useGrouping: "always" });
+const num2 = (n) => Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// =====================================================================
+//  ZAINO: checklist, peso, genera, aggiungi, modifica, togli, svuota
+// =====================================================================
+
+async function caricaZaino() {
+  zaino = await api(`/api/viaggi/${id}/zaino`);
+  renderZaino();
+  caricaKit(); // B5: anche il riquadro "Per questa uscita" dipende da cosa c'è nello zaino
+}
+
+// =====================================================================
+//  B5: "PER QUESTA USCITA" – l'attrezzatura che serve, e dove si trova
+// =====================================================================
+const kitCard = document.querySelector("#kit-card");
+const elKit = document.querySelector("#kit");
+const elKitRiepilogo = document.querySelector("#kit-riepilogo");
+
+async function caricaKit() {
+  try {
+    const voci = await api(`/api/viaggi/${id}/kit`);
+    const mancano = voci.filter((v) => v.stato === "manca").length;
+    const daAggiungere = voci.filter((v) => v.stato === "nell_armadio").length;
+    elKitRiepilogo.textContent = mancano + daAggiungere === 0
+      ? "Hai tutto quello che serve per questa uscita."
+      : [daAggiungere ? `${daAggiungere} da mettere nello zaino` : "", mancano ? `${mancano} che non hai nell'armadio` : ""]
+          .filter(Boolean).join(" · ");
+    elKit.innerHTML = voci.map(rigaKit).join("");
+    kitCard.hidden = false;
+  } catch {
+    kitCard.hidden = true; // il riquadro è un aiuto in più: se non arriva, la scheda funziona lo stesso
+  }
+}
+
+function rigaKit(v) {
+  const perche = `<span class="kit-perche">${esc(v.perche)}</span>`;
+  if (v.stato === "nello_zaino") {
+    return `<li class="kit-ok"><span class="kit-segno" aria-hidden="true">✓</span>
+      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nello zaino: ${esc(v.oggetto.nome)}${perche}</span></li>`;
+  }
+  if (v.stato === "nell_armadio") {
+    return `<li><span class="kit-segno" aria-hidden="true">○</span>
+      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nell'armadio: ${esc(v.oggetto.nome)}${perche}</span>
+      <button type="button" class="btn-piccolo" data-aggiungi="${v.oggetto.id}">Aggiungi</button></li>`;
+  }
+  const link = `/armadio.html?nuovo=${encodeURIComponent(v.voce)}&categoria=${encodeURIComponent(v.categoria)}`;
+  return `<li class="kit-manca"><span class="kit-segno" aria-hidden="true">!</span>
+    <span class="kit-testo"><strong>${esc(v.voce)}</strong> · ti manca${perche}</span>
+    <a class="btn-piccolo btn secondario" href="${link}">Aggiungi all'armadio</a></li>`;
+}
+
+// "Aggiungi": l'oggetto dell'armadio entra nello zaino (stessa API di "Aggiungi dall'armadio")
+elKit.addEventListener("click", async (e) => {
+  const bottone = e.target.closest("[data-aggiungi]");
+  if (!bottone) return;
+  bottone.disabled = true;
+  nascondiErrore();
+  try {
+    await api(`/api/viaggi/${id}/zaino`, { method: "POST", body: { oggetto_id: Number(bottone.dataset.aggiungi), quantita: 1 } });
+    await caricaZaino();
+  } catch (err) {
+    mostraErrore(err.message);
+    bottone.disabled = false;
+  }
+});
+
+function renderZaino() {
+  const p = zaino.peso;
+
+  // Peso e barra (US5 CA2: kg con 2 decimali, aggiornati senza ricaricare)
+  elPesoInserito.textContent = num2(p.peso_inserito_kg);
+  elPesoTotale.textContent = num2(p.peso_totale_kg);
+  const percentuale = p.peso_totale_g > 0 ? Math.round((p.peso_inserito_g / p.peso_totale_g) * 100) : 0;
+  barraRiempimento.style.width = `${percentuale}%`;
+  // B3: quello che indossi non pesa nello zaino, ma lo mostriamo a parte
+  elPesoAddosso.hidden = !(p.peso_addosso_g > 0);
+  elPesoAddosso.textContent = ` · più ${num2(p.peso_addosso_kg)} kg addosso`;
+
+  // Avviso peso (stretch 5): la soglia arriva dal dettaglio del viaggio, il peso è quello aggiornato
+  const avviso = viaggio?.consigli.avviso_peso;
+  const troppoPesante = avviso?.disponibile && p.peso_totale_kg > avviso.soglia_kg;
+  elAvvisoPeso.hidden = !troppoPesante;
+  barraRiempimento.classList.toggle("oltre-soglia", Boolean(troppoPesante));
+  if (troppoPesante) {
+    const uscita = viaggio.pernotto === "nessuno" ? "per un'uscita in giornata" : "con il pernotto";
+    elTestoAvvisoPeso.textContent = `Lo zaino, senza acqua e cibo, pesa ${num2(p.peso_totale_kg)} kg: più del ${avviso.soglia_percento}% ` +
+      `del tuo peso corporeo, il limite consigliato ${uscita} (${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
+  }
+  // B4: solo un promemoria, fuori dai calcoli: l'acqua pesa 1 kg al litro
+  const litri = viaggio?.consigli.acqua_persona_giorno;
+  elPesoAcqua.hidden = litri == null;
+  if (litri != null) elPesoAcqua.textContent = `Più circa ${num(litri)} kg d'acqua a persona al giorno (1 litro = 1 kg), meno se lungo il percorso trovi fontane o rifugi.`;
+
+  // Checklist: un gruppo per categoria, con il peso del gruppo (come nell'armadio)
+  if (zaino.oggetti.length === 0) {
+    elChecklist.innerHTML = "";
+    mostraInfo("Lo zaino è vuoto: premi «Genera zaino» per riempirlo con indispensabili e preferiti, oppure aggiungi un oggetto dall'armadio.");
+  } else {
+    elMessaggioZaino.hidden = true;
+    elChecklist.innerHTML = Object.keys(CATEGORIE).map((categoria) => {
+      const delGruppo = zaino.oggetti.filter((o) => o.categoria === categoria);
+      if (delGruppo.length === 0) return "";
+      // peso del gruppo DENTRO lo zaino: gli oggetti indossati non contano (B3)
+      const pesoGruppo = delGruppo.filter((o) => !o.indossato).reduce((somma, o) => somma + o.peso_riga_g, 0);
+      const presi = delGruppo.filter((o) => o.inserito).length;
+      return `
+        <section class="gruppo">
+          <div class="gruppo-testa"><h2>${CATEGORIE[categoria]} · ${presi}/${delGruppo.length}</h2><span>${num(pesoGruppo)}&nbsp;g</span></div>
+          <div class="gruppo-righe">${delGruppo.map(rigaZaino).join("")}</div>
+        </section>`;
+    }).join("");
+  }
+
+  renderSelettore();
+}
+
+// Una riga della checklist. Qui la riga NON è un pulsante: dentro ci sono già dei controlli
+// (spunta, quantità, togli), e un controllo non può stare dentro un altro.
+function rigaZaino(o) {
+  return `
+    <div class="riga riga-zaino ${o.inserito ? "inserito" : ""} ${o.indossato ? "addosso" : ""}" data-id="${o.oggetto_id}">
+      <input type="checkbox" class="spunta" ${o.inserito ? "checked" : ""} aria-label="Inserito nello zaino: ${esc(o.nome)}">
+      <span class="riquadro-icona"><img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22"></span>
+      <span class="riga-testo">
+        <span class="riga-nome">${esc(o.nome)}</span>
+        <span class="riga-nota">${o.marchio ? `${esc(o.marchio)} · ` : ""}${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}${o.indossato ? " · addosso" : ""}</span>
+      </span>
+      ${o.categoria === "abbigliamento" ? pulsanteIndosso(o) : '<span class="indosso-vuoto"></span>'}
+      <!-- max = pezzi che possiedi (B2): le frecce del campo non vanno oltre -->
+      <input type="number" class="quantita" min="1" max="${o.quantita_posseduta}" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">
+      <button type="button" class="togli" aria-label="Togli ${esc(o.nome)} dallo zaino" title="Togli dallo zaino">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>`;
+}
+
+// B3: il pulsante "lo indosso" (solo per l'abbigliamento).
+// aria-pressed dice se è attivo ("true"/"false"), come i segmenti dell'armadio
+function pulsanteIndosso(o) {
+  return `
+      <button type="button" class="indosso" aria-pressed="${o.indossato}" aria-label="Lo indosso: ${esc(o.nome)}" title="Lo indosso (non pesa nello zaino)">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3.5 4 6l1.8 3.6L8 8.6V20.5h8V8.6l2.2 1L20 6l-4.5-2.5c-.6 1.4-1.9 2.2-3.5 2.2s-2.9-.8-3.5-2.2Z"/></svg>
+      </button>`;
+}
+
+// Il selettore "aggiungi dall'armadio" mostra solo gli oggetti che NON sono già nello zaino
+function renderSelettore() {
+  const presenti = new Set(zaino.oggetti.map((o) => o.oggetto_id));
+  const disponibili = armadio.filter((o) => !presenti.has(o.id));
+  formAggiungi.elements.oggetto_id.innerHTML = disponibili.length
+    ? `<option value="">Scegli un oggetto…</option>` +
+      disponibili.map((o) => `<option value="${o.id}">${esc(o.nome)} (${esc(o.peso_g)} g)</option>`).join("")
+    : `<option value="">Tutto l'armadio è già nello zaino</option>`;
+}
+
+// --- Genera zaino (US4) ---
+bottoneGenera.addEventListener("click", async () => {
+  nascondiErrore();
+  bottoneGenera.disabled = true;
+  try {
+    const { aggiunti, base, dal_kit: dalKit, esclusi } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
+    await caricaZaino();
+    // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
+    // B5: cosa ha fatto "Genera", in parole
+    const parti = [];
+    if (base > 0) parti.push(`${base} tra indispensabili e preferiti`);
+    if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questa uscita`);
+    let messaggio = aggiunti > 0
+      ? `Aggiunti ${aggiunti} ${aggiunti === 1 ? "oggetto" : "oggetti"}: ${parti.join(" e ")}.`
+      : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
+    if (esclusi > 0) messaggio += ` In giornata ho lasciato fuori ${esclusi === 1 ? "un oggetto" : `${esclusi} oggetti`} che servono solo per dormire fuori.`;
+    mostraInfo(messaggio);
+  } catch (err) {
+    mostraErrore(err.message);
+  } finally {
+    bottoneGenera.disabled = false;
+  }
+});
+
+// --- Svuota checklist (US5 CA4) ---
+bottoneSvuota.addEventListener("click", async () => {
+  if (!confirm("Togliere la spunta a tutti gli oggetti dello zaino?")) return;
+  nascondiErrore();
+  try {
+    const { svuotati } = await api(`/api/viaggi/${id}/zaino/svuota`, { method: "POST" });
+    await caricaZaino();
+    mostraInfo(`Spunte tolte: ${svuotati} ${svuotati === 1 ? "oggetto" : "oggetti"} da rimettere nello zaino. Gli oggetti restano nella lista.`);
+  } catch (err) {
+    mostraErrore(err.message);
+  }
+});
+
+// --- Checkbox "inserito" e quantità: event delegation sull'evento "change" ---
+elChecklist.addEventListener("change", async (e) => {
+  const riga = e.target.closest(".riga-zaino[data-id]");
+  if (!riga) return;
+  const oggettoId = riga.dataset.id;
+  nascondiErrore();
+
+  let modifica;
+  if (e.target.matches(".spunta")) {
+    modifica = { inserito: e.target.checked };
+  } else if (e.target.matches(".quantita")) {
+    const quantita = Number(e.target.value);
+    const posseduti = Number(e.target.max); // B2: quanti ne hai nell'armadio
+    if (!Number.isInteger(quantita) || quantita < 1) {
+      mostraErrore("La quantità deve essere un numero intero, almeno 1");
+      renderZaino(); // rimette il valore giusto
+      return;
+    }
+    if (quantita > posseduti) {
+      mostraErrore(posseduti === 1 ? "Nell'armadio ne hai solo uno" : `Nell'armadio ne hai solo ${posseduti}`);
+      renderZaino();
+      return;
+    }
+    modifica = { quantita };
+  } else {
+    return;
+  }
+
+  try {
+    await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "PATCH", body: modifica });
+    await caricaZaino();
+  } catch (err) {
+    mostraErrore(err.message);
+    await caricaZaino();
+  }
+});
+
+// --- Clic sui pulsanti della riga (event delegation sull'evento "click"):
+//     "lo indosso" (B3) cambia indossato con PATCH, la X toglie dallo zaino con DELETE ---
+elChecklist.addEventListener("click", async (e) => {
+  const bottoneIndosso = e.target.closest(".indosso");
+  const bottoneTogli = e.target.closest(".togli");
+  if (!bottoneIndosso && !bottoneTogli) return;
+  const oggettoId = e.target.closest(".riga-zaino[data-id]").dataset.id;
+  nascondiErrore();
+  try {
+    if (bottoneIndosso) {
+      // aria-pressed è testo ("true"/"false"): mando il contrario di com'è adesso
+      const indossato = bottoneIndosso.getAttribute("aria-pressed") !== "true";
+      await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "PATCH", body: { indossato } });
+    } else {
+      await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "DELETE" });
+    }
+    await caricaZaino();
+  } catch (err) {
+    mostraErrore(err.message);
+  }
+});
+
+// B2: scegliendo un oggetto, il campo quantità non può superare i pezzi che ne possiedi
+formAggiungi.elements.oggetto_id.addEventListener("change", () => {
+  const scelto = armadio.find((o) => o.id === Number(formAggiungi.elements.oggetto_id.value));
+  formAggiungi.elements.quantita.max = scelto ? scelto.quantita_posseduta : 99;
+  formAggiungi.elements.quantita.value = 1;
+});
+
+// --- Aggiungi un oggetto dall'armadio (US5 CA3) ---
+formAggiungi.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  nascondiErrore();
+  const oggettoId = Number(formAggiungi.elements.oggetto_id.value);
+  const quantita = Number(formAggiungi.elements.quantita.value);
+  if (!oggettoId) return mostraErrore("Scegli un oggetto dall'armadio");
+  if (!Number.isInteger(quantita) || quantita < 1 || quantita > 99) return mostraErrore("La quantità deve essere tra 1 e 99");
+  try {
+    await api(`/api/viaggi/${id}/zaino`, { method: "POST", body: { oggetto_id: oggettoId, quantita } });
+    formAggiungi.elements.quantita.value = 1;
+    await caricaZaino();
+  } catch (err) {
+    mostraErrore(err.message); // es. "Questo oggetto è già nello zaino" (409)
+  }
+});
+
+// --- Messaggi ---
+function mostraInfo(testo) {
+  elMessaggioZaino.textContent = testo;
+  elMessaggioZaino.hidden = false;
+}
+
+function mostraErrore(testo) {
+  erroreZaino.textContent = testo;
+  erroreZaino.hidden = false;
+}
+
+function nascondiErrore() {
+  erroreZaino.hidden = true;
+}
+
+// =====================================================================
+//  AVVIO
+// =====================================================================
+if (!Number.isInteger(id) || id <= 0) {
+  location.href = "/zaini.html"; // URL senza un id valido: torniamo all'elenco degli zaini
+} else {
+  const elCaricamento = document.querySelector("#caricamento");
+  const timerCaricamento = setTimeout(() => { elCaricamento.hidden = false; }, 250); // come nella scheda
+  linkTorna.href = `/scheda-viaggio.html?id=${id}`;
+  try {
+    viaggio = await api(`/api/viaggi/${id}`);
+    document.title = `Loadout – Zaino: ${viaggio.nome}`;
+    titolo.textContent = `Zaino: ${viaggio.nome}`;
+    armadio = await api("/api/oggetti?limit=200");
+    await caricaZaino();
+    document.querySelector("#corpo-zaino").hidden = false;
+    // Arrivo da "Genera lo zaino" (o "Aggiorna lo zaino") della scheda: lo riempio subito
+    if (new URLSearchParams(location.search).has("genera")) {
+      history.replaceState(null, "", `?id=${id}`); // ricaricando la pagina non rigenera
+      bottoneGenera.click();
+    }
+  } catch (err) {
+    titolo.textContent = err.status === 404 ? "Questa uscita non esiste più o è stata eliminata" : err.message;
+  } finally {
+    clearTimeout(timerCaricamento);
+    elCaricamento.hidden = true;
+    document.querySelector("#intestazione").hidden = false;
+  }
+}

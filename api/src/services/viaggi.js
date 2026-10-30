@@ -36,12 +36,20 @@ const SQL_INSERT = `
   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
   RETURNING *`;
 
+// Ogni viaggio arriva con il riepilogo del suo zaino (per la pagina Zaino) e ha_mappa (per la pagina Mappe):
+// così il browser non deve fare una richiesta in più per ogni uscita.
+//   n_oggetti, peso_totale_kg → dalla vista v_zaino_peso (gli oggetti indossati non pesano)
+//   n_inseriti                → quanti oggetti hanno già la spunta
 export async function list(utenteId, { pianificato = null } = {}) {
   const { rows } = await query(
-    `SELECT * FROM viaggio
-     WHERE utente_id = $1
-       AND ($2::boolean IS NULL OR pianificato = $2)
-     ORDER BY data_partenza NULLS LAST, id`,
+    `SELECT v.*, z.n_oggetti, z.peso_totale_kg,
+            (SELECT COUNT(*) FROM viaggio_oggetto vo WHERE vo.viaggio_id = v.id AND vo.inserito) AS n_inseriti,
+            v.traccia IS NOT NULL AS ha_mappa
+     FROM viaggio v
+     JOIN v_zaino_peso z ON z.viaggio_id = v.id
+     WHERE v.utente_id = $1
+       AND ($2::boolean IS NULL OR v.pianificato = $2)
+     ORDER BY v.data_partenza NULLS LAST, v.id`,
     [utenteId, pianificato]
   );
   return rows;

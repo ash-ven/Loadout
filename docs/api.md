@@ -62,7 +62,7 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 ## Viaggi
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/viaggi?pianificato= | — | array dei miei viaggi, ordinati per data di partenza (senza data in fondo); `pianificato=true` solo i percorsi da fare in futuro, `false` solo gli altri | 200, 400, 401 |
+| GET | /api/viaggi?pianificato= | — | array dei miei viaggi, ordinati per data di partenza (senza data in fondo); `pianificato=true` solo i percorsi da fare in futuro, `false` solo gli altri. Ogni viaggio ha in più il riepilogo dello zaino `n_oggetti`, `n_inseriti`, `peso_totale_kg` (per la pagina Zaino) e `ha_mappa` (per la pagina Mappe) | 200, 400, 401 |
 | GET | /api/viaggi/:id?ore_cammino= | — | il viaggio + `peso` (vedi Zaino) + `consigli` (vedi sotto); `ore_cammino` facoltativo, 0.5–16 | 200, 400, 401, 404 |
 | POST | /api/viaggi?genera= | `{ nome*, attivita*, n_persone, n_giorni, pernotto, serve_cucina, data_partenza, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, distanza_km, note, pianificato }` – vedi regole sotto | il viaggio creato; con `genera=true` lo zaino viene generato subito, nella stessa transazione, e la risposta contiene anche `aggiunti` | 201, 400, 401 |
 | PUT | /api/viaggi/:id | come POST (viaggio intero) | il viaggio aggiornato | 200, 400, 401, 404 |

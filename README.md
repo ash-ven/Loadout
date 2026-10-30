@@ -114,16 +114,19 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | Pagina | JavaScript | Cosa fa |
 | --- | --- | --- |
 | `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (dopo la registrazione entra da sola) |
-| `index.html` | `index.js` | home: saluto, frase casuale (anche "viva" sul prossimo viaggio), conteggi di oggetti e viaggi in arrivo |
+| `index.html` | `index.js` | home (ci si arriva dal logo): saluto, frase casuale (anche "viva" sul prossimo viaggio), conteggi di oggetti e viaggi in arrivo |
 | `armadio.html` | `armadio.js` | lista per categoria con ricerca e filtri Tutti/Indispensabili/Preferiti, scheda di dettaglio, aggiungi/modifica/elimina in una finestra |
 | `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino"; con `?modifica=ID` la stessa finestra modifica un viaggio |
-| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | zaino con checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, consigli (acqua, alba e tramonto, meteo, percorso, emergenza), modifica ed elimina viaggio |
+| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | l'uscita: collegamenti allo zaino e alla mappa (o "Genera lo zaino" / "Disegna la mappa" se non ci sono ancora), consigli (acqua, alba e tramonto, ora limite, meteo in partenza e in vetta, percorso, emergenza), modifica ed elimina viaggio |
+| `zaini.html` | `zaini.js` | tutti gli zaini (uno per uscita), divisi in in arrivo / senza data / già fatti, con spuntati e peso |
+| `zaino.html?id=` | `zaino.js` | lo zaino di un'uscita: checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, "Per questa uscita"; con `&genera=1` lo riempie appena si apre |
+| `mappe.html` | `mappe.js` | le uscite che hanno una mappa (la mappa si disegna nel form dell'uscita) |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
 | `profilo.html` | `profilo.js` | foto, dati personali (esperienza, sensibilità al freddo, contatto di emergenza, note mediche, tessera CAI), peso corporeo e soglia dello zaino, esci |
 
-Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie).
+Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/elenco-uscite.js` (gruppi per data per Zaino e Mappe).
 Stile: un solo foglio, `css/style.css`. Immagini: logo, icone e sfondi SVG in `img/`.
-Sul telefono il menu è una barra in basso; sul computer sta nella barra in alto.
+Menu: Armadio · Zaino · Viaggi · Mappe · Profilo. Sul telefono è una barra in basso, con Viaggi al centro (la scarpa senape) e Consigli come icona accanto a "Esci"; sul computer sta nella barra in alto, con Consigli come ultima voce. Alla home si torna dal logo.
 
 ## Stato
 
@@ -216,7 +219,7 @@ Come escursionista voglio che l'app proponga lo zaino, per non dimenticare nulla
 - [x] CA2. Oggetti di categoria cucina entrano solo se serve_cucina è vero.
 - [x] CA3. Generare due volte non crea duplicati; la risposta dice quanti oggetti sono stati aggiunti.
 
-*Dove: `scheda-viaggio.html`; si può anche generare subito alla creazione del viaggio (`?genera=true`).*
+*Dove: `zaino.html` (dalla scheda: «Genera lo zaino»); si può anche generare subito alla creazione del viaggio (`?genera=true`).*
 
 ### US5 – Il tuo zaino
 Come escursionista voglio vedere lo zaino riempirsi e il suo peso, per decidere cosa togliere.
@@ -225,7 +228,7 @@ Come escursionista voglio vedere lo zaino riempirsi e il suo peso, per decidere 
 - [x] CA3. Posso aggiungere un oggetto dall'armadio che non è stato proposto, cambiare la quantità, rimuoverlo.
 - [x] CA4. La checklist si può "svuotare" (tutti non inseriti) con un pulsante.
 
-*Dove: `scheda-viaggio.html`. In più: oggetti indossati fuori dal peso, quantità non oltre i pezzi posseduti.*
+*Dove: `zaino.html`. In più: oggetti indossati fuori dal peso, quantità non oltre i pezzi posseduti.*
 
 ### US6 – Consigli
 Come escursionista voglio alba, tramonto e acqua consigliata, per scegliere l'ora di partenza.
