@@ -125,7 +125,7 @@ Sul telefono il menu è una barra in basso; sul computer sta nella barra in alto
 
 ## Stato
 
-Aggiornato a venerdì 30 ottobre (consegna).
+Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 
 ### Database
 - [x] PostgreSQL 16 su Docker Compose, schema fornito + migrazioni in `db/initdb/` (vedi tabella sopra)
@@ -148,11 +148,11 @@ Aggiornato a venerdì 30 ottobre (consegna).
 ### Stretch fatti
 - [x] 1. Meteo del giorno di partenza (Open-Meteo) e suggerimenti sul vestiario
 - [x] 4. Percorsi da fare in futuro (`pianificato`) con filtro nella lista
-- [x] 5. Avviso se lo zaino supera il 20% del peso corporeo
+- [x] 5. Avviso se lo zaino supera il 10% del peso corporeo in giornata o il 20% con pernotto (sul peso base: senza acqua e cibo)
 - [x] 2. Scansione dell'etichetta con la fotocamera (libreria html5-qrcode 2.3.8 da unpkg: EAN-13/8, UPC, Code 128/39, QR). Se il codice è già nell'armadio apre quell'oggetto, altrimenti il form nuovo con il codice compilato, e il server cerca nome, marchio e peso nelle banche dati gratuite (Open Facts, UPCitemdb: `GET /api/prodotti/:codice`), riempiendo solo i campi vuoti. Il pulsante "Cerca" accanto al codice fa la stessa ricerca per i codici scritti a mano. La fotocamera funziona solo su https o su localhost: altrimenti si scrive il codice a mano
 - [ ] 3. Mappa con Leaflet per scegliere partenza e arrivo: provata (anche con percorso sui sentieri via BRouter e file GPX), poi tolta per scelta di design; da riprogettare
 
-### Oltre lo scope (giovedì pomeriggio)
+### Oltre lo scope (giovedì e venerdì, dopo la revisione UX)
 - [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più)
 - [x] Zaino intelligente: per ogni uscita (attività, pernotto, cucina, freddo, neve, quota alta, caldo) l'app sa quale attrezzatura serve, la cerca nell'armadio e la aggiunge con «Genera zaino»; in giornata lascia fuori sacco a pelo, tenda e materassino; il riquadro «Per questa uscita» mostra cosa c'è, cosa aggiungere e cosa manca (con «Aggiungi all'armadio»); gli oggetti si riconoscono per parole chiave con sinonimi (es. imbrago/imbragatura/harness, casco/elmetto) in `api/src/services/kit.js`
 - [x] Uscite: luogo per nome (OpenStreetMap), ora limite di partenza, quota massima con meteo stimato in cima, vento, avviso neve e bollettino valanghe; peso base (senza acqua e cibo) con soglia 10% in giornata e 20% con pernotto; «Lascia detto»: messaggio già scritto per il contatto di emergenza (WhatsApp o SMS, lo invia l'utente)
@@ -164,11 +164,16 @@ Aggiornato a venerdì 30 ottobre (consegna).
 ### Venerdì: sicurezza, Docker, qualità
 - [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
 - [x] Sicurezza: helmet con CSP severa (solo il nostro sito + Google Fonts e unpkg; niente script inline), limite di tentativi su login (10 errori in 15 min per IP) e registrazione (10 all'ora), `trust proxy` per Caddy, cookie `HttpOnly` + `Secure` (in produzione) + `SameSite=Lax`, CORS chiuso di default (`CORS_ORIGINS` per ammettere altri siti)
-- [x] 20 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, vestiario)
+- [x] 39 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, soglia del peso, kit dello zaino intelligente)
 - [x] `npm audit` (0 vulnerabilità), pulizia del codice (ESLint), `NOTE.md` con le riflessioni di fine settimana
 
 ### Cosa manca (prossimi passi)
-- Mappe: provate e tolte; da riprogettare (es. tracciato GPX importato e mostrato in sola lettura)
+- **Mappe** (in preparazione): da integrare insieme all'**importazione della traccia GPX** (lunghezza, salita, quota massima, partenza e arrivo letti dal file, proposti all'utente che resta libero di correggerli)
+- **Password dimenticata**: richiede l'invio di email (un servizio SMTP); oggi c'è il cambio password da loggati
+- **Attrezzatura di gruppo**: con più persone, tenda e fornello li porta uno solo (peso a persona realistico)
+- **Modelli di uscita** e "duplica uscita" ("Giornata invernale", "Rifugio 2 giorni")
+- **Difficoltà CAI** (T, E, EE, EEA) da usare nei consigli e nel kit
+- **App installabile e offline** (PWA): checklist ed emergenza consultabili senza campo
 - Ricerca del prodotto dal codice a barre: le banche dati gratuite conoscono poco l'attrezzatura da montagna
 - Limite di tentativi: il contatore vive nella memoria del server (con più server servirebbe un archivio condiviso, es. Redis)
 - HTTPS solo con certificato locale: online servirebbe un dominio e un certificato pubblico (Caddy lo ottiene da solo con Let's Encrypt)
