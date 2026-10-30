@@ -1,0 +1,16 @@
+# =====================================================================
+#  Caddy: il "portiere" HTTPS davanti all'API di Loadout
+#  - riceve le richieste dal browser su https://localhost (porta 443)
+#  - le gira all'API dentro la rete del compose (api:3000)
+#  - chi arriva su http:// (porta 80) viene rimandato su https:// in automatico
+# =====================================================================
+
+localhost {
+	# Certificato firmato dall'autorità di certificazione LOCALE di Caddy
+	# (generata da Caddy al primo avvio, salvata nel volume caddy_data).
+	# Va bene per lo sviluppo; online si userebbe un certificato pubblico (es. Let's Encrypt).
+	tls internal
+
+	# Tutte le richieste vanno all'API: "api" è il nome del servizio nel compose
+	reverse_proxy api:3000
+}

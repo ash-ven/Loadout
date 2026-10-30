@@ -14,11 +14,27 @@ Prerequisiti: Docker Desktop avviato. Node.js non serve.
 git clone <indirizzo-del-repository> loadout
 cd loadout
 Copy-Item .env.example .env      # poi apri .env e metti un JWT_SECRET lungo e casuale
-docker compose up -d --build     # database + API; la prima volta scarica le immagini e crea il database
-docker compose ps                # db e api devono risultare "healthy"
+docker compose up -d --build     # database + API + Caddy; la prima volta scarica le immagini e crea il database
+docker compose ps                # db e api devono risultare "healthy", caddy "Up"
 ```
 
-Poi apri **http://localhost:3000** nel browser.
+Poi apri **https://localhost** nel browser (http://localhost rimanda su https da solo).
+
+**HTTPS con certificato locale.** Caddy (il reverse proxy, file `Caddyfile`) crea al primo avvio una sua autorità di
+certificazione locale e firma il certificato per `localhost`. Finché il PC non si fida di quell'autorità il browser mostra
+"La connessione non è privata". Per avere la connessione sicura (una volta sola, solo per il proprio utente Windows):
+
+```powershell
+mkdir certs                                                                              # esclusa da git
+docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./certs/caddy-root.crt
+certutil -user -addstore Root .\certs\caddy-root.crt                                     # conferma con "Sì"
+```
+
+Poi chiudere e riaprire il browser. Per toglierla a fine progetto:
+`certutil -user -delstore Root "Caddy Local Authority - 2026 ECC Root"`.
+
+Percorso delle richieste: browser → **Caddy** (443, https) → **api** (`api:3000`, rete interna) → **db** (`db:5432`).
+La porta 3000 dell'API è aperta solo per il PC stesso (`127.0.0.1`), per l'inoltro porta di VS Code.
 
 - Fermare tutto: `docker compose down` (i dati restano nel volume `loadout_pgdata`).
 - Ripartire da un database nuovo (cancella i dati!): `docker compose down -v`, poi di nuovo `docker compose up -d --build`.
@@ -42,7 +58,7 @@ curl.exe http://localhost:3000/api/health
 ```
 
 Attenzione: il container `loadout-api` e `npm run dev` usano entrambi la porta 3000. Se è acceso uno, ferma l'altro
-(`docker compose stop api` oppure Ctrl+C nel terminale di `npm run dev`).
+(`docker compose stop caddy api` oppure Ctrl+C nel terminale di `npm run dev`).
 
 ### Database: schema e migrazioni
 Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in `db/initdb/`:
@@ -133,7 +149,8 @@ Aggiornato a giovedì 29 ottobre.
 - [x] Home con frasi casuali e "vive" sul prossimo viaggio; pagina di consigli generali
 
 ### Da fare
-- [ ] HTTPS (Caddy), helmet (la CSP deve permettere Google Fonts, le immagini data: della foto, lo script di unpkg.com per html5-qrcode), limite tentativi sul login, Dockerfile e compose completo, `.env.example` nella radice (venerdì)
+- [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
+- [ ] helmet (la CSP deve permettere Google Fonts, le immagini data: della foto, lo script di unpkg.com per html5-qrcode), limite tentativi sul login, cookie Secure, CORS (venerdì)
 - [ ] Almeno 5 test automatici (i primi 5 ci sono: `api/test/prodotti.test.js`, si lanciano con `npm test` dalla cartella `api`), `npm audit`, NOTE.md (venerdì)
 
 ## User story MVP

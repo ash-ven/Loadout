@@ -42,8 +42,10 @@ services:
     depends_on:
       db:
         condition: service_healthy   # parte solo quando il database risponde
+    # L'ingresso "vero" è Caddy (https). La porta 3000 resta aperta SOLO per questo PC
+    # (127.0.0.1 = nessun altro computer della rete può usarla): serve all'inoltro porta di VS Code.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     healthcheck:
       # nell'immagine slim non c'è curl: usiamo fetch di Node per chiamare /api/health
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
@@ -52,5 +54,23 @@ services:
       retries: 5
       start_period: 5s
 
+  # --- Caddy: il "portiere" HTTPS davanti all'API (reverse proxy) ---
+  caddy:
+    image: caddy:2
+    container_name: loadout-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"       # http://  → Caddy rimanda su https://
+      - "443:443"     # https:// → la porta standard dell'HTTPS
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro   # la configurazione (il nostro Caddyfile)
+      - caddy_data:/data                      # l'autorità locale e i certificati: restano tra un riavvio e l'altro
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy            # apre la porta solo quando l'API sta bene
+
 volumes:
   loadout_pgdata:
+  caddy_data:
+  caddy_config:
