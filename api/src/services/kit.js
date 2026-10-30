@@ -134,11 +134,11 @@ export function migliorOggetto(voce, oggetti) {
 // --- Con il database ---
 
 // Le condizioni dell'uscita: attività, pernotto, cucina, freddo, neve.
-// Freddo: minima (in cima, se c'è la quota) sotto i 5 °C; senza previsioni, da novembre a marzo.
+// Freddo: minima (in vetta, se c'è la quota) sotto i 5 °C; senza previsioni, da novembre a marzo.
 // Quota alta: dai 2000 m in su. Caldo: massima in partenza sopra i 25 °C.
 export async function condizioni(viaggio) {
-  const meteo = await consigli.meteo(viaggio);
-  const minima = meteo.disponibile ? (meteo.cima?.temp_min ?? meteo.temp_min) : null;
+  const meteo = await consigli.meteo(viaggio, null, consigli.oreStimate(viaggio));
+  const minima = meteo.disponibile ? (meteo.vetta?.temp_min ?? meteo.temp_min) : null;
   const mese = viaggio.data_partenza ? Number(viaggio.data_partenza.slice(5, 7)) : null;
   const neve = consigli.rischioNeve(viaggio.quota_max_m, viaggio.data_partenza, minima);
   const freddo = neve || (minima != null ? minima < 5 : mese != null && (mese >= 11 || mese <= 3));

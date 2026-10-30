@@ -74,9 +74,13 @@ Regole dei campi del viaggio (* = obbligatorio):
 - `pernotto` tra nessuno, rifugio, tenda, bivacco (default nessuno); `serve_cucina` booleano (default false)
 - `data_partenza` data `AAAA-MM-GG` valida
 - `lat_*` tra −90 e 90; `lon_*` tra −180 e 180
-- `dislivello_m` intero 0–9000 (salita di **tutto** il percorso); `distanza_km` 0.1–999 (lunghezza del sentiero, inserita dall'utente)
+- `dislivello_m` intero 0–9000 (dislivello positivo di **tutto** il percorso: la somma delle salite); `distanza_km` 0.1–999 (lunghezza del sentiero, inserita dall'utente)
 - `note` max 1000; `pianificato` booleano (default false) – percorsi da fare in futuro
 - `luogo_partenza`, `luogo_arrivo` testo max 200 (B1); `quota_max_m` intero 0–9000 (B3, il punto più alto del percorso)
+- Mappe, fase 1: `quota_min_m` intero −500–9000 (non più alta di `quota_max_m`, altrimenti 400 "La quota minima non può superare la quota massima");
+  `ora_partenza` testo `HH:MM` (es. `"08:30"`; se manca, per i calcoli vale 08:00);
+  `traccia` oggetto `{ tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (2–5000) }` = il percorso disegnato sulla mappa
+  (con valori fuori dai limiti → 400 "Traccia non valida")
 
 Blocco `consigli` del dettaglio:
 - `ore_cammino_giorno`: da `?ore_cammino=` se presente (`fonte_ore: "utente"`), altrimenti stimate dal percorso
@@ -87,16 +91,23 @@ Blocco `consigli` del dettaglio:
 - `acqua_litri`: totale del viaggio per tutto il gruppo, da `fn_acqua_consigliata(n_giorni, n_persone, ore, temperatura_max, dislivello_giorno, cucina)`
   = litri a persona al giorno × giorni × persone
 - `acqua_con_temperatura`, `acqua_con_dislivello`, `acqua_con_cucina`: quali fattori sono entrati nel calcolo (il frontend li elenca)
-- `distanza_linea_aria_km`: tra partenza e arrivo (formula di haversine); `null` se mancano le coordinate
 - `sole`: `{ disponibile: true, alba, tramonto }` in ora italiana, chiesti dal server a sunrise-sunset.org;
   `{ disponibile: false, motivo }` se mancano coordinate/data o se il servizio esterno non risponde entro 3 secondi
 - `meteo`: `{ disponibile: true, temp_max, temp_min, prob_pioggia, vestiario: [...] }` da Open-Meteo per la data e le coordinate di partenza;
   `{ disponibile: false, motivo }` se mancano coordinate/data, se la partenza è passata o oltre 16 giorni, o se il servizio non risponde
   I consigli di `vestiario` tengono conto della `sensibilita_freddo` del profilo (temperatura percepita ±4 °C).
-  In più (B3): `quota_partenza_m` (da Open-Meteo), `cima` = `{ quota_m, temp_min, temp_max }` stimata con −6 °C ogni 1000 m se il viaggio
-  ha `quota_max_m` (altrimenti `null`), `vento_kmh` e `raffiche_kmh`; il vestiario si decide sulla minima in cima.
-- `ora_limite_partenza` (B2): `{ ora: "09:25", prima_dell_alba, margine_ore: 1 }` = tramonto − ore di cammino − 1 h; `null` senza alba/tramonto o ore
-- `neve_ghiaccio` (B3): `true` se `quota_max_m` ≥ 2000 e la data è tra ottobre e maggio (o senza data, o con minima in cima ≤ 0 °C)
+  In più: `quota_partenza_m` (da Open-Meteo), `vento_kmh` e `raffiche_kmh` in partenza.
+  `vetta` (se il viaggio ha `quota_max_m`, altrimenti `null`): una seconda richiesta a Open-Meteo, fatta insieme alla prima, con
+  `elevation = quota_max_m` sulle coordinate del punto più alto della `traccia` (`fonte: "traccia"`) o, senza traccia, su quelle di partenza
+  (`fonte: "quota_scritta"`). Contiene `quota_m`, `ora_arrivo_stimata` (`ora_partenza` + ore fino alla vetta: con la traccia km/4 + salita/400
+  fino al punto più alto, senza traccia metà delle ore del giorno, senza ore 4 ore), i valori all'ora di arrivo `temp`, `percepita`, `raffiche_kmh`,
+  quelli della giornata `temp_min`, `temp_max`, `percepita_min`, `raffiche_max_kmh`, lo `zero_termico_m` più basso tra le 7 e le 18 e `temporali`
+  (codici meteo 95–99). Se la seconda richiesta fallisce resta la stima con −6 °C ogni 1000 m (`fonte: "stima"`, solo `temp_min`/`temp_max`).
+  `avvisi`: `[{ tipo, livello, testo }]` per vento (raffiche massime in vetta: da 40, 62 e 88 km/h), zero termico sotto la vetta, temporali.
+  Il vestiario si decide sulla percepita minima in vetta (o sulla minima, se manca).
+- `ora_limite_partenza` (B2): `{ ora: "09:25", prima_dell_alba, margine_ore: 1, ora_partenza, in_ritardo }` = tramonto − ore di cammino − 1 h;
+  `in_ritardo: true` se l'`ora_partenza` del viaggio è dopo il limite; `null` senza alba/tramonto o ore
+- `neve_ghiaccio` (B3): `true` se `quota_max_m` ≥ 2000 e la data è tra ottobre e maggio (o senza data, o con minima in vetta ≤ 0 °C)
 - `bollettino_valanghe` (B3): `true` con neve possibile oppure attività ciaspolata/alpinismo
 - `avviso_peso`: `{ disponibile: true, peso_corporeo_kg, soglia_percento, soglia_kg, troppo_pesante }` – soglia = **10%** del peso corporeo in giornata
   (`pernotto` nessuno), **20%** con pernotto; confrontata con il **peso base** (zaino senza acqua e cibo, senza gli oggetti indossati); `{ disponibile: false, motivo }` se il peso corporeo non è impostato

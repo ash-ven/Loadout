@@ -26,7 +26,8 @@ test("vestiario: sotto zero vero vale per tutti, la pioggia non dipende dal prof
 
 test("ora limite di partenza: tramonto 16:55, 6,5 ore di cammino, 1 ora di margine → 09:25", async () => {
   const { oraLimitePartenza } = await import("../src/services/consigli.js");
-  assert.deepEqual(oraLimitePartenza("07:05", "16:55", 6.5), { ora: "09:25", prima_dell_alba: false, margine_ore: 1 });
+  assert.deepEqual(oraLimitePartenza("07:05", "16:55", 6.5),
+    { ora: "09:25", prima_dell_alba: false, margine_ore: 1, ora_partenza: null, in_ritardo: false });
 });
 
 test("ora limite di partenza: cammino più lungo delle ore di luce → avviso; senza ore → null", async () => {
@@ -57,4 +58,60 @@ test("soglia del peso: 10% in giornata, 20% con il pernotto", async () => {
   const { sogliaPeso } = await import("../src/services/consigli.js");
   assert.deepEqual(sogliaPeso(57, "nessuno"), { percento: 10, soglia_kg: 5.7 });
   assert.deepEqual(sogliaPeso(57, "rifugio"), { percento: 20, soglia_kg: 11.4 });
+});
+
+// --- Meteo in vetta (mappe, fase 1) ---
+
+test("ora limite: se parti alle 10:00 e il limite è 09:25 sei in ritardo; alle 08:00 no", async () => {
+  const { oraLimitePartenza } = await import("../src/services/consigli.js");
+  assert.equal(oraLimitePartenza("07:05", "16:55", 6.5, 1, "10:00").in_ritardo, true);
+  assert.equal(oraLimitePartenza("07:05", "16:55", 6.5, 1, "08:00").in_ritardo, false);
+});
+
+// Una traccia finta: tre punti in fila verso nord, la quota sale fino al secondo e poi scende
+const traccia = { linea: [[44.0, 11.0, 1000], [44.01, 11.0, 1400], [44.02, 11.0, 1100]] };
+
+test("punto più alto: il secondo punto della traccia; senza quote o senza traccia → null", async () => {
+  const { puntoPiuAlto } = await import("../src/services/consigli.js");
+  assert.deepEqual(puntoPiuAlto(traccia), { lat: 44.01, lon: 11.0, quota: 1400, indice: 1 });
+  assert.equal(puntoPiuAlto({ linea: [[44, 11], [44.1, 11]] }), null);
+  assert.equal(puntoPiuAlto(null), null);
+});
+
+test("ore fino alla vetta: con la traccia km/4 + salita/400; senza traccia metà del giorno; senza niente null", async () => {
+  const { oreFinoAllaVetta } = await import("../src/services/consigli.js");
+  // 0,01° di latitudine ≈ 1,11 km → 1,11/4 + 400/400 ≈ 1,28 ore
+  assert.ok(Math.abs(oreFinoAllaVetta(traccia) - 1.28) < 0.01);
+  assert.equal(oreFinoAllaVetta(null, 6), 3);
+  assert.equal(oreFinoAllaVetta(null), null);
+});
+
+test("vento in vetta: sotto 40 niente, poi sostenuto, forte (da 62) e molto forte (da 88)", async () => {
+  const { avvisoVento } = await import("../src/services/consigli.js");
+  assert.equal(avvisoVento(39), null);
+  assert.equal(avvisoVento(40).livello, "sostenuto");
+  assert.equal(avvisoVento(62).livello, "forte");
+  assert.equal(avvisoVento(88).livello, "molto_forte");
+  assert.equal(avvisoVento(null), null);
+});
+
+test("risposta di Open-Meteo per la vetta: valori all'ora di arrivo, zero termico minimo di giorno, temporali", async () => {
+  const { daMeteoVetta, avvisiVetta } = await import("../src/services/consigli.js");
+  const ore = (f) => Array.from({ length: 24 }, (_, h) => f(h));
+  const json = {
+    daily: { temperature_2m_min: [-1], temperature_2m_max: [6], apparent_temperature_min: [-6],
+             wind_gusts_10m_max: [65], weather_code: [95] },
+    hourly: { temperature_2m: ore((h) => h / 4), apparent_temperature: ore((h) => h / 4 - 2),
+              wind_gusts_10m: ore(() => 30), weather_code: ore(() => 3),
+              // di notte lo zero termico è basso (1200 m), di giorno scende al minimo a 1800 m alle 9
+              freezing_level_height: ore((h) => (h < 7 ? 1200 : h === 9 ? 1800 : 2600)) },
+  };
+  const vetta = daMeteoVetta(json, 1945, 11, "traccia");
+  assert.equal(vetta.temp, 2.8);          // alle 11: 11/4 = 2,75 → 2,8
+  assert.equal(vetta.percepita, 0.8);     // 2,75 − 2 = 0,75 → 0,8
+  assert.equal(vetta.zero_termico_m, 1800); // la notte (1200 m) non conta
+  assert.equal(vetta.temporali, true);
+  assert.equal(vetta.percepita_min, -6);
+  // avvisi: vento forte (raffiche max 65), zero termico sotto la vetta, temporali
+  assert.deepEqual(avvisiVetta(vetta).map((a) => a.tipo), ["vento", "zero_termico", "temporali"]);
 });

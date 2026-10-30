@@ -159,9 +159,10 @@ function apriModifica(v) {
   rigaGenera.hidden = true; // lo zaino c'è già: "genera" lo trovi nella scheda
   for (const nome of ["nome", "attivita", "n_persone", "n_giorni", "pernotto", "data_partenza", "distanza_km",
                       "dislivello_m", "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo", "note",
-                      "luogo_partenza", "luogo_arrivo", "quota_max_m"]) {
+                      "luogo_partenza", "luogo_arrivo", "quota_max_m", "quota_min_m"]) {
     campi[nome].value = v[nome] ?? "";
   }
+  campi.ora_partenza.value = v.ora_partenza ?? "08:00"; // senza ora salvata, vale quella di default
   luogoPartenza.aggiorna(); // mostra "Coordinate: …" se ci sono
   luogoArrivo.aggiorna();
   campi.serve_cucina.checked = v.serve_cucina;
@@ -192,6 +193,11 @@ function leggiForm() {
     luogo_partenza: campi.luogo_partenza.value.trim(),
     luogo_arrivo: campi.luogo_arrivo.value.trim(),
     quota_max_m: numero("quota_max_m"),
+    quota_min_m: numero("quota_min_m"),
+    ora_partenza: campi.ora_partenza.value || undefined,
+    // la traccia della mappa non è un campo del form: in modifica la rimandiamo com'era,
+    // altrimenti il PUT (che sostituisce il viaggio intero) la cancellerebbe
+    traccia: inModifica ? (prima?.traccia ?? undefined) : undefined,
   };
 }
 
@@ -201,6 +207,12 @@ function validaLatoClient(d) {
   if (!d.luogo_partenza) errori.push("Scrivi da dove parti");
   if (d.quota_max_m !== undefined && (!Number.isInteger(d.quota_max_m) || d.quota_max_m < 0 || d.quota_max_m > 9000)) {
     errori.push("La quota massima deve essere un numero intero di metri, tra 0 e 9000");
+  }
+  if (d.quota_min_m !== undefined && (!Number.isInteger(d.quota_min_m) || d.quota_min_m < -500 || d.quota_min_m > 9000)) {
+    errori.push("La quota minima deve essere un numero intero di metri, tra -500 e 9000");
+  }
+  if (d.quota_min_m !== undefined && d.quota_max_m !== undefined && d.quota_min_m > d.quota_max_m) {
+    errori.push("La quota minima non può superare la quota massima");
   }
   if (d.n_persone !== undefined && (!Number.isInteger(d.n_persone) || d.n_persone < 1 || d.n_persone > 50)) {
     errori.push("Le persone devono essere tra 1 e 50");

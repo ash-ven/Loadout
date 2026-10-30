@@ -78,9 +78,15 @@
             <option value="bivacco">Bivacco</option>
           </select>
         </label>
-        <label>Data di partenza
-          <input name="data_partenza" type="date">
-        </label>
+        <div class="riga2">
+          <label>Data di partenza
+            <input name="data_partenza" type="date">
+          </label>
+          <!-- Mappe, fase 1: serve a stimare a che ora arrivi in vetta (per il meteo lassù) e se parti troppo tardi -->
+          <label>Ora di partenza
+            <input name="ora_partenza" type="time" value="08:00">
+          </label>
+        </div>
 
         <!-- B1: il luogo per nome, con i suggerimenti (OpenStreetMap). Scegliendo un suggerimento
              si compilano anche le coordinate qui sotto, in "Percorso e coordinate". -->
@@ -109,14 +115,20 @@
             <label>Lunghezza (km)
               <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">
             </label>
-            <label>Salita totale (m)
+            <label>Dislivello positivo (m)
               <input name="dislivello_m" type="number" min="0" max="9000" step="1">
             </label>
           </div>
-          <!-- B3: il punto più alto del percorso → freddo stimato in cima, avviso neve e ghiaccio -->
-          <label>Quota massima (m)
-            <input name="quota_max_m" type="number" min="0" max="9000" step="1" placeholder="es. 2400">
-          </label>
+          <!-- B3: il punto più alto del percorso → meteo in vetta, avviso neve e ghiaccio.
+               La quota minima la compilerà anche la mappa (fase 5). -->
+          <div class="riga2">
+            <label>Quota minima (m)
+              <input name="quota_min_m" type="number" min="-500" max="9000" step="1" placeholder="es. 900">
+            </label>
+            <label>Quota massima (m)
+              <input name="quota_max_m" type="number" min="0" max="9000" step="1" placeholder="es. 2400">
+            </label>
+          </div>
           <div class="riga2">
             <label>Latitudine partenza
               <input name="lat_partenza" type="number" min="-90" max="90" step="any" placeholder="es. 44.22">

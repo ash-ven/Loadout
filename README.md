@@ -75,6 +75,7 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_luoghi.sql` | il nome del luogo di partenza e di arrivo (cercato su OpenStreetMap) |
 | `loadout_stretch_quota.sql` | quota massima del percorso: freddo stimato in cima, avviso neve e ghiaccio |
 | `loadout_stretch_zaino_intelligente.sql` | zaino intelligente: tolto "Adatto a", `fn_genera_zaino` di nuovo senza filtro per attività |
+| `loadout_stretch_percorso.sql` | mappe, fase 1: quota minima, ora di partenza, traccia del percorso (per il meteo in vetta) |
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
@@ -86,6 +87,7 @@ docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_indossato.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_oggetto.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_luoghi.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_percorso.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_quota.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_intelligente.sql
@@ -137,7 +139,7 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 - [x] Armadio: lista con ricerca, filtro per categoria e paginazione, dettaglio, crea, modifica, elimina; marchio, caratteristiche, pezzi posseduti
 - [x] Viaggi: lista ordinata per data (filtro pianificati), dettaglio, crea (anche con zaino generato nella stessa transazione), modifica, elimina
 - [x] Zaino: genera, checklist con peso, aggiungi/modifica/togli, svuota; oggetti indossati (solo abbigliamento) fuori dal peso; quantità non oltre i pezzi posseduti
-- [x] Consigli: ore di cammino stimate o inserite, acqua a persona al giorno, distanza in linea d'aria, alba e tramonto (sunrise-sunset.org), meteo e vestiario (Open-Meteo), avviso se lo zaino supera il 20% del peso corporeo
+- [x] Consigli: ore di cammino stimate o inserite, acqua a persona al giorno, alba e tramonto (sunrise-sunset.org), meteo e vestiario (Open-Meteo), avviso se lo zaino supera il 20% del peso corporeo
 - [x] Validazione dell'input con messaggi 400 chiari; gestione centralizzata degli errori
 
 ### Frontend – `public/`
@@ -155,7 +157,7 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 ### Oltre lo scope (giovedì e venerdì, dopo la revisione UX)
 - [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più)
 - [x] Zaino intelligente: per ogni uscita (attività, pernotto, cucina, freddo, neve, quota alta, caldo) l'app sa quale attrezzatura serve, la cerca nell'armadio e la aggiunge con «Genera zaino»; in giornata lascia fuori sacco a pelo, tenda e materassino; il riquadro «Per questa uscita» mostra cosa c'è, cosa aggiungere e cosa manca (con «Aggiungi all'armadio»); gli oggetti si riconoscono per parole chiave con sinonimi (es. imbrago/imbragatura/harness, casco/elmetto) in `api/src/services/kit.js`
-- [x] Uscite: luogo per nome (OpenStreetMap), ora limite di partenza, quota massima con meteo stimato in cima, vento, avviso neve e bollettino valanghe; peso base (senza acqua e cibo) con soglia 10% in giornata e 20% con pernotto; «Lascia detto»: messaggio già scritto per il contatto di emergenza (WhatsApp o SMS, lo invia l'utente)
+- [x] Uscite: luogo per nome (OpenStreetMap), ora limite di partenza, quota massima e minima, ora di partenza, meteo in vetta all'ora di arrivo (Open-Meteo con la quota) con avvisi di vento, zero termico e temporali, avviso neve e bollettino valanghe; peso base (senza acqua e cibo) con soglia 10% in giornata e 20% con pernotto; «Lascia detto»: messaggio già scritto per il contatto di emergenza (WhatsApp o SMS, lo invia l'utente)
 - [x] Account e privacy (GDPR): cambio password, «Scarica i miei dati» (JSON con profilo, armadio, uscite e zaini), elimina l'account con conferma della password (tutto il resto si cancella da solo: ON DELETE CASCADE)
 - [x] Zaino: oggetti indossati (solo abbigliamento) fuori dal peso; acqua a persona al giorno con salita, caldo e cucina
 - [x] Profilo: foto (ridotta nel browser), esperienza, contatto di emergenza, note mediche e tessera CAI/assicurazione (mostrati nel riquadro Emergenza della scheda del viaggio), sensibilità al freddo (adatta i consigli di vestiario)
@@ -164,7 +166,7 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 ### Venerdì: sicurezza, Docker, qualità
 - [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
 - [x] Sicurezza: helmet con CSP severa (solo il nostro sito + Google Fonts e unpkg; niente script inline), limite di tentativi su login (10 errori in 15 min per IP) e registrazione (10 all'ora), `trust proxy` per Caddy, cookie `HttpOnly` + `Secure` (in produzione) + `SameSite=Lax`, CORS chiuso di default (`CORS_ORIGINS` per ammettere altri siti)
-- [x] 39 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, soglia del peso, kit dello zaino intelligente)
+- [x] 46 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, meteo in vetta e vento, traccia della mappa, soglia del peso, kit dello zaino intelligente)
 - [x] `npm audit` (0 vulnerabilità), pulizia del codice (ESLint), `NOTE.md` con le riflessioni di fine settimana
 
 ### Cosa manca (prossimi passi)

@@ -1,7 +1,7 @@
 import { query, pool } from "../db.js";
 import * as kit from "./kit.js";
 
-// I 18 campi del viaggio, sempre nello stesso ordine, con i valori di riserva
+// I 21 campi del viaggio, sempre nello stesso ordine, con i valori di riserva
 function campi(d) {
   return [
     d.nome,
@@ -22,6 +22,9 @@ function campi(d) {
     d.luogo_partenza || null, // B1: il nome del luogo ("" → null)
     d.luogo_arrivo || null,
     d.quota_max_m ?? null,    // B3
+    d.quota_min_m ?? null,    // mappe: il punto più basso
+    d.traccia ? JSON.stringify(d.traccia) : null, // mappe: tappe + linea (JSONB)
+    d.ora_partenza || null,   // meteo in vetta all'ora giusta
   ];
 }
 
@@ -29,8 +32,8 @@ function campi(d) {
 const SQL_INSERT = `
   INSERT INTO viaggio (utente_id, nome, attivita, n_persone, n_giorni, pernotto, serve_cucina, data_partenza,
                        lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, note, pianificato, distanza_km,
-                       luogo_partenza, luogo_arrivo, quota_max_m)
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                       luogo_partenza, luogo_arrivo, quota_max_m, quota_min_m, traccia, ora_partenza)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
   RETURNING *`;
 
 export async function list(utenteId, { pianificato = null } = {}) {
@@ -79,7 +82,8 @@ export async function update(utenteId, id, dati) {
     `UPDATE viaggio
      SET nome = $3, attivita = $4, n_persone = $5, n_giorni = $6, pernotto = $7, serve_cucina = $8, data_partenza = $9,
          lat_partenza = $10, lon_partenza = $11, lat_arrivo = $12, lon_arrivo = $13, dislivello_m = $14, note = $15,
-         pianificato = $16, distanza_km = $17, luogo_partenza = $18, luogo_arrivo = $19, quota_max_m = $20
+         pianificato = $16, distanza_km = $17, luogo_partenza = $18, luogo_arrivo = $19, quota_max_m = $20,
+         quota_min_m = $21, traccia = $22, ora_partenza = $23
      WHERE id = $1 AND utente_id = $2
      RETURNING *`,
     [id, utenteId, ...campi(dati)]

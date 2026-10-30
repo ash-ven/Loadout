@@ -26,6 +26,8 @@ export function validate(schema) {
         if (typeof v !== "string" || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) errors.push(`'${field}' deve essere una data valida (AAAA-MM-GG)`);
       }
       if (rule.type === "string" && typeof v !== "string") errors.push(`'${field}' deve essere testo`);
+      if (rule.type === "object" && (typeof v !== "object" || Array.isArray(v))) errors.push(`'${field}' deve essere un oggetto`);
+      if (rule.pattern && typeof v === "string" && !rule.pattern.test(v)) errors.push(`'${field}' non è nel formato giusto${rule.formato ? ` (${rule.formato})` : ""}`);
       if (rule.type === "array") {
         if (!Array.isArray(v)) errors.push(`'${field}' deve essere un elenco`);
         else {
@@ -36,7 +38,7 @@ export function validate(schema) {
         }
       }
 
-      if (rule.maxLength && String(v).length > rule.maxLength) errors.push(`'${field}' troppo lungo (max ${rule.maxLength})`);
+      if (rule.maxLength && typeof v !== "object" && String(v).length > rule.maxLength) errors.push(`'${field}' troppo lungo (max ${rule.maxLength})`);
       if (rule.min !== undefined && v < rule.min) errors.push(`'${field}' deve essere ≥ ${rule.min}`);
       if (rule.max !== undefined && v > rule.max) errors.push(`'${field}' deve essere ≤ ${rule.max}`);
       if (rule.enum && rule.type !== "array" && !rule.enum.includes(v)) errors.push(`'${field}' deve essere uno tra: ${rule.enum.join(", ")}`);

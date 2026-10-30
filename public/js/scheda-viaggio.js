@@ -104,7 +104,7 @@ function renderConsigli() {
 
     // Da cosa dipende il calcolo: un pezzo di frase per ogni fattore usato
     const fattori = [`${num(c.ore_cammino_giorno)} ore di cammino al giorno (${c.fonte_ore === "utente" ? "inserite da te" : "stimate dal percorso"})`];
-    if (c.acqua_con_dislivello) fattori.push(`${num(Math.round(v.dislivello_m / v.n_giorni))} m di salita al giorno`);
+    if (c.acqua_con_dislivello) fattori.push(`${num(Math.round(v.dislivello_m / v.n_giorni))} m di dislivello positivo al giorno`);
     if (c.acqua_con_temperatura) fattori.push(`la temperatura prevista (${num(c.meteo.temp_max)} °C)`);
     if (c.acqua_con_cucina) fattori.push("l'acqua per cucinare");
 
@@ -128,7 +128,8 @@ function renderConsigli() {
       ? `<span><strong>Attenzione:</strong> con ${num(c.ore_cammino_giorno)} ore di cammino non c'è abbastanza luce
          (alba ${esc(c.sole.alba)}, tramonto ${esc(c.sole.tramonto)}). Valuta di accorciare il percorso o di dividerlo in più giorni.</span>`
       : `<span>Parti <strong>entro le ${esc(limite.ora)}</strong> per arrivare almeno un'ora prima del tramonto
-         (${num(c.ore_cammino_giorno)} ore di cammino, soste comprese nel margine).</span>`;
+         (${num(c.ore_cammino_giorno)} ore di cammino, soste comprese nel margine).${limite.in_ritardo
+           ? ` <strong>Hai segnato la partenza alle ${esc(limite.ora_partenza)}: è più tardi del limite.</strong>` : ""}</span>`;
   }
 
   // Meteo e vestiario
@@ -140,11 +141,27 @@ function renderConsigli() {
       `<strong>In partenza</strong>${m.quota_partenza_m != null ? ` (circa ${m.quota_partenza_m.toLocaleString("it-IT", { useGrouping: "always" })} m)` : ""}:
        massima ${esc(num(m.temp_max))} °C · minima ${esc(num(m.temp_min))} °C · pioggia ${esc(m.prob_pioggia)}%`,
     ];
-    // B3: la stima in cima, se conosciamo la quota massima
-    if (m.cima) righe.push(`<strong>In cima</strong>${quota(m.cima.quota_m)}, stima: massima ${esc(num(m.cima.temp_max))} °C · minima ${esc(num(m.cima.temp_min))} °C`);
+    // Mappe, fase 1: il meteo in vetta (sulla quota massima), all'ora in cui stimiamo che arriverai
+    const vt = m.vetta;
+    if (vt) {
+      righe.unshift(`<span class="muto">Meteo calcolato sul punto più alto che raggiungerai${quota(vt.quota_m)}</span>`);
+      if (vt.fonte === "stima") {
+        // Open-Meteo non ha risposto per la vetta: resta la stima di prima (−6 °C ogni 1000 m)
+        righe.push(`<strong>In vetta</strong>, stima: massima ${esc(num(vt.temp_max))} °C · minima ${esc(num(vt.temp_min))} °C`);
+      } else {
+        const allArrivo = [];
+        if (vt.temp != null) allArrivo.push(`${esc(num(vt.temp))} °C`);
+        if (vt.percepita != null) allArrivo.push(`percepiti ${esc(num(vt.percepita))} °C`);
+        if (vt.raffiche_kmh != null) allArrivo.push(`raffiche ${esc(num(vt.raffiche_kmh))} km/h`);
+        righe.push(`<strong>In vetta verso le ${esc(vt.ora_arrivo_stimata)}</strong>${allArrivo.length ? `: ${allArrivo.join(" · ")}` : ""}`);
+        righe.push(`Nella giornata, in vetta: massima ${esc(num(vt.temp_max))} °C · minima ${esc(num(vt.temp_min))} °C`);
+      }
+    }
     if (m.vento_kmh != null) righe.push(`<strong>Vento</strong> fino a ${esc(num(m.vento_kmh))} km/h${m.raffiche_kmh != null ? `, raffiche ${esc(num(m.raffiche_kmh))} km/h` : ""}`);
     htmlMeteo = `${righe.map((r) => `<p>${r}</p>`).join("")}
       <ul>${m.vestiario.map((consiglio) => `<li>${esc(consiglio)}</li>`).join("")}</ul>`;
+    // gli avvisi della vetta (vento, zero termico, temporali) nel riquadro ocra, come gli altri avvisi
+    for (const a of m.avvisi ?? []) htmlMeteo += `<p class="avviso"><span>${esc(a.testo)}</span></p>`;
   } else {
     htmlMeteo = `<p>Non disponibile: ${esc(c.meteo.motivo)}.</p>`;
   }
@@ -162,8 +179,7 @@ function renderConsigli() {
   const parti = [];
   if (viaggio.luogo_arrivo) parti.push(`arrivo a ${viaggio.luogo_arrivo}`);
   if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km di sentiero`);
-  if (viaggio.dislivello_m != null) parti.push(`${num(viaggio.dislivello_m)} m di dislivello`);
-  if (c.distanza_linea_aria_km != null) parti.push(`${num(c.distanza_linea_aria_km)} km in linea d'aria tra partenza e arrivo`);
+  if (viaggio.dislivello_m != null) parti.push(`${num(viaggio.dislivello_m)} m di dislivello positivo`);
   elPercorso.textContent = parti.length
     ? parti.join(" · ")
     : "Aggiungi km, dislivello e coordinate per avere più consigli.";
