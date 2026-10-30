@@ -28,8 +28,9 @@ let viaggio = null; // il viaggio con peso e consigli (GET /api/viaggi/:id)
 // Unisce un elenco all'italiana: ["a", "b", "c"] → "a, b e c"
 const elenco = (parti) => parti.length < 2 ? parti.join("") : `${parti.slice(0, -1).join(", ")} e ${parti.at(-1)}`;
 
-// Numeri in formato italiano: 3.5 → "3,5"
+// Numeri in formato italiano: 3.5 → "3,5"; e con 2 decimali: 5.6 → "5,60"
 const num = (n) => Number(n).toLocaleString("it-IT", { useGrouping: "always" });
+const num2 = (n) => Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // =====================================================================
 //  VIAGGIO: intestazione e consigli
@@ -183,23 +184,32 @@ formOre.addEventListener("submit", async (e) => {
   }
 });
 
-// --- Lo zaino e la mappa dell'uscita: se ci sono si aprono, altrimenti si creano ---
+// --- Le tessere dello zaino e della mappa: se ci sono si aprono (con il riepilogo), altrimenti si creano ---
 function renderCollegamenti() {
-  const icona = (nome) => `<img class="icona" src="/img/icone/${nome}.svg" alt="" width="24" height="24">`;
-  if (viaggio.peso.n_oggetti > 0) {
+  const p = viaggio.peso;
+  const testo = (selettore, valore) => { document.querySelector(selettore).textContent = valore; }; // textContent: niente XSS
+  if (p.n_oggetti > 0) {
     linkZaino.href = `/zaino.html?id=${id}`;
-    linkZaino.innerHTML = `${icona("zaino")}Lo zaino`;
+    testo("#titolo-zaino", "Lo zaino");
+    const quanti = p.n_inseriti != null ? `${p.n_inseriti} su ${p.n_oggetti} nello zaino` : `${p.n_oggetti} oggetti`;
+    testo("#riepilogo-zaino", `${quanti} · ${num2(p.peso_totale_kg)} kg`);
   } else {
     linkZaino.href = `/zaino.html?id=${id}&genera=1`; // la pagina dello zaino lo riempie appena si apre
-    linkZaino.innerHTML = `${icona("zaino")}Genera lo zaino`;
+    testo("#titolo-zaino", "Genera lo zaino");
+    testo("#riepilogo-zaino", "Ancora vuoto: lo riempio con indispensabili, preferiti e l'attrezzatura per questa uscita.");
   }
+  linkMappa.href = `/mappa.html?id=${id}`; // la mappa si disegna e si guarda nella sua pagina, come lo zaino
   if (viaggio.traccia) {
-    linkMappa.href = `/mappa.html?id=${id}`;
-    linkMappa.innerHTML = `${icona("mappe")}La mappa`;
+    const parti = [];
+    if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km`);
+    if (viaggio.dislivello_m != null) parti.push(`D+ ${num(viaggio.dislivello_m)} m`);
+    testo("#titolo-mappa", "La mappa");
+    testo("#riepilogo-mappa", parti.join(" · ") || "Il percorso sui sentieri");
   } else {
-    linkMappa.href = `/viaggi.html?modifica=${id}&mappa=1`; // la mappa si disegna nel form dell'uscita
-    linkMappa.innerHTML = `${icona("mappe")}Disegna la mappa`;
+    testo("#titolo-mappa", "Disegna la mappa");
+    testo("#riepilogo-mappa", "Tocca partenza e tappe: il percorso segue i sentieri.");
   }
+  document.querySelector("#tessere").hidden = false;
 }
 
 // Arrivo dalla modifica del viaggio con attività, pernotto, cucina o giorni cambiati (?aggiorna=1):
@@ -315,8 +325,7 @@ if (!Number.isInteger(id) || id <= 0) {
     // 404 = l'uscita non esiste (o è di un altro utente): un messaggio comprensibile, senza numeri
     titolo.textContent = err.status === 404 ? "Questa uscita non esiste più o è stata eliminata" : err.message;
     document.querySelector("#elimina-viaggio").hidden = true; // niente da eliminare
-    linkZaino.hidden = true;
-    linkMappa.hidden = true;
+    document.querySelector("#tessere").hidden = true; // niente zaino né mappa da aprire
     document.querySelector("#modifica-viaggio").hidden = true; // né da modificare
   } finally {
     // finally gira SEMPRE, sia dopo il try riuscito sia dopo il catch

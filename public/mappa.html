@@ -32,24 +32,72 @@
     <div class="testata-dentro">
       <p class="indietro"><a id="torna" href="/mappe.html">← Torna all'uscita</a></p>
       <h1 id="titolo"></h1>
-      <div class="testata-azioni">
-        <a class="btn" id="modifica" href="#">Modifica il percorso</a>
-      </div>
     </div>
   </section>
 
   <main class="container">
-    <!-- La mappa dell'uscita in sola lettura (si disegna nel form dell'uscita, in «Percorso») -->
+    <!-- La mappa dell'uscita: si disegna qui (come nella pagina di prova) e si salva con «Salva il percorso» -->
     <section class="card" id="corpo-mappa" hidden>
-      <p id="dati-percorso"></p>
-      <div class="mappa-cornice"><div class="mappa sola-lettura" id="mappa"></div></div>
+      <div class="intestazione-sezione">
+        <h2><img class="icona" src="/img/icone/mappe.svg" alt="" width="24" height="24">Percorso e mappa</h2>
+        <span class="conteggio" id="conteggio-punti">Nessun punto</span>
+      </div>
+      <div class="mappa-cornice"><div class="mappa" id="mappa"></div></div>
       <ul class="legenda" aria-label="Legenda">
         <li><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Partenza</li>
         <li><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="#f6efdf" stroke="#31503f" stroke-width="3"/></svg>Tappa</li>
         <li><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#c8962b"/></svg>Arrivo</li>
         <li><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#31503f" stroke-width="3.5" stroke-linecap="round"/></svg>Sui sentieri</li>
       </ul>
+      <div class="strumenti">
+        <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
+        <div class="azioni">
+          <button type="button" class="secondario btn-piccolo" id="togli-punto">Togli l'ultimo punto</button>
+          <button type="button" class="pericolo btn-piccolo" id="ricomincia">Ricomincia</button>
+        </div>
+      </div>
       <p id="stato-mappa" class="stato" hidden></p>
+
+      <!-- I valori del percorso: campi normali. "dalla mappa" = li ha compilati la mappa; se li scrivi tu, restano tuoi -->
+      <form id="form-percorso" class="form-percorso" novalidate>
+        <div class="riga2">
+          <label><span class="nome-campo">Lunghezza (km) <span class="origine"></span></span>
+            <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">
+          </label>
+          <label><span class="nome-campo">Dislivello positivo (m) <span class="origine"></span></span>
+            <input name="dislivello_m" type="number" min="0" max="9000" step="1">
+          </label>
+        </div>
+        <div class="riga2">
+          <label><span class="nome-campo">Quota minima (m) <span class="origine"></span></span>
+            <input name="quota_min_m" type="number" min="-500" max="9000" step="1">
+          </label>
+          <label><span class="nome-campo">Quota massima (m) <span class="origine"></span></span>
+            <input name="quota_max_m" type="number" min="0" max="9000" step="1">
+          </label>
+        </div>
+        <div class="riga2">
+          <label><span class="nome-campo">Latitudine partenza <span class="origine"></span></span>
+            <input name="lat_partenza" type="number" min="-90" max="90" step="any">
+          </label>
+          <label><span class="nome-campo">Longitudine partenza <span class="origine"></span></span>
+            <input name="lon_partenza" type="number" min="-180" max="180" step="any">
+          </label>
+        </div>
+        <div class="riga2">
+          <label><span class="nome-campo">Latitudine arrivo <span class="origine"></span></span>
+            <input name="lat_arrivo" type="number" min="-90" max="90" step="any">
+          </label>
+          <label><span class="nome-campo">Longitudine arrivo <span class="origine"></span></span>
+            <input name="lon_arrivo" type="number" min="-180" max="180" step="any">
+          </label>
+        </div>
+        <p class="errore" id="errore-percorso" hidden></p>
+        <p class="muto" id="messaggio-percorso" hidden></p>
+        <div class="azioni">
+          <button type="submit" id="salva-percorso">Salva il percorso</button>
+        </div>
+      </form>
     </section>
   </main>
 

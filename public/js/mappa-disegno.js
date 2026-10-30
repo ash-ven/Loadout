@@ -1,10 +1,10 @@
 // =====================================================================
-//  MAPPA NEL FORM DELL'USCITA (fase 5) – facoltativa, dentro «Percorso».
+//  DISEGNO DEL PERCORSO SULLA MAPPA (fase 5) – lo usa la pagina della mappa (mappa.js).
 //  La logica è quella della pagina di prova (sezioni 4–7), con due differenze:
 //  - il percorso lo chiede il NOSTRO server (/api/percorso), che a sua volta chiama BRouter;
-//  - la mappa scrive nei campi veri del form (km, dislivello positivo, quote, coordinate) con il post-it.
-//  Lezione di giovedì: Leaflet misura il contenitore quando nasce, e dentro un <dialog> o un <details>
-//  chiuso misura zero. Per questo la mappa nasce solo quando apri «Percorso» (apri()).
+//  - la mappa scrive nei campi veri della pagina (km, dislivello positivo, quote, coordinate) con il post-it.
+//  Lezione di giovedì: Leaflet misura il contenitore quando nasce: la mappa nasce con apri(),
+//  quando il contenitore è già visibile.
 // =====================================================================
 import { api } from "./api.js";
 import { proponi } from "./post-it.js";
@@ -12,8 +12,9 @@ import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, e
 
 const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 
-export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate }) {
-  let mappa = null;            // nasce alla prima apertura di «Percorso»
+// suModifica: chiamata ogni volta che il percorso cambia (la pagina la usa per "modifiche non salvate")
+export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate, suModifica = () => {} }) {
+  let mappa = null;            // nasce con apri()
   let livelloPercorso = null;  // le linee: si svuota e si ridisegna
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
   let linea = null;            // la traccia dell'ultimo percorso calcolato: [[lat, lon, quota], ...]
@@ -21,7 +22,7 @@ export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAne
   let centro = null;           // dove aprire la mappa (il luogo scelto, o la partenza)
   let ultimaRichiesta = 0;     // se tocchi in fretta partono più richieste: vale solo la risposta dell'ultima
 
-  // --- La mappa nasce (una volta sola), poi a ogni apertura si rimisura ---
+  // --- La mappa nasce (una volta sola); chiamandola di nuovo si rimisura ---
   async function apri() {
     if (mappa) { requestAnimationFrame(() => mappa.invalidateSize()); return; }
     let chiave;
@@ -29,9 +30,9 @@ export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAne
       ({ chiave } = await api("/api/mappe/config"));
     } catch (err) {
       scriviStato(stato, `${err.message}. Puoi scrivere i dati del percorso a mano.`, "errore");
-      return;
+      return false;
     }
-    if (mappa) return; // due aperture veloci: la mappa è già nata con la prima
+    if (mappa) return true; // due chiamate veloci: la mappa è già nata con la prima
     mappa = creaMappa(contenitore, chiave, {
       centro: centro ?? undefined,
       suTessereSbagliate: () => scriviStato(stato, "Le tessere della mappa non arrivano: controlla la chiave MapTiler nel file .env.", "errore"),
@@ -43,8 +44,16 @@ export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAne
       ridisegna();
     });
     if (daRipristinare) ripristina(daRipristinare);
-    else scriviStato(stato, "Tocca la mappa per mettere la partenza.");
+    else if (leggiCoppia(coordinate.latPartenza, coordinate.lonPartenza)) {
+      // C'è già la partenza (dal luogo o scritta a mano): la puntina nasce lì, e tu tocchi subito le tappe.
+      // Non è una modifica da salvare (niente suModifica): la mostriamo e basta.
+      punti.push(nuovaPuntina(leggiCoppia(coordinate.latPartenza, coordinate.lonPartenza)));
+      punti[0].setIcon(icona(tipoDelPunto(0, 1, interruttoreAnello.checked)));
+      aggiornaConteggio();
+      scriviStato(stato, "Ora tocca la prossima tappa (o l'arrivo).");
+    } else scriviStato(stato, "Tocca la mappa per mettere la partenza.");
     requestAnimationFrame(() => mappa.invalidateSize());
+    return true;
   }
 
   function nuovaPuntina(latlng) {
@@ -52,6 +61,41 @@ export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAne
     puntina.on("dragend", ridisegna); // spostare un punto ricalcola il percorso
     return puntina;
   }
+
+  // Una coppia di campi lat/lon → un punto di Leaflet, oppure null se i numeri mancano o sono fuori dal mondo
+  function leggiCoppia(campoLat, campoLon) {
+    if (campoLat.value === "" || campoLon.value === "") return null;
+    const lat = Number(campoLat.value);
+    const lon = Number(campoLon.value);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+    return L.latLng(lat, lon);
+  }
+
+  // Coordinate scritte a mano nei campi sotto la mappa → la puntina nasce o si sposta lì (e il percorso si ricalcola).
+  // È la strada inversa del post-it: lì la mappa scrive nei campi, qui i campi muovono la mappa.
+  function daCoordinate(quale) {
+    if (!mappa) return;
+    let punto;
+    if (quale === "partenza") {
+      punto = leggiCoppia(coordinate.latPartenza, coordinate.lonPartenza);
+      if (!punto) return;
+      if (punti.length) punti[0].setLatLng(punto);
+      else punti.push(nuovaPuntina(punto));
+    } else {
+      if (interruttoreAnello.checked) return;              // con l'anello l'arrivo è la partenza
+      punto = leggiCoppia(coordinate.latArrivo, coordinate.lonArrivo);
+      if (!punto || punti.length === 0) return;             // senza partenza l'arrivo non si mette
+      if (punti.length >= 2) punti.at(-1).setLatLng(punto);
+      else punti.push(nuovaPuntina(punto));
+    }
+    if (!mappa.getBounds().contains(punto)) mappa.panTo(punto); // se il punto è fuori dalla vista, la mappa ci va
+    ridisegna();
+  }
+  // "change" = quando hai finito di scrivere (uscendo dal campo o con Invio), non a ogni tasto
+  coordinate.latPartenza.addEventListener("change", () => daCoordinate("partenza"));
+  coordinate.lonPartenza.addEventListener("change", () => daCoordinate("partenza"));
+  coordinate.latArrivo.addEventListener("change", () => daCoordinate("arrivo"));
+  coordinate.lonArrivo.addEventListener("change", () => daCoordinate("arrivo"));
 
   // I punti del giro: con l'anello, in fondo si aggiunge di nuovo la partenza
   function puntiDelGiro() {
@@ -62,6 +106,7 @@ export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAne
 
   // Stato → disegno: icone, conteggio, coordinate, percorso
   function ridisegna() {
+    suModifica();
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     aggiornaConteggio();
     aggiornaCoordinate();
@@ -160,12 +205,7 @@ export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAne
 
   return {
     apri,
-    // Scegliendo un luogo la mappa si centra lì (le puntine non si spostano)
-    centra(lat, lon) {
-      centro = [lat, lon];
-      if (mappa) mappa.setView(centro, 14);
-    },
-    // Nuovo viaggio: mappa vuota
+    // Mappa vuota
     svuota() {
       ultimaRichiesta++;
       punti.forEach((p) => mappa?.removeLayer(p));
@@ -178,7 +218,7 @@ export function attivaMappaForm({ contenitore, conteggio, stato, interruttoreAne
       aggiornaConteggio();
       scriviStato(stato, mappa ? "Tocca la mappa per mettere la partenza." : "");
     },
-    // Modifica: la traccia salvata del viaggio (se c'è)
+    // La traccia salvata del viaggio (se c'è): da chiamare PRIMA di apri()
     carica(viaggio) {
       this.svuota();
       if (viaggio.lat_partenza != null && viaggio.lon_partenza != null) centro = [viaggio.lat_partenza, viaggio.lon_partenza];

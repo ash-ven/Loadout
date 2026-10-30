@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout – Viaggi</title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
-  <!-- Leaflet (mappe): prima il suo CSS, poi il nostro (che lo "veste" da Loadout).
-       integrity = impronta del file: se unpkg servisse un file diverso, il browser lo rifiuterebbe -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -96,7 +92,7 @@
         </div>
 
         <!-- B1: il luogo per nome, con i suggerimenti (OpenStreetMap). Scegliendo un suggerimento
-             si compilano anche le coordinate qui sotto (post-it "dal luogo") e la mappa si centra lì. -->
+             si compilano anche le coordinate qui sotto (post-it "dal luogo"). -->
         <div class="campo-luogo">
           <label>Da dove parti
             <input name="luogo_partenza" type="text" maxlength="200" required autocomplete="off"
@@ -131,41 +127,23 @@
         </div>
         <label class="check"><input name="serve_cucina" type="checkbox"> Serve la cucina</label>
 
-        <details id="dettagli-percorso">
+        <details>
           <summary>Percorso (facoltativo)</summary>
-          <!-- Mappe, fase 5: la mappa facoltativa (come nella pagina di prova). Nasce quando apri questo riquadro. -->
-          <div class="testa-mappa"><span class="conteggio" id="conteggio-punti">Nessun punto</span></div>
-          <div class="mappa-cornice"><div class="mappa" id="mappa-form"></div></div>
-          <ul class="legenda" aria-label="Legenda">
-            <li><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Partenza</li>
-            <li><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="#f6efdf" stroke="#31503f" stroke-width="3"/></svg>Tappa</li>
-            <li><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#c8962b"/></svg>Arrivo</li>
-            <li><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#31503f" stroke-width="3.5" stroke-linecap="round"/></svg>Sui sentieri</li>
-          </ul>
-          <div class="strumenti">
-            <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
-            <div class="azioni">
-              <button type="button" class="secondario btn-piccolo" id="togli-punto">Togli l'ultimo punto</button>
-              <button type="button" class="pericolo btn-piccolo" id="ricomincia">Ricomincia</button>
-            </div>
-          </div>
-          <p id="stato-mappa" class="stato" hidden></p>
-
-          <!-- I quattro valori: campi normali. Se li compila la mappa compare "dalla mappa"; se li scrivi tu, restano tuoi -->
+          <!-- Il percorso si può anche disegnare sulla mappa, nella pagina della mappa dell'uscita (dalla scheda: «Disegna la mappa») -->
           <div class="riga2">
-            <label><span class="nome-campo">Lunghezza (km) <span class="origine"></span></span>
+            <label>Lunghezza (km)
               <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">
             </label>
-            <label><span class="nome-campo">Dislivello positivo (m) <span class="origine"></span></span>
+            <label>Dislivello positivo (m)
               <input name="dislivello_m" type="number" min="0" max="9000" step="1">
             </label>
           </div>
           <!-- B3: il punto più alto del percorso → meteo in vetta, avviso neve e ghiaccio -->
           <div class="riga2">
-            <label><span class="nome-campo">Quota minima (m) <span class="origine"></span></span>
+            <label>Quota minima (m)
               <input name="quota_min_m" type="number" min="-500" max="9000" step="1" placeholder="es. 900">
             </label>
-            <label><span class="nome-campo">Quota massima (m) <span class="origine"></span></span>
+            <label>Quota massima (m)
               <input name="quota_max_m" type="number" min="0" max="9000" step="1" placeholder="es. 2400">
             </label>
           </div>
@@ -186,9 +164,6 @@
     </dialog>
   </main>
 
-  <!-- Leaflet come script "classico": crea la variabile globale L, usata dai moduli della mappa -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script type="module" src="/js/viaggi.js"></script>
 </body>
 </html>

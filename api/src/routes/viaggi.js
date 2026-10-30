@@ -34,6 +34,12 @@ const schemaViaggio = {
   traccia:       { type: "object" },                                          // mappe: controllata da tracciaValida()
 };
 
+// Il percorso di un'uscita (pagina della mappa): la traccia e i valori che la mappa compila.
+// Stesse regole del viaggio, ma tutti "nullable": null = campo vuoto (il percorso si sostituisce per intero)
+const CAMPI_PERCORSO = ["traccia", "distanza_km", "dislivello_m", "quota_min_m", "quota_max_m",
+                        "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
+const schemaPercorso = Object.fromEntries(CAMPI_PERCORSO.map((campo) => [campo, { ...schemaViaggio[campo], nullable: true }]));
+
 // Controlli che il validatore generico non sa fare: tra due campi, e la forma della traccia
 function controlliPercorso(req, res, next) {
   const d = req.validated;
@@ -160,6 +166,13 @@ router.put("/:id", validate(schemaViaggio), controlliPercorso, async (req, res, 
     const viaggio = await svc.update(req.user.sub, id, req.validated);
     if (!viaggio) return res.status(404).json({ error: "NOT_FOUND", message: `Viaggio ${id} non trovato` });
     res.json(viaggio);
+  } catch (err) { next(err); }
+});
+
+// === PUT /api/viaggi/:id/percorso (pagina della mappa: salva solo il percorso, senza toccare il resto dell'uscita) ===
+router.put("/:id/percorso", caricaViaggio, validate(schemaPercorso), controlliPercorso, async (req, res, next) => {
+  try {
+    res.json(await svc.aggiornaPercorso(req.user.sub, req.viaggio.id, req.validated));
   } catch (err) { next(err); }
 });
 

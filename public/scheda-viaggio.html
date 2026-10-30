@@ -30,12 +30,10 @@
       <p class="indietro"><a href="/viaggi.html">← I miei viaggi</a></p>
       <h1 id="titolo"></h1>
       <div class="etichette" id="dettagli"></div>
-      <div class="testata-azioni">
-        <!-- Lo zaino e la mappa dell'uscita: testo e indirizzo li decide scheda-viaggio.js (aprire o creare) -->
-        <a class="btn" id="link-zaino" href="#">Lo zaino</a>
-        <a class="btn" id="link-mappa" href="#">La mappa</a>
+      <!-- Modifica a contorno, elimina come scritta discreta (zaino e mappa sono le tessere sotto la testata) -->
+      <div class="testata-azioni azioni-secondarie">
         <button type="button" class="su-scuro" id="modifica-viaggio">Modifica viaggio</button>
-        <button type="button" class="su-scuro" id="elimina-viaggio">Elimina viaggio</button>
+        <button type="button" class="elimina-discreto" id="elimina-viaggio">Elimina viaggio</button>
       </div>
     </div>
   </section>
@@ -45,6 +43,19 @@
     <div class="caricamento" id="caricamento" hidden>
       <img src="/img/zaino-animato-chiaro.svg" alt="" width="120" height="120">
       <p class="muto" role="status">Sto preparando lo zaino…</p>
+    </div>
+
+    <!-- Lo zaino e la mappa dell'uscita: due tessere con il riepilogo (scelta di Asiha, disposizione A).
+         Titolo, riepilogo e indirizzo li scrive scheda-viaggio.js: aprire se ci sono, crearli se mancano -->
+    <div class="tessere" id="tessere" hidden>
+      <a class="card tessera" id="link-zaino" href="#">
+        <h2><img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24"><span id="titolo-zaino">Lo zaino</span></h2>
+        <p class="muto" id="riepilogo-zaino"></p>
+      </a>
+      <a class="card tessera" id="link-mappa" href="#">
+        <h2><img class="icona" src="/img/icone/mappe.svg" alt="" width="24" height="24"><span id="titolo-mappa">La mappa</span></h2>
+        <p class="muto" id="riepilogo-mappa"></p>
+      </a>
     </div>
 
     <!-- Dopo una modifica dell'uscita: la proposta di aggiornare lo zaino (la scrive scheda-viaggio.js) -->

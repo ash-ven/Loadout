@@ -126,7 +126,7 @@ Le liste del kit (voci, parole chiave, quando servono) sono in `api/src/services
 | POST | /api/viaggi/:id/zaino/svuota | — | `{ svuotati: n }` – tutti gli oggetti tornano "non inseriti" | 200, 400, 401, 404 |
 
 Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_dettaglio` per `oggetti`):
-- `peso`: `{ n_oggetti, peso_totale_g, peso_inserito_g, peso_totale_kg, peso_inserito_kg, peso_addosso_g, peso_addosso_kg }`.
+- `peso`: `{ n_oggetti, n_inseriti, peso_totale_g, peso_inserito_g, peso_totale_kg, peso_inserito_kg, peso_addosso_g, peso_addosso_kg }` (`n_inseriti` = quanti oggetti hanno la spunta).
   Gli oggetti **indossati** non contano in `peso_totale` e `peso_inserito`: il loro peso è in `peso_addosso`
 - `oggetti`: `[ { oggetto_id, nome, categoria, peso_g, quantita, peso_riga_g, inserito, is_indispensabile, is_preferito, indossato, quantita_posseduta, marchio } ]`
 
@@ -143,6 +143,7 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
 | GET | /api/percorso?punti=44.21,10.64;44.22,10.62 | — | `{ distanza_km, dislivello_m, quota_min_m, quota_max_m, punto_piu_alto: [lat, lon], traccia: [[lat, lon, quota], …] }` | 200, 400 (`BAD_QUERY`: 2–30 coppie lat,lon), 401, 404 (`NESSUN_PERCORSO`: un punto lontano dai sentieri), 502 (`SERVIZIO_PERCORSI`: BRouter non risponde) |
+| PUT | /api/viaggi/:id/percorso | `{ traccia, distanza_km, dislivello_m, quota_min_m, quota_max_m, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo }` (tutti facoltativi, `null` = vuoto) | il viaggio aggiornato. Salva SOLO il percorso (pagina della mappa): il resto dell'uscita non cambia; i campi non mandati diventano `null` | 200, 400 (stesse regole del viaggio, quota minima ≤ massima, traccia valida), 401, 404 |
 | GET | /api/mappe/config | — | `{ chiave }` – la chiave di MapTiler per le tessere della mappa | 200, 401, 503 (`MAPPE_NON_CONFIGURATE`: manca `MAPTILER_KEY` nel `.env`) |
 
 - Il percorso lo calcola il server con BRouter (OpenStreetMap, profilo `hiking-mountain`), con 10 secondi di tempo massimo.

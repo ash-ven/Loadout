@@ -26,6 +26,7 @@ test("CSP delle mappe: tessere solo da MapTiler, CSS di Leaflet da unpkg, fetch 
 test("percorso e chiave delle mappe senza login: 401", async () => {
   assert.equal((await request(app).get("/api/percorso?punti=44.2,10.7;44.21,10.71")).status, 401);
   assert.equal((await request(app).get("/api/mappe/config")).status, 401);
+  assert.equal((await request(app).put("/api/viaggi/1/percorso").send({ distanza_km: 5 })).status, 401);
 });
 
 test("CORS: un altro sito non riceve il permesso di chiamare l'API", async () => {

@@ -542,3 +542,18 @@ label:has(input[data-auto]) .origine { display: inline; }
 label:has(input[data-auto="mappa"]) .origine::after { content: "dalla mappa"; }
 label:has(input[data-auto="luogo"]) .origine::after { content: "dal luogo"; }
 label:has(input[data-auto]) input { background: var(--salvia-chiaro); border-color: transparent; }
+.form-percorso { margin-top: 1.1rem; }   /* i campi sotto la mappa, nella pagina della mappa */
+
+/* --- Scheda dell'uscita: zaino e mappa come due tessere sotto la testata (scelta di Asiha, disposizione A) ---
+   Sul telefono una sotto l'altra, sul computer affiancate (auto-fit: tante colonne quante ne stanno da 14rem) */
+.tessere { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.tessera { display: grid; gap: .35rem; align-content: start; color: var(--testo); text-decoration: none;
+           transition: border-color .15s, box-shadow .15s; }
+.tessera h2 { margin: 0; font-size: 1.35rem; }
+.tessera p { margin: 0; }
+.tessera:hover, .tessera:focus-visible { border-color: var(--salvia); box-shadow: 0 0 0 3px rgba(95, 132, 99, .2), var(--ombra); }
+/* In testata: Modifica a contorno ed Elimina come scritta discreta (rosa chiaro: il rosso scuro sul muschio non si leggerebbe) */
+.azioni-secondarie { align-items: center; }
+button.elimina-discreto { background: transparent; border: 0; padding: .55rem .4rem; color: #f1b9b0; font-weight: 600;
+                          text-decoration: underline; text-underline-offset: 3px; }
+button.elimina-discreto:hover, button.elimina-discreto:focus-visible { background: transparent; color: #fff; }

@@ -3,7 +3,6 @@ import "./menu.js";
 import { segno } from "./segni.js";
 import { ATTIVITA } from "./categorie.js";
 import { attivaCampoLuogo } from "./campo-luogo.js";
-import { attivaMappaForm } from "./mappa-form.js";
 import { staccaPostItScrivendo } from "./post-it.js";
 
 // --- Elementi della pagina ---
@@ -104,7 +103,6 @@ segmenti.addEventListener("click", (e) => {
 // Il browser la chiude da solo anche con il tasto Esc.
 function apriFinestra() {
   finestra.showModal();
-  if (dettagliPercorso.open) mappaForm.apri(); // «Percorso» era già aperto: la mappa va rimisurata
   campi.nome.focus(); // il cursore va nel primo campo
 }
 
@@ -121,31 +119,14 @@ finestra.addEventListener("click", (e) => {
   if (e.target === finestra) finestra.close();
 });
 
-// Mappe, fase 5: la mappa facoltativa dentro «Percorso». Scrive nei campi veri del form con il post-it.
-const dettagliPercorso = document.querySelector("#dettagli-percorso");
-const mappaForm = attivaMappaForm({
-  contenitore: document.querySelector("#mappa-form"),
-  conteggio: document.querySelector("#conteggio-punti"),
-  stato: document.querySelector("#stato-mappa"),
-  interruttoreAnello: document.querySelector("#anello"),
-  bottoneTogli: document.querySelector("#togli-punto"),
-  bottoneRicomincia: document.querySelector("#ricomincia"),
-  campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
-  coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
-});
-// La mappa nasce (o si rimisura) quando apri «Percorso»: dentro un <details> chiuso Leaflet misurerebbe zero
-dettagliPercorso.addEventListener("toggle", () => { if (dettagliPercorso.open) mappaForm.apri(); });
-
-// I campi che possono avere il post-it (compilati dalla mappa o dal luogo): scrivendo a mano diventano tuoi
-const CAMPI_POST_IT = ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo", "distanza_km", "dislivello_m", "quota_max_m", "quota_min_m"];
+// Le coordinate possono avere il post-it (compilate dal luogo, o dalla mappa nella sua pagina): scrivendo a mano diventano tuoi
+const CAMPI_POST_IT = ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
 staccaPostItScrivendo(CAMPI_POST_IT.map((nome) => campi[nome]));
 
-// B1: i due campi luogo con i suggerimenti (il nome e, scegliendo, le coordinate).
-// Scegliendo la partenza la mappa si centra lì (le puntine non si spostano, il nome non lo tocca nessuno)
+// B1: i due campi luogo con i suggerimenti (il nome e, scegliendo, le coordinate)
 const luogoPartenza = attivaCampoLuogo({
   campoTesto: campi.luogo_partenza, lista: document.querySelector("#suggerimenti-partenza"),
   campoLat: campi.lat_partenza, campoLon: campi.lon_partenza,
-  suScelta: (lat, lon) => mappaForm.centra(lat, lon),
 });
 const luogoArrivo = attivaCampoLuogo({
   campoTesto: campi.luogo_arrivo, lista: document.querySelector("#suggerimenti-arrivo"),
@@ -156,7 +137,6 @@ const luogoArrivo = attivaCampoLuogo({
 function svuotaForm() {
   form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
   CAMPI_POST_IT.forEach((nome) => delete campi[nome].dataset.auto); // reset() non toglie i post-it
-  mappaForm.svuota();
   erroreForm.hidden = true;
   inModifica = null;
   titoloForm.textContent = "Prepara il tuo cammino";
@@ -189,19 +169,11 @@ function apriModifica(v) {
     campi[nome].value = v[nome] ?? "";
   }
   campi.ora_partenza.value = v.ora_partenza ?? "08:00"; // senza ora salvata, vale quella di default
-  // I post-it in modifica (non sappiamo chi aveva scritto i valori, quindi indoviniamo nel modo più utile):
-  // - coordinate: dalla mappa se c'è una traccia, altrimenti dal luogo → scegliendo un altro luogo si aggiornano;
-  // - i quattro valori del percorso: dalla mappa solo se c'è una traccia, altrimenti sono tuoi.
-  const origine = v.traccia ? "mappa" : "luogo";
-  for (const nome of ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"]) {
-    if (campi[nome].value !== "") campi[nome].dataset.auto = origine;
+  // Coordinate in modifica: non sappiamo chi le aveva scritte, quindi indoviniamo nel modo più utile
+  // (dalla mappa se c'è una traccia, altrimenti dal luogo): scegliendo un altro luogo si aggiornano
+  for (const nome of CAMPI_POST_IT) {
+    if (campi[nome].value !== "") campi[nome].dataset.auto = v.traccia ? "mappa" : "luogo";
   }
-  if (v.traccia) {
-    for (const nome of ["distanza_km", "dislivello_m", "quota_max_m", "quota_min_m"]) {
-      if (campi[nome].value !== "") campi[nome].dataset.auto = "mappa";
-    }
-  }
-  mappaForm.carica(v); // le puntine e la traccia salvate (compaiono quando apri «Percorso»)
   campi.serve_cucina.checked = v.serve_cucina;
   campi.pianificato.checked = v.pianificato;
   apriFinestra();
@@ -232,8 +204,9 @@ function leggiForm() {
     quota_max_m: numero("quota_max_m"),
     quota_min_m: numero("quota_min_m"),
     ora_partenza: campi.ora_partenza.value || undefined,
-    // la traccia della mappa ({ tappe, linea }); senza percorso non si manda, e il server salva null
-    traccia: mappaForm.traccia() ?? undefined,
+    // la traccia della mappa non è un campo del form (si disegna nella pagina della mappa): in modifica
+    // la rimandiamo com'era, altrimenti il PUT (che sostituisce il viaggio intero) la cancellerebbe
+    traccia: inModifica ? (prima?.traccia ?? undefined) : undefined,
   };
 }
 
@@ -300,11 +273,5 @@ if (daModificare) {
   const v = viaggi.find((x) => x.id === daModificare);
   if (v) {
     apriModifica(v);
-    // "Disegna la mappa" della scheda (?mappa=1): apro subito «Percorso e coordinate», dove si disegna la mappa
-    if (new URLSearchParams(location.search).has("mappa")) {
-      const percorso = form.querySelector("details");
-      percorso.open = true;
-      percorso.scrollIntoView({ block: "start" });
-    }
   } else location.href = "/viaggi.html"; // id sbagliato o viaggio non mio: torno alla lista
 }

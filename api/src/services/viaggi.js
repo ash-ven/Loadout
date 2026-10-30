@@ -85,6 +85,22 @@ export async function createConZaino(utenteId, dati) {
   }
 }
 
+// Solo il percorso (pagina della mappa): traccia, km, dislivello positivo, quote e coordinate.
+// I campi non mandati diventano null: il percorso si sostituisce per intero.
+export async function aggiornaPercorso(utenteId, id, d) {
+  const { rows } = await query(
+    `UPDATE viaggio
+     SET traccia = $3, distanza_km = $4, dislivello_m = $5, quota_min_m = $6, quota_max_m = $7,
+         lat_partenza = $8, lon_partenza = $9, lat_arrivo = $10, lon_arrivo = $11
+     WHERE id = $1 AND utente_id = $2
+     RETURNING *`,
+    [id, utenteId, d.traccia ? JSON.stringify(d.traccia) : null, d.distanza_km ?? null, d.dislivello_m ?? null,
+     d.quota_min_m ?? null, d.quota_max_m ?? null, d.lat_partenza ?? null, d.lon_partenza ?? null,
+     d.lat_arrivo ?? null, d.lon_arrivo ?? null]
+  );
+  return rows[0] ?? null;
+}
+
 export async function update(utenteId, id, dati) {
   const { rows } = await query(
     `UPDATE viaggio

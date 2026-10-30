@@ -34,7 +34,8 @@ export async function peso(viaggioId) {
   const { rows } = await query(
     `SELECT n_oggetti, peso_totale_g, peso_inserito_g, peso_totale_kg,
             ROUND(peso_inserito_g / 1000.0, 2) AS peso_inserito_kg,
-            peso_addosso_g, ROUND(peso_addosso_g / 1000.0, 2) AS peso_addosso_kg
+            peso_addosso_g, ROUND(peso_addosso_g / 1000.0, 2) AS peso_addosso_kg,
+            (SELECT COUNT(*) FROM viaggio_oggetto vo WHERE vo.viaggio_id = $1 AND vo.inserito) AS n_inseriti
      FROM v_zaino_peso
      WHERE viaggio_id = $1`,
     [viaggioId]
