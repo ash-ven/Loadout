@@ -7,5 +7,6 @@ app.listen(port, (err) => {
     console.error(`Impossibile avviare il server sulla porta ${port}: ${err.message}`);
     process.exit(1);
   }
-  console.log(`API in ascolto su http://localhost:${port}`);
+  // Con npm run dev: http://localhost:3000. Con Docker si entra da Caddy: https://localhost
+  console.log(`API in ascolto sulla porta ${port}`);
 });

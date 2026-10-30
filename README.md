@@ -51,7 +51,7 @@ docker compose up -d db
 cd api
 npm install
 Copy-Item .env.example .env    # poi apri api/.env e inserisci valori veri (JWT_SECRET lungo e casuale)
-npm run dev                    # → "API in ascolto su http://localhost:3000"
+npm run dev                    # → "API in ascolto sulla porta 3000", poi apri http://localhost:3000
 
 # 3. Verifica (da un secondo terminale)
 curl.exe http://localhost:3000/api/health
@@ -96,6 +96,8 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 - `docs/api.md` – contratto completo dell'API (URL, body, risposte, status code, regole dei campi)
 - `api/api.http` – una richiesta di prova per ogni endpoint (estensione REST Client di VS Code)
 - `db/esercizi.sql` – esercizi SQL svolti
+- `api/test/` – test automatici (`npm test` dalla cartella `api`)
+- `NOTE.md` – cosa ho imparato, cosa mi è costato di più, cosa farei diversamente
 
 ## Struttura del frontend (`public/`)
 
@@ -115,7 +117,7 @@ Sul telefono il menu è una barra in basso; sul computer sta nella barra in alto
 
 ## Stato
 
-Aggiornato a giovedì 29 ottobre.
+Aggiornato a venerdì 30 ottobre (consegna).
 
 ### Database
 - [x] PostgreSQL 16 su Docker Compose, schema fornito + migrazioni in `db/initdb/` (vedi tabella sopra)
@@ -148,11 +150,18 @@ Aggiornato a giovedì 29 ottobre.
 - [x] Profilo: foto (ridotta nel browser), esperienza, contatto di emergenza, note mediche e tessera CAI/assicurazione (mostrati nel riquadro Emergenza della scheda del viaggio), sensibilità al freddo (adatta i consigli di vestiario)
 - [x] Home con frasi casuali e "vive" sul prossimo viaggio; pagina di consigli generali
 
-### Da fare
+### Venerdì: sicurezza, Docker, qualità
 - [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
 - [x] Sicurezza: helmet con CSP severa (solo il nostro sito + Google Fonts e unpkg; niente script inline), limite di tentativi su login (10 errori in 15 min per IP) e registrazione (10 all'ora), `trust proxy` per Caddy, cookie `HttpOnly` + `Secure` (in produzione) + `SameSite=Lax`, CORS chiuso di default (`CORS_ORIGINS` per ammettere altri siti)
 - [x] 20 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, vestiario)
-- [ ] `npm audit`, NOTE.md, pulizia del codice (venerdì)
+- [x] `npm audit` (0 vulnerabilità), pulizia del codice (ESLint), `NOTE.md` con le riflessioni di fine settimana
+
+### Cosa manca (prossimi passi)
+- Mappe: provate e tolte; da riprogettare (es. tracciato GPX importato e mostrato in sola lettura)
+- Ricerca del prodotto dal codice a barre: le banche dati gratuite conoscono poco l'attrezzatura da montagna
+- Limite di tentativi: il contatore vive nella memoria del server (con più server servirebbe un archivio condiviso, es. Redis)
+- HTTPS solo con certificato locale: online servirebbe un dominio e un certificato pubblico (Caddy lo ottiene da solo con Let's Encrypt)
+- In sviluppo la porta 5432 del database è aperta sul PC: in produzione andrebbe chiusa
 
 ## User story MVP
 
