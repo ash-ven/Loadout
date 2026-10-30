@@ -75,7 +75,8 @@ export async function avvisoPeso(utenteId, pesoZainoKg) {
 }
 
 // 6. Meteo del giorno di partenza da Open-Meteo + suggerimenti sul vestiario (stretch 1)
-export async function meteo(viaggio) {
+//    sensibilita = la sensibilità al freddo del profilo ("alta", "normale", "bassa" o null)
+export async function meteo(viaggio, sensibilita = null) {
   const { lat_partenza: lat, lon_partenza: lon, data_partenza: data } = viaggio;
   if (lat == null || lon == null || !data) {
     return { disponibile: false, motivo: "servono coordinate e data di partenza" };
@@ -103,7 +104,7 @@ export async function meteo(viaggio) {
       temp_max: tMax,
       temp_min: tMin,
       prob_pioggia: pioggia,
-      vestiario: consigliVestiario(tMin, tMax, pioggia),
+      vestiario: consigliVestiario(tMin, tMax, pioggia, sensibilita),
     };
   } catch (err) {
     console.error("open-meteo non disponibile:", err.message);
@@ -111,12 +112,29 @@ export async function meteo(viaggio) {
   }
 }
 
-function consigliVestiario(tMin, tMax, pioggia) {
+// La sensibilità al freddo del profilo: chi soffre il freddo "sente" 4 gradi in meno,
+// chi lo sente poco 4 gradi in più. Le soglie dei consigli si confrontano con la temperatura PERCEPITA.
+const GRADI_PERCEPITI = { alta: -4, normale: 0, bassa: +4 };
+
+// Funzione "pura" (niente rete né database): la provano i test in test/consigli.test.js
+export function consigliVestiario(tMin, tMax, pioggia, sensibilita = null) {
+  const spostamento = GRADI_PERCEPITI[sensibilita] ?? 0;
+  const minPercepita = tMin + spostamento;
+  const maxPercepita = tMax + spostamento;
   const consigli = [];
   if (tMin < 0) consigli.push("Strati termici, guanti e berretto: si va sotto zero");
-  else if (tMin < 8) consigli.push("Pile o piumino leggero per le ore più fresche");
-  if (tMax > 25) consigli.push("Abbigliamento traspirante, cappello e crema solare");
+  else if (minPercepita < 0) consigli.push("Strati termici, guanti e berretto: per te sarà molto freddo");
+  else if (minPercepita < 8) consigli.push("Pile o piumino leggero per le ore più fresche");
+  if (maxPercepita > 25) consigli.push("Abbigliamento traspirante, cappello e crema solare");
   if (pioggia >= 50) consigli.push("Giacca impermeabile e copri-zaino");
   if (consigli.length === 0) consigli.push("Abbigliamento a strati: temperature miti");
+  if (spostamento < 0) consigli.push("Consigli adattati al tuo profilo: soffri il freddo");
+  if (spostamento > 0) consigli.push("Consigli adattati al tuo profilo: senti poco il freddo");
   return consigli;
+}
+
+// La sensibilità al freddo dell'utente (null se non l'ha indicata)
+export async function sensibilitaFreddo(utenteId) {
+  const { rows } = await query("SELECT sensibilita_freddo FROM utente WHERE id = $1", [utenteId]);
+  return rows[0]?.sensibilita_freddo ?? null;
 }

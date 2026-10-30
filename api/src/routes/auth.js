@@ -59,8 +59,9 @@ router.post("/logout", (req, res) => {
 });
 
 // Le colonne del profilo che restituiamo (mai il password_hash; la foto ha un indirizzo suo)
-const CAMPI_PROFILO = `id, email, nome, peso_corporeo_kg, livello_esperienza, citta,
-                       emergenza_nome, emergenza_telefono, (foto IS NOT NULL) AS ha_foto`;
+const CAMPI_PROFILO = `id, email, nome, peso_corporeo_kg, livello_esperienza,
+                       emergenza_nome, emergenza_telefono, note_mediche, tessera_soccorso,
+                       sensibilita_freddo, (foto IS NOT NULL) AS ha_foto`;
 
 // === GET /api/auth/me (dati aggiornati dal database) ===
 router.get("/me", requireAuth, async (req, res, next) => {
@@ -76,9 +77,11 @@ router.get("/me", requireAuth, async (req, res, next) => {
 const schemaProfilo = {
   peso_corporeo_kg:   { type: "number", min: 20, max: 300, nullable: true },     // stretch 5
   livello_esperienza: { type: "string", enum: ["principiante", "intermedio", "esperto"], nullable: true }, // C1
-  citta:              { type: "string", maxLength: 100, nullable: true },
   emergenza_nome:     { type: "string", maxLength: 100, nullable: true },
   emergenza_telefono: { type: "string", maxLength: 30, nullable: true },
+  note_mediche:       { type: "string", maxLength: 300, nullable: true },
+  tessera_soccorso:   { type: "string", maxLength: 80, nullable: true },
+  sensibilita_freddo: { type: "string", enum: ["alta", "normale", "bassa"], nullable: true },
   foto:               { type: "string", maxLength: 200000, nullable: true },
 };
 
@@ -93,7 +96,7 @@ router.patch("/me", requireAuth, validate(schemaProfilo), async (req, res, next)
     if (dati.foto && !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(dati.foto)) {
       throw new HttpError(400, "BAD_FOTO", "La foto deve essere un'immagine JPEG, PNG o WebP");
     }
-    // SET peso_corporeo_kg = $1, citta = $2, ...  (i VALORI restano parametri $n, mai dentro la stringa)
+    // SET peso_corporeo_kg = $1, note_mediche = $2, ...  (i VALORI restano parametri $n, mai dentro la stringa)
     const set = nomi.map((nome, i) => `${nome} = $${i + 1}`).join(", ");
     const { rows } = await query(
       `UPDATE utente SET ${set} WHERE id = $${nomi.length + 1} RETURNING ${CAMPI_PROFILO}`,

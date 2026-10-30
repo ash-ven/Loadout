@@ -20,13 +20,15 @@ Il browser lo rimanda da solo: tutte le rotte di Armadio, Viaggi e Zaino lo rich
 | POST | /api/auth/register | `{ email*, password*, nome* }` – email valida (max 255), password ≥ 8 caratteri, nome max 100 | `{ id, email, nome }` (mai la password né l'hash) | 201, 400 (`BAD_EMAIL`, `WEAK_PASSWORD`, `VALIDATION_ERROR`), 409 (email già usata) |
 | POST | /api/auth/login | `{ email*, password* }` | `{ id, nome }` + cookie `token` | 200, 400, 401 ("Email o password errati", stesso messaggio per email inesistente e password sbagliata) |
 | POST | /api/auth/logout | — | nessun corpo, cookie cancellato | 204 |
-| GET | /api/auth/me | — | il profilo, letto dal database: `{ id, email, nome, peso_corporeo_kg, livello_esperienza, citta, emergenza_nome, emergenza_telefono, ha_foto }` (la foto ha un indirizzo suo, sotto) | 200, 401 |
-| PATCH | /api/auth/me | uno o più tra `{ peso_corporeo_kg, livello_esperienza, citta, emergenza_nome, emergenza_telefono, foto }` – modifica **parziale**: cambia solo i campi inviati; `""` o `null` svuota il campo. Regole sotto | il profilo aggiornato (come GET) | 200, 400 (`VALIDATION_ERROR`, `BAD_TELEFONO`, `BAD_FOTO`), 401 |
+| GET | /api/auth/me | — | il profilo, letto dal database: `{ id, email, nome, peso_corporeo_kg, livello_esperienza, emergenza_nome, emergenza_telefono, note_mediche, tessera_soccorso, sensibilita_freddo, ha_foto }` (la foto ha un indirizzo suo, sotto) | 200, 401 |
+| PATCH | /api/auth/me | uno o più tra `{ peso_corporeo_kg, livello_esperienza, emergenza_nome, emergenza_telefono, note_mediche, tessera_soccorso, sensibilita_freddo, foto }` – modifica **parziale**: cambia solo i campi inviati; `""` o `null` svuota il campo. Regole sotto | il profilo aggiornato (come GET) | 200, 400 (`VALIDATION_ERROR`, `BAD_TELEFONO`, `BAD_FOTO`), 401 |
 | GET | /api/auth/me/foto | — | l'immagine (byte veri, `Content-Type: image/jpeg` o png/webp), da usare in `<img src>` | 200, 401, 404 (nessuna foto) |
 
 Regole dei campi del profilo:
 - `peso_corporeo_kg` tra 20 e 300; `livello_esperienza` tra principiante, intermedio, esperto
-- `citta` max 100; `emergenza_nome` max 100; `emergenza_telefono` max 30, solo cifre, spazi e un `+` iniziale
+- `emergenza_nome` max 100; `emergenza_telefono` max 30, solo cifre, spazi e un `+` iniziale
+- `note_mediche` max 300 (dati sulla salute: li inserisce solo l'utente e li vede solo lui); `tessera_soccorso` max 80
+- `sensibilita_freddo` tra `alta` (soffro il freddo), `normale`, `bassa` (sento poco il freddo): sposta di 4 °C le soglie dei consigli di vestiario del meteo
 - `foto`: data URL `data:image/(jpeg|png|webp);base64,...`, max 200.000 caratteri (il frontend la riduce a 256×256 prima di mandarla). Body JSON massimo 300 kB
 
 ## Armadio (oggetti dell'utente loggato)
@@ -81,6 +83,7 @@ Blocco `consigli` del dettaglio:
   `{ disponibile: false, motivo }` se mancano coordinate/data o se il servizio esterno non risponde entro 3 secondi
 - `meteo`: `{ disponibile: true, temp_max, temp_min, prob_pioggia, vestiario: [...] }` da Open-Meteo per la data e le coordinate di partenza;
   `{ disponibile: false, motivo }` se mancano coordinate/data, se la partenza è passata o oltre 16 giorni, o se il servizio non risponde
+  I consigli di `vestiario` tengono conto della `sensibilita_freddo` del profilo (temperatura percepita ±4 °C).
 - `avviso_peso`: `{ disponibile: true, peso_corporeo_kg, soglia_kg, troppo_pesante }` – soglia = 20% del peso corporeo,
   confrontata con il peso dello zaino (senza gli oggetti indossati); `{ disponibile: false, motivo }` se il peso corporeo non è impostato
 

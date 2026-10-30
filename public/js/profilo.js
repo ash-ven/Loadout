@@ -22,7 +22,9 @@ elEmail.textContent = utente.email;
 campoPeso.value = utente.peso_corporeo_kg ?? "";
 mostraSoglia(utente.peso_corporeo_kg);
 mostraFoto();
-for (const nome of ["livello_esperienza", "citta", "emergenza_nome", "emergenza_telefono"]) {
+// I campi del form "Dati personali" (stessi nomi delle colonne del database)
+const CAMPI_DATI = ["livello_esperienza", "sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
+for (const nome of CAMPI_DATI) {
   formDati.elements[nome].value = utente[nome] ?? "";
 }
 
@@ -85,9 +87,9 @@ formDati.addEventListener("submit", async (e) => {
   e.preventDefault();
   infoDati.hidden = true;
   erroreDati.hidden = true;
-  // Mando tutti e quattro i campi: quelli vuoti ("") il server li svuota
+  // Mando tutti i campi: quelli vuoti ("") il server li svuota
   const dati = {};
-  for (const nome of ["livello_esperienza", "citta", "emergenza_nome", "emergenza_telefono"]) {
+  for (const nome of CAMPI_DATI) {
     dati[nome] = formDati.elements[nome].value.trim();
   }
   try {

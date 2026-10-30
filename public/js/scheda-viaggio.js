@@ -370,14 +370,20 @@ function nascondiErrore() {
 
 // --- Emergenza (C1): sempre il 112, più il contatto del profilo se c'è (tel: = un tocco per chiamare) ---
 function mostraEmergenza(utente) {
-  const { emergenza_nome: nome, emergenza_telefono: telefono } = utente;
-  if (!nome && !telefono) {
-    elEmergenza.innerHTML = 'In caso di emergenza chiama il <strong>112</strong>. <a href="/profilo.html">Aggiungi un contatto di emergenza</a> nel profilo.';
-    return;
+  const { emergenza_nome: nome, emergenza_telefono: telefono, note_mediche: note, tessera_soccorso: tessera } = utente;
+  let html = "In caso di emergenza chiama il <strong>112</strong>.";
+  if (nome || telefono) {
+    const chi = esc(nome || "il tuo contatto");
+    const numero = telefono ? ` <a href="tel:${esc(telefono.replace(/\s/g, ""))}">${esc(telefono)}</a>` : "";
+    html += ` Avvisa anche ${chi}${numero}.`;
   }
-  const chi = esc(nome || "il tuo contatto");
-  const numero = telefono ? ` <a href="tel:${esc(telefono.replace(/\s/g, ""))}">${esc(telefono)}</a>` : "";
-  elEmergenza.innerHTML = `In caso di emergenza chiama il <strong>112</strong>. Avvisa anche ${chi}${numero}.`;
+  // Le informazioni da dire (o far leggere) a chi ti soccorre
+  if (note) html += `<br><strong>Note mediche:</strong> ${esc(note)}`;
+  if (tessera) html += `<br><strong>Tessera / assicurazione:</strong> ${esc(tessera)}`;
+  if (!nome && !telefono && !note && !tessera) {
+    html += ' <a href="/profilo.html">Aggiungi nel profilo</a> un contatto di emergenza, le note mediche e la tessera CAI.';
+  }
+  elEmergenza.innerHTML = html;
 }
 
 // --- Modifica viaggio: usa la finestra della pagina Viaggi, già compilata ---

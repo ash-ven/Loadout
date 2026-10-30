@@ -36,7 +36,7 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_attivita.sql` | oggetti adatti a certe attività; lo zaino generato ne tiene conto |
 | `loadout_stretch_indossato.sql` | oggetti indossati: restano in checklist ma non pesano nello zaino |
 | `loadout_stretch_oggetto.sql` | marchio, caratteristiche tecniche e pezzi posseduti degli oggetti |
-| `loadout_stretch_profilo.sql` | profilo: livello di esperienza, città, contatto di emergenza, foto |
+| `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
 
@@ -72,7 +72,7 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino"; con `?modifica=ID` la stessa finestra modifica un viaggio |
 | `scheda-viaggio.html?id=` | `scheda-viaggio.js` | zaino con checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, consigli (acqua, alba e tramonto, meteo, percorso, emergenza), modifica ed elimina viaggio |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
-| `profilo.html` | `profilo.js` | foto, dati personali (esperienza, città, contatto di emergenza), peso corporeo e soglia dello zaino, esci |
+| `profilo.html` | `profilo.js` | foto, dati personali (esperienza, sensibilità al freddo, contatto di emergenza, note mediche, tessera CAI), peso corporeo e soglia dello zaino, esci |
 
 Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie).
 Stile: un solo foglio, `css/style.css`. Immagini: logo, icone e sfondi SVG in `img/`.
@@ -110,7 +110,7 @@ Aggiornato a giovedì 29 ottobre.
 ### Oltre lo scope (giovedì pomeriggio)
 - [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più), adatti a certe attività (lo zaino generato ne tiene conto)
 - [x] Zaino: oggetti indossati (solo abbigliamento) fuori dal peso; acqua a persona al giorno con salita, caldo e cucina
-- [x] Profilo: foto (ridotta nel browser), esperienza, città, contatto di emergenza (mostrato nella scheda del viaggio)
+- [x] Profilo: foto (ridotta nel browser), esperienza, contatto di emergenza, note mediche e tessera CAI/assicurazione (mostrati nel riquadro Emergenza della scheda del viaggio), sensibilità al freddo (adatta i consigli di vestiario)
 - [x] Home con frasi casuali e "vive" sul prossimo viaggio; pagina di consigli generali
 
 ### Da fare

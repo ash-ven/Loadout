@@ -53,7 +53,7 @@
     <!-- C1: dati personali utili in montagna (tutti facoltativi) -->
     <section class="card">
       <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Dati personali</h2>
-      <p class="muto">Tutti facoltativi, li vedi solo tu. Il contatto di emergenza compare nella scheda di ogni viaggio.</p>
+      <p class="muto">Tutti facoltativi, li vedi solo tu. Contatto, note mediche e tessera compaiono nel riquadro Emergenza di ogni viaggio; la sensibilità al freddo adatta i consigli sul vestiario.</p>
       <form id="form-dati" novalidate>
         <label>Esperienza in montagna
           <select name="livello_esperienza">
@@ -63,8 +63,13 @@
             <option value="esperto">Esperto</option>
           </select>
         </label>
-        <label>Città da cui parti di solito
-          <input name="citta" type="text" maxlength="100" autocomplete="address-level2">
+        <label>Come senti il freddo
+          <select name="sensibilita_freddo">
+            <option value="">Non indicato</option>
+            <option value="alta">Soffro il freddo</option>
+            <option value="normale">Nella media</option>
+            <option value="bassa">Sento poco il freddo</option>
+          </select>
         </label>
         <div class="riga2">
           <label>Contatto di emergenza
@@ -74,6 +79,12 @@
             <input name="emergenza_telefono" type="tel" maxlength="30" placeholder="+39 333 1234567" autocomplete="off">
           </label>
         </div>
+        <label>Note mediche per chi ti soccorre
+          <textarea name="note_mediche" maxlength="300" rows="2" placeholder="es. allergia alle punture d'api, asma (inalatore nella tasca alta), gruppo sanguigno 0+"></textarea>
+        </label>
+        <label>Tessera CAI o assicurazione per il soccorso
+          <input name="tessera_soccorso" type="text" maxlength="80" placeholder="es. CAI 1234567 · Sezione di Bologna" autocomplete="off">
+        </label>
         <p class="avviso" id="dati-info" hidden></p>
         <p class="errore" id="dati-errore" hidden></p>
         <div class="azioni"><button type="submit">Salva i dati</button></div>

@@ -76,7 +76,7 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
 
     const peso = await zaino.peso(v.id);
     const sole = await consigli.sole(v);
-    const meteo = await consigli.meteo(v);
+    const meteo = await consigli.meteo(v, await consigli.sensibilitaFreddo(req.user.sub));
     const tempMax = meteo.disponibile ? meteo.temp_max : null;
     const acqua = ore == null ? null : await consigli.acqua(v, ore, tempMax); // { persona_giorno, totale }
 
