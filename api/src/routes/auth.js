@@ -1,6 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { rateLimit } from "express-rate-limit";
 import { query } from "../db.js";
 import { validate } from "../middleware/validate.js";
 import { HttpError } from "../middleware/errors.js";
@@ -10,6 +11,30 @@ export const router = Router();
 
 const COOKIE = { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 8 * 3600 * 1000 };
 
+// === LIMITE DI TENTATIVI (contro chi prova tante password di fila: "forza bruta") ===
+// Il server conta le richieste di ogni indirizzo IP in una "finestra" di 15 minuti.
+// Superato il limite risponde 429 "Too Many Requests" fino alla fine della finestra.
+const RISPOSTA_TROPPI = (minuti) => ({ error: "TOO_MANY_REQUESTS", message: `Troppi tentativi: riprova tra ${minuti} minuti` });
+
+// Login: contano solo i tentativi SBAGLIATI (chi entra al primo colpo non consuma niente)
+const limiteLogin = rateLimit({
+  windowMs: 15 * 60 * 1000,      // finestra di 15 minuti
+  limit: 10,                     // al massimo 10 tentativi sbagliati
+  skipSuccessfulRequests: true,  // i login riusciti non contano
+  standardHeaders: "draft-8",    // dice al client quanti tentativi restano (intestazione RateLimit)
+  legacyHeaders: false,
+  message: RISPOSTA_TROPPI(15),
+});
+
+// Registrazione: contano tutte (evita che qualcuno crei centinaia di account in automatico)
+const limiteRegistrazione = rateLimit({
+  windowMs: 60 * 60 * 1000,      // finestra di un'ora
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: RISPOSTA_TROPPI(60),
+});
+
 // === POST /api/auth/register ===
 const schemaRegister = {
   email:    { type: "string", required: true, maxLength: 255 },
@@ -17,7 +42,7 @@ const schemaRegister = {
   nome:     { type: "string", required: true, maxLength: 100 },
 };
 
-router.post("/register", validate(schemaRegister), async (req, res, next) => {
+router.post("/register", limiteRegistrazione, validate(schemaRegister), async (req, res, next) => {
   try {
     const { email, password, nome } = req.validated;
     if (password.length < 8) throw new HttpError(400, "WEAK_PASSWORD", "Password di almeno 8 caratteri");
@@ -37,7 +62,7 @@ const schemaLogin = {
   password: { type: "string", required: true },
 };
 
-router.post("/login", validate(schemaLogin), async (req, res, next) => {
+router.post("/login", limiteLogin, validate(schemaLogin), async (req, res, next) => {
   try {
     const { email, password } = req.validated;
     const { rows } = await query("SELECT * FROM utente WHERE email = $1", [email.toLowerCase()]);

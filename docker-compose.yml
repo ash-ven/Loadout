@@ -39,6 +39,7 @@ services:
       DATABASE_URL: postgres://loadout:${POSTGRES_PASSWORD:-loadout_dev}@db:5432/loadout
       # Obbligatoria: senza, il compose si ferma con questo messaggio
       JWT_SECRET: ${JWT_SECRET:?manca JWT_SECRET - copia .env.example in .env e inserisci una chiave lunga e casuale}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}   # facoltativa: altri siti ammessi (vuota = nessuno)
     depends_on:
       db:
         condition: service_healthy   # parte solo quando il database risponde

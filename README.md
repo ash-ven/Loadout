@@ -150,7 +150,7 @@ Aggiornato a giovedì 29 ottobre.
 
 ### Da fare
 - [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
-- [ ] helmet (la CSP deve permettere Google Fonts, le immagini data: della foto, lo script di unpkg.com per html5-qrcode), limite tentativi sul login, cookie Secure, CORS (venerdì)
+- [x] Sicurezza: helmet con CSP severa (solo il nostro sito + Google Fonts e unpkg; niente script inline), limite di tentativi su login (10 errori in 15 min per IP) e registrazione (10 all'ora), `trust proxy` per Caddy, cookie `HttpOnly` + `Secure` (in produzione) + `SameSite=Lax`, CORS chiuso di default (`CORS_ORIGINS` per ammettere altri siti)
 - [ ] Almeno 5 test automatici (i primi 5 ci sono: `api/test/prodotti.test.js`, si lanciano con `npm test` dalla cartella `api`), `npm audit`, NOTE.md (venerdì)
 
 ## User story MVP
