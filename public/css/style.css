@@ -458,3 +458,87 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 /* B7: le tre parti di "Account e privacy", separate da una riga */
 #account-privacy h3 { margin: 1.5rem 0 .5rem; padding-top: 1.25rem; border-top: 1px solid var(--bordo); font-size: 1.05rem; }
 #account-privacy h2 + h3 { margin-top: .75rem; padding-top: 0; border-top: 0; }
+
+/* =====================================================================
+   MAPPE (fase 5) – copiato dalla pagina di prova approvata (prova-mappe-maptiler.html).
+   Il CSS di Leaflet arriva da unpkg PRIMA di questo file: alcune regole qui sotto
+   hanno !important perché il suo è più specifico.
+   ===================================================================== */
+.testa-mappa { display: flex; justify-content: flex-end; margin: .75rem 0 .5rem; }
+.mappa-cornice { position: relative; overflow: hidden; border-radius: var(--raggio-medio); border: 1px solid var(--bordo); }
+/* z-index: 0 tiene i livelli di Leaflet (fino a 1000) dentro la mappa: senza, coprirebbero il menu in basso sul telefono */
+.mappa { position: relative; z-index: 0; height: 480px; cursor: crosshair; background: var(--crema); --filtro: .7; }
+.mappa.sola-lettura { cursor: grab; }
+@media (max-width: 600px) { .mappa { height: max(340px, 60vh); } }
+
+/* Il filtro "Loadout" SOLO sulle tessere: linee e puntine stanno in altri livelli ("pane") e restano vive.
+   sepia = tono caldo verso il crema · saturate < 1 = colori più quieti · brightness/contrast = più morbido.
+   --filtro = 0,7 (provvisorio: l'intensità la sta ancora regolando Asiha) */
+.mappa .leaflet-tile-pane {
+  filter: sepia(calc(.25 * var(--filtro))) saturate(calc(1 - .35 * var(--filtro)))
+          brightness(calc(1 + .04 * var(--filtro))) contrast(calc(1 - .06 * var(--filtro)));
+}
+.leaflet-container { font-family: var(--font); font-size: .85rem; background: var(--crema); }
+
+/* --- I controlli di Leaflet, vestiti da Loadout --- */
+.leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 14px !important; overflow: hidden;
+                                             box-shadow: 0 1px 2px rgba(35, 58, 45, .12), 0 6px 18px rgba(35, 58, 45, .16) !important; }
+.leaflet-touch .leaflet-bar a, .leaflet-bar a { width: 40px !important; height: 40px !important; line-height: 40px !important;
+                                                background: var(--lana); color: var(--muschio); font-size: 1.35rem; font-weight: 600;
+                                                border-bottom: 1px solid var(--bordo) !important; transition: background .15s; }
+.leaflet-bar a:last-child { border-bottom: 0 !important; }
+.leaflet-bar a:hover, .leaflet-bar a:focus-visible { background: var(--salvia-chiaro); color: var(--muschio-scuro); }
+.leaflet-bar a.leaflet-disabled { background: var(--lana); color: #c2b9a4; }
+
+/* Il selettore degli sfondi: un gruppo di "pillole" come i segmenti dell'app */
+.leaflet-touch .leaflet-control-layers, .leaflet-control-layers {
+  border: 1px solid var(--bordo) !important; border-radius: 18px !important; background: var(--lana);
+  box-shadow: 0 1px 2px rgba(35, 58, 45, .12), 0 6px 18px rgba(35, 58, 45, .16) !important; color: var(--testo); }
+.leaflet-control-layers-expanded { padding: 5px !important; }
+.leaflet-control-layers-base { display: grid; gap: 2px; }
+.leaflet-control-layers-base label { display: block; margin: 0; padding: .38rem .9rem; border-radius: 999px; cursor: pointer;
+                                     font-size: .84rem; font-weight: 600; color: var(--muschio); transition: background .15s; }
+.leaflet-control-layers-base label:hover { background: var(--salvia-chiaro); }
+.leaflet-control-layers-base label:has(input:checked) { background: var(--muschio); color: #f6efdf; }
+.leaflet-control-layers-base label:has(input:focus-visible) { outline: 3px solid var(--salvia); outline-offset: 1px; }
+/* Il pallino del radio non serve (si vede la pillola scura): nascosto ma usabile da tastiera */
+.leaflet-control-layers-base input { position: absolute; opacity: 0; pointer-events: none; }
+/* Selettore chiuso (telefono): icona "livelli" a linee nel muschio dell'app al posto dell'immagine di Leaflet */
+.leaflet-touch .leaflet-control-layers-toggle, .leaflet-control-layers-toggle {
+  width: 40px !important; height: 40px !important; border-radius: 14px; background-color: var(--lana);
+  background-size: 22px 22px !important; background-position: center !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2331503f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 2.5 8 12 13l9.5-5Z'/%3E%3Cpath d='m2.5 12.5 9.5 5 9.5-5'/%3E%3Cpath d='m2.5 17 9.5 5 9.5-5' stroke='%23c8962b'/%3E%3C/svg%3E") !important; }
+
+/* Le fonti in basso: piccole, nel colore terra, su un velo di lana */
+.leaflet-container .leaflet-control-attribution { background: rgba(246, 239, 223, .9); color: var(--terra);
+                                                  font-size: .68rem; padding: 2px 8px; border-radius: 10px 0 0 0; }
+.leaflet-control-attribution a { color: var(--muschio); }
+
+/* --- Le puntine (SVG dentro un divIcon): drop-shadow segue la forma della goccia --- */
+.puntina { background: none; border: 0; }
+.puntina svg { display: block; filter: drop-shadow(0 2px 3px rgba(35, 58, 45, .35)); transform-origin: 50% 100%; transition: transform .15s; }
+.puntina:hover svg { transform: translateY(-2px) scale(1.06); }
+.leaflet-dragging .puntina svg { transform: scale(1.1); }
+
+/* --- Sotto la mappa: legenda, anello e pulsanti --- */
+.legenda { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: .7rem 0 0; padding: 0; list-style: none; font-size: .8rem; color: var(--terra); }
+.legenda li { display: inline-flex; align-items: center; gap: .35rem; }
+.legenda svg { flex-shrink: 0; }
+.strumenti { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; margin-top: .9rem; }
+
+/* Riga di stato: discreta mentre cerca (pallino senape che pulsa), riquadro ocra se c'è un problema */
+.stato { display: flex; align-items: center; gap: .55rem; margin: .9rem 0 0; font-size: .9rem; color: var(--terra); }
+.stato.attesa::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--senape); flex-shrink: 0;
+                        animation: pulsa 1s ease-in-out infinite; }
+@keyframes pulsa { 50% { opacity: .25; transform: scale(.7); } }
+.stato.errore { padding: .6rem .8rem; background: var(--ocra-chiaro); border-left: 4px solid var(--senape); color: var(--testo); }
+@media (prefers-reduced-motion: reduce) { .stato.attesa::before { animation: none; } .puntina svg { transition: none; } }
+
+/* --- Il "post-it" sui campi normali del form (post-it.js): sfondo salvia e "dalla mappa" / "dal luogo" ---
+   :has() = "l'etichetta che CONTIENE un campo con il post-it": niente JavaScript per il colore */
+.nome-campo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 .4rem; }
+.origine { display: none; font-size: .68rem; font-weight: 700; letter-spacing: .03em; color: var(--salvia); white-space: nowrap; }
+label:has(input[data-auto]) .origine { display: inline; }
+label:has(input[data-auto="mappa"]) .origine::after { content: "dalla mappa"; }
+label:has(input[data-auto="luogo"]) .origine::after { content: "dal luogo"; }
+label:has(input[data-auto]) input { background: var(--salvia-chiaro); border-color: transparent; }

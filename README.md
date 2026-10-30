@@ -13,7 +13,7 @@ Prerequisiti: Docker Desktop avviato. Node.js non serve.
 ```powershell
 git clone <indirizzo-del-repository> loadout
 cd loadout
-Copy-Item .env.example .env      # poi apri .env e metti un JWT_SECRET lungo e casuale
+Copy-Item .env.example .env      # poi apri .env e metti un JWT_SECRET lungo e casuale (e, per le mappe, la MAPTILER_KEY)
 docker compose up -d --build     # database + API + Caddy; la prima volta scarica le immagini e crea il database
 docker compose ps                # db e api devono risultare "healthy", caddy "Up"
 ```
@@ -121,10 +121,11 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | `zaini.html` | `zaini.js` | tutti gli zaini (uno per uscita), divisi in in arrivo / senza data / già fatti, con spuntati e peso |
 | `zaino.html?id=` | `zaino.js` | lo zaino di un'uscita: checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, "Per questa uscita"; con `&genera=1` lo riempie appena si apre |
 | `mappe.html` | `mappe.js` | le uscite che hanno una mappa (la mappa si disegna nel form dell'uscita) |
+| `mappa.html?id=` | `mappa.js` | la mappa di un'uscita in sola lettura (traccia, puntine, km, dislivello positivo, quote) |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
 | `profilo.html` | `profilo.js` | foto, dati personali (esperienza, sensibilità al freddo, contatto di emergenza, note mediche, tessera CAI), peso corporeo e soglia dello zaino, esci |
 
-Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/elenco-uscite.js` (gruppi per data per Zaino e Mappe).
+Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/elenco-uscite.js` (gruppi per data per Zaino e Mappe), `js/post-it.js` (i campi compilati in automatico dalla mappa o dal luogo, che restano modificabili), `js/mappa-base.js` (sfondi MapTiler, puntine e tracciato, con Leaflet 1.9.4 da unpkg), `js/mappa-form.js` (la mappa che si disegna nel form dell'uscita).
 Stile: un solo foglio, `css/style.css`. Immagini: logo, icone e sfondi SVG in `img/`.
 Menu: Armadio · Zaino · Viaggi · Mappe · Profilo. Sul telefono è una barra in basso, con Viaggi al centro (la scarpa senape) e Consigli come icona accanto a "Esci"; sul computer sta nella barra in alto, con Consigli come ultima voce. Alla home si torna dal logo.
 
@@ -169,11 +170,13 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 ### Venerdì: sicurezza, Docker, qualità
 - [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
 - [x] Sicurezza: helmet con CSP severa (solo il nostro sito + Google Fonts e unpkg; niente script inline), limite di tentativi su login (10 errori in 15 min per IP) e registrazione (10 all'ora), `trust proxy` per Caddy, cookie `HttpOnly` + `Secure` (in produzione) + `SameSite=Lax`, CORS chiuso di default (`CORS_ORIGINS` per ammettere altri siti)
-- [x] 46 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, meteo in vetta e vento, traccia della mappa, soglia del peso, kit dello zaino intelligente)
+- [x] Mappe: nel form dell'uscita, in «Percorso» (facoltativo), si toccano partenza e tappe e il percorso segue i sentieri (BRouter, chiamato dal server); anello con un interruttore; la mappa compila km, dislivello positivo, quote e coordinate con il "post-it" (vince l'ultimo automatico tra mappa e luogo, ma quello che scrivi a mano vince sempre); sfondi MapTiler (Outdoor, Topo, Inverno, Satellite) con il filtro Loadout; la traccia salvata dà il punto più alto per il meteo in vetta; mappa in sola lettura per ogni uscita e pagina Mappe
+- [x] 52 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, meteo in vetta e vento, traccia della mappa, lettura della risposta di BRouter, CSP delle mappe, soglia del peso, kit dello zaino intelligente)
 - [x] `npm audit` (0 vulnerabilità), pulizia del codice (ESLint), `NOTE.md` con le riflessioni di fine settimana
 
 ### Cosa manca (prossimi passi)
-- **Mappe** (in preparazione): da integrare insieme all'**importazione della traccia GPX** (lunghezza, salita, quota massima, partenza e arrivo letti dal file, proposti all'utente che resta libero di correggerli)
+- **Importazione della traccia GPX** (B8): lunghezza, dislivello, quote, partenza e arrivo letti dal file, proposti con il post-it come fa la mappa
+- **Avvisi sul percorso** (pietraie, tratti esposti, catene) dai dati di OpenStreetMap che BRouter già restituisce, collegati al kit dello zaino
 - **Password dimenticata**: richiede l'invio di email (un servizio SMTP); oggi c'è il cambio password da loggati
 - **Attrezzatura di gruppo**: con più persone, tenda e fornello li porta uno solo (peso a persona realistico)
 - **Modelli di uscita** e "duplica uscita" ("Giornata invernale", "Rifugio 2 giorni")

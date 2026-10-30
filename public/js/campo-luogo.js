@@ -2,13 +2,15 @@
 //  CAMPO LUOGO con suggerimenti (B1)
 //  Scrivi "malga prato": dopo mezzo secondo di pausa chiediamo al server (/api/luoghi)
 //  e mostriamo fino a 6 luoghi. Scegliendone uno, il nome va nel campo e le coordinate
-//  nei campi lat/lon del form. Le coordinate restano modificabili a mano: vince quello che scrivi tu.
+//  nei campi lat/lon del form, con il post-it "luogo" (vedi post-it.js): vince l'ultimo automatico
+//  (luogo o mappa), ma quello che scrivi tu a mano vince sempre.
 // =====================================================================
 import { api, esc } from "./api.js";
+import { proponi } from "./post-it.js";
 
 // campoTesto: l'<input> del nome; lista: l'<ul> dei suggerimenti; campoLat/campoLon: gli <input> delle coordinate;
-// nota: un <p> dove scrivere "Coordinate impostate: …"
-export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, nota }) {
+// suScelta(lat, lon): facoltativa, chiamata quando scegli un luogo (il form la usa per centrare la mappa)
+export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, suScelta = () => {} }) {
   let timer = null;
   let ultimaRicerca = 0; // per ignorare le risposte arrivate tardi (se nel frattempo hai scritto altro)
   let trovati = [];
@@ -42,9 +44,9 @@ export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, nota }
     if (!bottone) return;
     const luogo = trovati[Number(bottone.dataset.i)];
     campoTesto.value = luogo.etichetta;
-    campoLat.value = luogo.lat;
-    campoLon.value = luogo.lon;
-    aggiornaNota();
+    proponi(campoLat, luogo.lat, "luogo"); // solo se il campo è vuoto o compilato in automatico
+    proponi(campoLon, luogo.lon, "luogo");
+    suScelta(luogo.lat, luogo.lon);
     chiudi();
     campoTesto.focus();
   });
@@ -62,10 +64,6 @@ export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, nota }
     if (e.key === "Escape") { chiudi(); campoTesto.focus(); e.preventDefault(); e.stopPropagation(); }
   });
 
-  // Se le coordinate le scrivi o le cambi a mano, la nota si aggiorna
-  campoLat.addEventListener("input", aggiornaNota);
-  campoLon.addEventListener("input", aggiornaNota);
-
   function mostra(html) {
     lista.innerHTML = html;
     lista.hidden = false;
@@ -76,12 +74,7 @@ export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, nota }
     lista.innerHTML = "";
     campoTesto.setAttribute("aria-expanded", "false");
   }
-  function aggiornaNota() {
-    const ok = campoLat.value !== "" && campoLon.value !== "";
-    nota.textContent = ok ? `Coordinate: ${campoLat.value}, ${campoLon.value} (modificabili in "Percorso e coordinate")` : "";
-    nota.hidden = !ok;
-  }
 
   // Da chiamare quando il form viene svuotato o riempito (nuovo viaggio / modifica)
-  return { aggiorna: () => { chiudi(); aggiornaNota(); } };
+  return { aggiorna: chiudi };
 }

@@ -139,6 +139,20 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 - Nel viaggio si salvano `luogo_partenza` e `luogo_arrivo` (testo, max 200) insieme alle coordinate. Nel form "Da dove parti" è
   obbligatorio; l'API lo accetta facoltativo (viaggi creati prima, richieste di prova). Le coordinate restano facoltative e modificabili a mano.
 
+## Mappe e percorso sui sentieri
+| Metodo | URL | Body | Risposta | Status |
+| --- | --- | --- | --- | --- |
+| GET | /api/percorso?punti=44.21,10.64;44.22,10.62 | — | `{ distanza_km, dislivello_m, quota_min_m, quota_max_m, punto_piu_alto: [lat, lon], traccia: [[lat, lon, quota], …] }` | 200, 400 (`BAD_QUERY`: 2–30 coppie lat,lon), 401, 404 (`NESSUN_PERCORSO`: un punto lontano dai sentieri), 502 (`SERVIZIO_PERCORSI`: BRouter non risponde) |
+| GET | /api/mappe/config | — | `{ chiave }` – la chiave di MapTiler per le tessere della mappa | 200, 401, 503 (`MAPPE_NON_CONFIGURATE`: manca `MAPTILER_KEY` nel `.env`) |
+
+- Il percorso lo calcola il server con BRouter (OpenStreetMap, profilo `hiking-mountain`), con 10 secondi di tempo massimo.
+  Per l'anello il browser ripete la partenza in fondo ai punti. BRouter vuole prima la longitudine: il server gira le coordinate.
+- `dislivello_m` è il dislivello positivo (`filtered ascend` di BRouter); le quote vengono dal terzo valore di ogni punto.
+- La traccia è semplificata (un punto ogni ~20 m) ma tiene sempre il punto più alto, che serve al meteo in vetta.
+- La chiave di MapTiler sta nel `.env` del server, non nel repository. Arriva comunque al browser, perché le tessere le scarica lui
+  da `api.maptiler.com` (le condizioni di MapTiler non permettono di farle passare dal nostro server): per questo la CSP permette
+  `https://api.maptiler.com` in `img-src`, e conviene limitare la chiave agli indirizzi dell'app nel pannello di MapTiler.
+
 ## Prodotti (dal codice a barre, stretch 2)
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |

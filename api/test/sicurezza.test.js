@@ -16,6 +16,18 @@ test("ogni risposta ha le intestazioni di sicurezza di helmet", async () => {
   assert.equal(risposta.headers["x-frame-options"], "SAMEORIGIN");
 });
 
+test("CSP delle mappe: tessere solo da MapTiler, CSS di Leaflet da unpkg, fetch solo verso la nostra API", async () => {
+  const csp = (await request(app).get("/index.html")).headers["content-security-policy"];
+  assert.match(csp, /img-src 'self' data: https:\/\/api\.maptiler\.com/);
+  assert.match(csp, /style-src [^;]*https:\/\/unpkg\.com/);
+  assert.match(csp, /connect-src 'self'(;|$)/); // BRouter lo chiama il server: il browser non esce dal nostro sito
+});
+
+test("percorso e chiave delle mappe senza login: 401", async () => {
+  assert.equal((await request(app).get("/api/percorso?punti=44.2,10.7;44.21,10.71")).status, 401);
+  assert.equal((await request(app).get("/api/mappe/config")).status, 401);
+});
+
 test("CORS: un altro sito non riceve il permesso di chiamare l'API", async () => {
   const risposta = await request(app)
     .options("/api/oggetti")
