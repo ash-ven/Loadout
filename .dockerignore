@@ -1,0 +1,10 @@
+# File che NON entrano nell'immagine Docker (build più veloce, niente segreti dentro)
+**/node_modules
+**/.env
+.git
+certs
+*.log
+db
+docs
+api/test
+api/api.http

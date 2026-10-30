@@ -7,23 +7,42 @@
 
 ## Come avviare in locale
 
-Prerequisiti: Docker Desktop avviato, Node.js 22.
+### Tutto con Docker (da zero)
+Prerequisiti: Docker Desktop avviato. Node.js non serve.
 
 ```powershell
-# 1. Database (dalla cartella loadout)
+git clone <indirizzo-del-repository> loadout
+cd loadout
+Copy-Item .env.example .env      # poi apri .env e metti un JWT_SECRET lungo e casuale
+docker compose up -d --build     # database + API; la prima volta scarica le immagini e crea il database
+docker compose ps                # db e api devono risultare "healthy"
+```
+
+Poi apri **http://localhost:3000** nel browser.
+
+- Fermare tutto: `docker compose down` (i dati restano nel volume `loadout_pgdata`).
+- Ripartire da un database nuovo (cancella i dati!): `docker compose down -v`, poi di nuovo `docker compose up -d --build`.
+- Log dell'API: `docker compose logs -f api`.
+
+### Per sviluppare (API sul PC, si riavvia a ogni modifica)
+Prerequisiti: Docker Desktop avviato, Node.js 22, il file `.env` nella radice (vedi sopra).
+
+```powershell
+# 1. Solo il database (dalla cartella loadout)
 docker compose up -d db
 
 # 2. API + frontend (lo stesso server Express serve anche la cartella public/)
 cd api
 npm install
-Copy-Item .env.example .env    # poi apri .env e inserisci valori veri (JWT_SECRET lungo e casuale)
+Copy-Item .env.example .env    # poi apri api/.env e inserisci valori veri (JWT_SECRET lungo e casuale)
 npm run dev                    # → "API in ascolto su http://localhost:3000"
 
 # 3. Verifica (da un secondo terminale)
 curl.exe http://localhost:3000/api/health
 ```
 
-Poi apri **http://localhost:3000** nel browser.
+Attenzione: il container `loadout-api` e `npm run dev` usano entrambi la porta 3000. Se è acceso uno, ferma l'altro
+(`docker compose stop api` oppure Ctrl+C nel terminale di `npm run dev`).
 
 ### Database: schema e migrazioni
 Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in `db/initdb/`:

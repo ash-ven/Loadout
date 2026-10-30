@@ -1,22 +1,56 @@
+# =====================================================================
+#  Loadout: tutta l'app con un comando
+#    docker compose up -d --build
+#  Prima volta: copia .env.example in .env (vedi README)
+# =====================================================================
 services:
+
+  # --- Il database ---
   db:
     image: postgres:16
     container_name: loadout-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: loadout
-      POSTGRES_PASSWORD: loadout_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-loadout_dev}   # dal file .env (se manca: loadout_dev)
       POSTGRES_DB: loadout
     ports:
-      - "5432:5432"
+      - "5432:5432"            # per collegarsi dal PC (psql, VS Code); l'API usa la rete interna
     volumes:
-      - loadout_pgdata:/var/lib/postgresql/data
-      - ./db/initdb:/docker-entrypoint-initdb.d:ro
+      - loadout_pgdata:/var/lib/postgresql/data          # i dati restano anche se il container viene ricreato
+      - ./db/initdb:/docker-entrypoint-initdb.d:ro       # schema e migrazioni, eseguiti al primo avvio
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U loadout -d loadout"]
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # --- L'API Node (serve anche il frontend) ---
+  api:
+    build:
+      context: .                 # la radice: servono sia api/ sia public/
+      dockerfile: api/Dockerfile
+    container_name: loadout-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # "db" è il nome del servizio qui sopra: dentro la rete del compose è il suo indirizzo
+      DATABASE_URL: postgres://loadout:${POSTGRES_PASSWORD:-loadout_dev}@db:5432/loadout
+      # Obbligatoria: senza, il compose si ferma con questo messaggio
+      JWT_SECRET: ${JWT_SECRET:?manca JWT_SECRET - copia .env.example in .env e inserisci una chiave lunga e casuale}
+    depends_on:
+      db:
+        condition: service_healthy   # parte solo quando il database risponde
+    ports:
+      - "3000:3000"
+    healthcheck:
+      # nell'immagine slim non c'è curl: usiamo fetch di Node per chiamare /api/health
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
 volumes:
   loadout_pgdata:
