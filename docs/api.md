@@ -48,7 +48,7 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 - `codice_etichetta` max 64; `note` max 1000
 - `marchio` max 80; `caratteristiche` max 500 (caratteristiche tecniche, testo libero)
 - `quantita_posseduta` intero 1–99 (default 1): quanti pezzi ne possiedo
-- `attivita_adatte` elenco (array) di attività tra escursione, trekking, alpinismo, ciaspolata, ferrata; senza doppioni.
+- `attivita_adatte` elenco (array) di attività tra escursione, alpinismo, ciaspolata, ferrata; senza doppioni.
   **Vuoto (default) = adatto a tutte le attività**
 
 ## Viaggi
@@ -61,7 +61,7 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 | DELETE | /api/viaggi/:id | — | nessun corpo (lo zaino del viaggio viene cancellato: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
 Regole dei campi del viaggio (* = obbligatorio):
-- `nome`* max 150; `attivita`* tra escursione, trekking, alpinismo, ciaspolata, ferrata
+- `nome`* max 150; `attivita`* tra escursione (comprende il trekking: in giornata o su più giorni lo dicono `n_giorni` e `pernotto`), alpinismo, ciaspolata, ferrata
 - `n_persone` intero 1–50 (default 1); `n_giorni` intero 1–60 (default 1)
 - `pernotto` tra nessuno, rifugio, tenda, bivacco (default nessuno); `serve_cucina` booleano (default false)
 - `data_partenza` data `AAAA-MM-GG` valida

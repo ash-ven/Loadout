@@ -172,9 +172,12 @@ tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: #f1e8d6; }
 
 /* --- Badge --- */
-.badge { display: inline-block; padding: .12rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
-.badge.indispensabile { background: var(--salvia-chiaro); color: #36573a; }
-.badge.preferito { background: var(--ocra-chiaro); color: #6e4f0f; }
+/* Segni discreti (Indispensabile, Preferito, Da fare): un'icona a linee dello stesso grigio del testo, niente "pillole" */
+.segno { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem; color: var(--terra); }
+.segno svg { flex-shrink: 0; }
+/* Testo nascosto alla vista ma letto dai lettori di schermo (chi non vede l'icona sente la parola) */
+.solo-lettori { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+                clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* --- Barra del peso dello zaino --- */
 .barra { height: 12px; background: #e2d8c2; border-radius: 999px; overflow: hidden; }
@@ -203,7 +206,9 @@ details > label, details > .riga2 { margin-top: .75rem; }
 .container > *, .griglia > *, .due-colonne > * { min-width: 0; }
 .intestazione-sezione { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
 .aggiungi { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-top: .75rem; }
-.aggiungi select { flex: 1 1 12rem; width: auto; }
+.aggiungi select { flex: 1 1 12rem; width: auto; min-width: 0; }
+/* min-width: 0 → un <select> di base è largo quanto la sua opzione più lunga: con un nome di oggetto
+   lunghissimo (es. preso dal codice a barre) allargava la card e la colonna dello zaino finiva sotto i consigli */
 .aggiungi input[type="number"] { width: 6rem; }
 .consiglio { padding: .9rem 0; border-top: 1px solid var(--bordo); }
 .consiglio:first-of-type { border-top: 0; }
@@ -229,12 +234,10 @@ details > label, details > .riga2 { margin-top: .75rem; }
   .testata p { font-size: .98rem; }
   th, td { padding: .45rem .3rem; font-size: .9rem; }
   td button { padding: .35rem .6rem; font-size: .8rem; }
-  .badge { font-size: .7rem; }
 }
 /* --- Icone (file SVG in /img/icone) ---
-   Misurate in em: seguono la grandezza del testo intorno (più grandi negli h2, più piccole nei badge) */
+   Misurate in em: seguono la grandezza del testo intorno (più grandi negli h2, più piccole nel testo piccolo) */
 .icona { width: 1.15em; height: 1.15em; vertical-align: -.2em; margin-right: .45em; }
-.badge .icona { width: 1.35em; height: 1.35em; vertical-align: -.35em; margin-right: .25em; }
 th .icona { display: block; margin: 0; width: 18px; height: 18px; }  /* nelle intestazioni il testo è piccolo: misura fissa */
 .avviso { display: flex; align-items: flex-start; gap: .55rem; }
 .avviso .icona { width: 1.4em; height: 1.4em; margin: 0; flex-shrink: 0; }
@@ -342,7 +345,8 @@ button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
 .nota-consigli { max-width: 40rem; }
 
 /* --- Scheda viaggio: colonna dello zaino e checklist a righe --- */
-.colonna-zaino { display: grid; gap: 1.25rem; align-content: start; }
+.colonna-zaino { display: grid; gap: 1.25rem; align-content: start;
+                 grid-template-columns: minmax(0, 1fr); }  /* la colonna non si allarga oltre il suo spazio (vedi .aggiungi select) */
 .gruppi.una-colonna { grid-template-columns: minmax(0, 1fr); }
 .riga-zaino:hover { background: var(--lana-chiara); }   /* la riga non è cliccabile: solo un accenno */
 .riga-zaino .spunta { flex-shrink: 0; width: 1.4rem; height: 1.4rem; margin: 0; accent-color: var(--salvia); cursor: pointer; }
@@ -373,7 +377,7 @@ button.indosso[aria-pressed="true"] { background: var(--salvia-chiaro); color: v
 .dettaglio-titolo { display: flex; align-items: center; gap: .8rem; min-width: 0; }
 .dettaglio-titolo h2 { margin: 0; }
 .dettaglio-titolo p { margin: .1rem 0 0; }
-#dettaglio .riga-dettagli { margin-bottom: .5rem; }
+#dettaglio .riga-dettagli { margin-bottom: .5rem; gap: .9rem; }
 #dettaglio .dati { margin: .5rem 0 1.25rem; }
 #dettaglio .dati dd { white-space: pre-line; }   /* le note su più righe restano su più righe */
 
@@ -408,3 +412,6 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 .campo-con-pulsante { display: flex; align-items: flex-end; gap: .5rem; }
 .campo-con-pulsante label { flex: 1; min-width: 0; }
 .campo-con-pulsante button { flex-shrink: 0; }
+/* Scheda viaggio: "Aggiungi dall'armadio" dentro la card dello zaino, separato da una riga */
+.titolo-aggiungi { margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--bordo); font-size: 1rem; }
+.segmenti button svg { flex-shrink: 0; margin-right: .3rem; vertical-align: -.2em; }   /* icona-legenda accanto al nome del filtro */

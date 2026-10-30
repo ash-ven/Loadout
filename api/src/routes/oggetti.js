@@ -5,7 +5,7 @@ import { validate } from "../middleware/validate.js";
 export const router = Router();
 
 const CATEGORIE = ["abbigliamento", "attrezzatura", "cucina", "sicurezza", "igiene", "elettronica", "cibo", "altro"];
-const ATTIVITA = ["escursione", "trekking", "alpinismo", "ciaspolata", "ferrata"];
+const ATTIVITA = ["escursione", "alpinismo", "ciaspolata", "ferrata"]; // escursione = anche trekking (unite venerdì)
 
 const schemaOggetto = {
   nome:              { type: "string", required: true, maxLength: 120 },

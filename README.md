@@ -69,6 +69,7 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch.sql` | peso corporeo, viaggi pianificati, km del percorso, acqua con la temperatura, nome unico senza distinguere maiuscole |
 | `loadout_stretch_acqua.sql` | acqua a persona al giorno (salita, caldo, cucina) |
 | `loadout_stretch_attivita.sql` | oggetti adatti a certe attività; lo zaino generato ne tiene conto |
+| `loadout_stretch_attivita_unite.sql` | escursione e trekking diventano una sola attività ("Escursione / trekking") |
 | `loadout_stretch_indossato.sql` | oggetti indossati: restano in checklist ma non pesano nello zaino |
 | `loadout_stretch_oggetto.sql` | marchio, caratteristiche tecniche e pezzi posseduti degli oggetti |
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
@@ -78,6 +79,7 @@ Se il volume del database esisteva già, le migrazioni nuove si applicano a mano
 ```powershell
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_acqua.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_attivita.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_attivita_unite.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_indossato.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_oggetto.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo.sql

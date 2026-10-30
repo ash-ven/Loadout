@@ -100,11 +100,20 @@
       <form id="form-oggetto" novalidate>
         <!-- Messaggio dopo una scansione (es. "Codice letto: …"): in cima, così si vede subito -->
         <p class="avviso" id="form-info" hidden></p>
+        <!-- Il codice a barre IN CIMA: se il prodotto si trova, "Cerca" compila i campi qui sotto.
+             Il messaggio con l'esito compare subito sopra, quindi si vede sempre. -->
+        <div class="campo-con-pulsante">
+          <label>Codice a barre <span class="muto">(facoltativo)</span>
+            <input name="codice_etichetta" type="text" maxlength="64" inputmode="numeric" placeholder="le cifre sotto le barre">
+          </label>
+          <button type="button" class="secondario" id="cerca-prodotto">Cerca</button>
+        </div>
         <label>Nome
           <input name="nome" type="text" maxlength="120" required>
         </label>
         <label>Categoria
           <select name="categoria" required>
+            <option value="" disabled selected>Scegli una categoria…</option>
             <option value="abbigliamento">Abbigliamento</option>
             <option value="attrezzatura">Attrezzatura</option>
             <option value="cucina">Cucina</option>
@@ -129,8 +138,7 @@
         <!-- C2: per quali attività va bene. Nessuna spunta = va bene per tutte -->
         <fieldset class="scelte">
           <legend>Adatto a <span class="muto">(nessuna spunta = tutte le attività)</span></legend>
-          <label class="check"><input name="attivita_adatte" type="checkbox" value="escursione"> Escursione</label>
-          <label class="check"><input name="attivita_adatte" type="checkbox" value="trekking"> Trekking</label>
+          <label class="check"><input name="attivita_adatte" type="checkbox" value="escursione"> Escursione / trekking</label>
           <label class="check"><input name="attivita_adatte" type="checkbox" value="alpinismo"> Alpinismo</label>
           <label class="check"><input name="attivita_adatte" type="checkbox" value="ciaspolata"> Ciaspolata</label>
           <label class="check"><input name="attivita_adatte" type="checkbox" value="ferrata"> Ferrata</label>
@@ -140,13 +148,6 @@
         <label>Caratteristiche tecniche
           <textarea name="caratteristiche" maxlength="500" rows="2" placeholder="es. Gore-Tex, impermeabile, taglia M"></textarea>
         </label>
-        <!-- Il codice e, accanto, "Cerca": chiede al server nome, marchio e peso del prodotto (stretch 2) -->
-        <div class="campo-con-pulsante">
-          <label>Codice etichetta
-            <input name="codice_etichetta" type="text" maxlength="64" inputmode="numeric">
-          </label>
-          <button type="button" class="secondario" id="cerca-prodotto">Cerca</button>
-        </div>
         <label>Note
           <textarea name="note" maxlength="1000" rows="3"></textarea>
         </label>

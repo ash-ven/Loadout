@@ -11,3 +11,12 @@ export const CATEGORIE = {
   cibo: "Cibo",
   altro: "Altro",
 };
+
+// Le attività dei viaggi, con il nome da far vedere. "escursione" comprende anche il trekking:
+// in giornata o su più giorni lo dicono già i campi giorni e pernotto.
+export const ATTIVITA = {
+  escursione: "Escursione / trekking",
+  alpinismo: "Alpinismo",
+  ciaspolata: "Ciaspolata",
+  ferrata: "Ferrata",
+};

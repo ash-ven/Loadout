@@ -17,7 +17,11 @@ export async function api(percorso, { method = "GET", body } = {}) {
   if (res.status === 204) return null; // nessun corpo (DELETE, logout)
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message ?? `Errore ${res.status}`);
+  if (!res.ok) {
+    const errore = new Error(data.message ?? `Errore ${res.status}`);
+    errore.status = res.status; // chi chiama può decidere in base allo status (es. 404 = non esiste)
+    throw errore;
+  }
   return data;
 }
 

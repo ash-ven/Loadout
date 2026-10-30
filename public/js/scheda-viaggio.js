@@ -1,6 +1,6 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
-import { CATEGORIE } from "./categorie.js";
+import { CATEGORIE, ATTIVITA } from "./categorie.js";
 
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
@@ -58,7 +58,7 @@ function renderIntestazione() {
   document.title = `Loadout – ${v.nome}`;
   titolo.textContent = v.nome;
   const parti = [
-    v.attivita,
+    ATTIVITA[v.attivita] ?? v.attivita,
     v.data_partenza ? `partenza ${formattaData(v.data_partenza)}` : "data da decidere",
     `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`,
     `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`,
@@ -234,7 +234,7 @@ function renderSelettore() {
   const presenti = new Set(zaino.oggetti.map((o) => o.oggetto_id));
   const disponibili = armadio.filter((o) => !presenti.has(o.id));
   formAggiungi.elements.oggetto_id.innerHTML = disponibili.length
-    ? `<option value="">Aggiungi dall'armadio…</option>` +
+    ? `<option value="">Scegli un oggetto…</option>` +
       disponibili.map((o) => `<option value="${o.id}">${esc(o.nome)} (${esc(o.peso_g)} g)</option>`).join("")
     : `<option value="">Tutto l'armadio è già nello zaino</option>`;
 }
@@ -248,8 +248,8 @@ bottoneGenera.addEventListener("click", async () => {
     await caricaZaino();
     // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
     mostraInfo(aggiunti > 0
-      ? `Aggiunti ${aggiunti} ${aggiunti === 1 ? "oggetto" : "oggetti"} tra indispensabili e preferiti adatti a: ${viaggio.attivita}.`
-      : `Nessun oggetto nuovo: lo zaino contiene già i tuoi indispensabili e preferiti adatti a: ${viaggio.attivita}.`);
+      ? `Aggiunti ${aggiunti} ${aggiunti === 1 ? "oggetto" : "oggetti"} tra indispensabili e preferiti adatti a: ${ATTIVITA[viaggio.attivita] ?? viaggio.attivita}.`
+      : `Nessun oggetto nuovo: lo zaino contiene già i tuoi indispensabili e preferiti adatti a: ${ATTIVITA[viaggio.attivita] ?? viaggio.attivita}.`);
   } catch (err) {
     mostraErrore(err.message);
   } finally {
@@ -264,7 +264,7 @@ bottoneSvuota.addEventListener("click", async () => {
   try {
     const { svuotati } = await api(`/api/viaggi/${id}/zaino/svuota`, { method: "POST" });
     await caricaZaino();
-    mostraInfo(`Checklist svuotata (${svuotati} ${svuotati === 1 ? "oggetto" : "oggetti"}).`);
+    mostraInfo(`Spunte tolte: ${svuotati} ${svuotati === 1 ? "oggetto" : "oggetti"} da rimettere nello zaino. Gli oggetti restano nella lista.`);
   } catch (err) {
     mostraErrore(err.message);
   }
@@ -354,6 +354,22 @@ formAggiungi.addEventListener("submit", async (e) => {
 });
 
 // --- Messaggi ---
+// Arrivo dalla modifica del viaggio con attività, pernotto, cucina o giorni cambiati (?aggiorna=1):
+// propongo di aggiornare lo zaino. "Genera" aggiunge solo quello che manca, non toglie niente.
+function proponiAggiornamento() {
+  const parametri = new URLSearchParams(location.search);
+  if (!parametri.has("aggiorna")) return;
+  history.replaceState(null, "", `?id=${id}`); // tolgo "aggiorna" dall'indirizzo: ricaricando non riappare
+  elMessaggioZaino.textContent = "Hai cambiato l'uscita: vuoi aggiornare lo zaino? Aggiungo solo quello che manca. ";
+  const bottone = document.createElement("button");
+  bottone.type = "button";
+  bottone.className = "btn-piccolo";
+  bottone.textContent = "Aggiorna lo zaino";
+  bottone.addEventListener("click", () => bottoneGenera.click()); // stesso effetto di "Genera zaino"
+  elMessaggioZaino.append(bottone);
+  elMessaggioZaino.hidden = false;
+}
+
 function mostraInfo(testo) {
   elMessaggioZaino.textContent = testo;
   elMessaggioZaino.hidden = false;
@@ -371,7 +387,7 @@ function nascondiErrore() {
 // --- Emergenza (C1): sempre il 112, più il contatto del profilo se c'è (tel: = un tocco per chiamare) ---
 function mostraEmergenza(utente) {
   const { emergenza_nome: nome, emergenza_telefono: telefono, note_mediche: note, tessera_soccorso: tessera } = utente;
-  let html = "In caso di emergenza chiama il <strong>112</strong>.";
+  let html = 'In caso di emergenza chiama il <a href="tel:112"><strong>112</strong></a>.'; // un tocco per chiamare
   if (nome || telefono) {
     const chi = esc(nome || "il tuo contatto");
     const numero = telefono ? ` <a href="tel:${esc(telefono.replace(/\s/g, ""))}">${esc(telefono)}</a>` : "";
@@ -418,8 +434,10 @@ if (!Number.isInteger(id) || id <= 0) {
     await caricaZaino();
     mostraEmergenza(await api("/api/auth/me")); // C1: il contatto di emergenza dal profilo
     document.querySelector("#corpo-scheda").hidden = false; // tutto ok: mostro zaino e consigli
+    proponiAggiornamento();
   } catch (err) {
-    titolo.textContent = err.message; // es. "Viaggio 99 non trovato" (anche se è di un altro utente)
+    // 404 = l'uscita non esiste (o è di un altro utente): un messaggio comprensibile, senza numeri
+    titolo.textContent = err.status === 404 ? "Questa uscita non esiste più o è stata eliminata" : err.message;
     document.querySelector("#elimina-viaggio").hidden = true; // niente da eliminare
     document.querySelector("#modifica-viaggio").hidden = true; // né da modificare
   } finally {

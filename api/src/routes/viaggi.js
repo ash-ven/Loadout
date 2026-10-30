@@ -6,7 +6,7 @@ import { validate } from "../middleware/validate.js";
 
 export const router = Router();
 
-const ATTIVITA = ["escursione", "trekking", "alpinismo", "ciaspolata", "ferrata"];
+const ATTIVITA = ["escursione", "alpinismo", "ciaspolata", "ferrata"]; // escursione = anche trekking (unite venerdì)
 const PERNOTTO = ["nessuno", "rifugio", "tenda", "bivacco"];
 
 const schemaViaggio = {

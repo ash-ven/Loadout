@@ -1,10 +1,13 @@
 import { query } from "../db.js";
 
+// La ricerca "q" cerca nel nome, nel marchio, nelle caratteristiche e nelle note
+// (ILIKE = senza distinguere maiuscole e minuscole; COALESCE perché i campi facoltativi possono essere NULL)
 export async function list(utenteId, { q = "", categoria = null, limit = 50, offset = 0 }) {
   const { rows } = await query(
     `SELECT * FROM oggetto
      WHERE utente_id = $1
-       AND nome ILIKE $2
+       AND (nome ILIKE $2 OR COALESCE(marchio, '') ILIKE $2
+            OR COALESCE(caratteristiche, '') ILIKE $2 OR COALESCE(note, '') ILIKE $2)
        AND ($3::categoria_oggetto IS NULL OR categoria = $3)
      ORDER BY categoria, nome
      LIMIT $4 OFFSET $5`,

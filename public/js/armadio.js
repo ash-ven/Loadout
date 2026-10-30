@@ -1,6 +1,7 @@
 import { api, esc } from "./api.js";
 import "./menu.js";
-import { CATEGORIE } from "./categorie.js";
+import { CATEGORIE, ATTIVITA } from "./categorie.js";
+import { segno, iconaSegno } from "./segni.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -49,8 +50,6 @@ async function carica() {
 // non hanno il punto delle migliaia. &nbsp; = niente a capo tra il numero e "g".
 const grammi = (g) => `${g.toLocaleString("it-IT", { useGrouping: "always" })}&nbsp;g`;
 
-// C2: le attività, con il nome da mostrare
-const ATTIVITA = { escursione: "Escursione", trekking: "Trekking", alpinismo: "Alpinismo", ciaspolata: "Ciaspolata", ferrata: "Ferrata" };
 
 // Le checkbox "Adatto a" hanno tutte lo stesso name: querySelectorAll le prende tutte
 const spunteAttivita = () => [...form.querySelectorAll('input[name="attivita_adatte"]')];
@@ -72,9 +71,16 @@ function render() {
   );
 
   if (visibili.length === 0) {
-    lista.innerHTML = `<p class="vuoto">${
-      oggetti.length === 0 ? "Nessun oggetto qui. Premi «Aggiungi» per inserire il primo." : "Nessun oggetto con questo filtro."
-    }</p>`;
+    const cercato = q.value.trim();
+    if (cercato && oggetti.length === 0) {
+      // La ricerca non ha trovato niente: lo diciamo, e offriamo di cancellarla
+      lista.innerHTML = `<p class="vuoto">Nessun oggetto contiene «${esc(cercato)}» nel nome, nel marchio o nelle note.
+        <button type="button" class="btn-piccolo secondario" id="cancella-ricerca">Cancella la ricerca</button></p>`;
+    } else {
+      lista.innerHTML = `<p class="vuoto">${
+        oggetti.length === 0 ? "Nessun oggetto qui. Premi «Aggiungi» per inserire il primo." : "Nessun oggetto con questo filtro."
+      }</p>`;
+    }
     return;
   }
 
@@ -100,8 +106,8 @@ function rigaOggetto(o) {
         <span class="riga-nome">${esc(o.nome)}</span>
         <span class="riga-dettagli">
           ${sottotitolo(o) ? `<span class="riga-nota">${esc(sottotitolo(o))}</span>` : ""}
-          ${o.is_indispensabile ? '<span class="badge indispensabile">Indispensabile</span>' : ""}
-          ${o.is_preferito ? '<span class="badge preferito">Preferito</span>' : ""}
+          ${o.is_indispensabile ? segno("indispensabile") : ""}
+          ${o.is_preferito ? segno("preferito") : ""}
         </span>
       </span>
       <span class="riga-valore">${grammi(o.peso_g)}</span>
@@ -116,6 +122,12 @@ function sottotitolo(o) {
 
 // --- Clic su un oggetto della lista (event delegation: UN solo listener per tutte le righe) ---
 lista.addEventListener("click", (e) => {
+  if (e.target.id === "cancella-ricerca") {
+    q.value = "";
+    carica();
+    q.focus();
+    return;
+  }
   const riga = e.target.closest(".riga[data-id]");
   if (!riga) return;
   apriDettaglio(oggetti.find((o) => o.id === Number(riga.dataset.id)));
@@ -131,8 +143,8 @@ function apriDettaglio(o, nota = "") {
   dettaglioMarchio.textContent = o.marchio ?? "";
   dettaglioMarchio.hidden = !o.marchio;
   dettaglioBadge.innerHTML =
-    (o.is_indispensabile ? '<span class="badge indispensabile">Indispensabile</span>' : "") +
-    (o.is_preferito ? '<span class="badge preferito">Preferito</span>' : "");
+    (o.is_indispensabile ? segno("indispensabile", true) : "") +
+    (o.is_preferito ? segno("preferito", true) : "");
 
   // Solo le voci che hanno un valore: [etichetta, valore]
   const voci = [
@@ -160,6 +172,9 @@ dettaglio.addEventListener("click", (e) => {
 });
 
 // --- Segmenti Tutti / Indispensabili / Preferiti ---
+// Le stesse icone della lista accanto ai nomi dei filtri: fanno anche da "legenda" (lucchetto = indispensabile, stella = preferito)
+segmenti.querySelector('[data-filtro="indispensabili"]').insertAdjacentHTML("afterbegin", iconaSegno("indispensabile"));
+segmenti.querySelector('[data-filtro="preferiti"]').insertAdjacentHTML("afterbegin", iconaSegno("preferito"));
 segmenti.addEventListener("click", (e) => {
   const bottone = e.target.closest("button[data-filtro]");
   if (!bottone) return;
@@ -313,6 +328,12 @@ function apriNuovoConCodice(codice, messaggio = "") {
 //  Regola: riempiamo SOLO i campi ancora vuoti. Quello che hai scritto tu non si tocca.
 // =====================================================================
 bottoneCercaProdotto.addEventListener("click", cercaProdotto);
+// Invio nel campo del codice = "Cerca" (senza, Invio salverebbe tutto il form, ancora mezzo vuoto)
+campi.codice_etichetta.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  cercaProdotto();
+});
 // Se scegli tu la categoria, la ricerca non la cambia più
 campi.categoria.addEventListener("change", () => { campi.categoria.dataset.scelta = "1"; });
 
@@ -411,6 +432,7 @@ function leggiForm() {
 function validaLatoClient(dati) {
   const errori = [];
   if (!dati.nome) errori.push("Il nome è obbligatorio");
+  if (!dati.categoria) errori.push("Scegli una categoria");
   if (!Number.isInteger(dati.peso_g) || dati.peso_g < 1) errori.push("Il peso deve essere un numero intero di almeno 1 grammo");
   if (!Number.isInteger(dati.quantita_posseduta) || dati.quantita_posseduta < 1 || dati.quantita_posseduta > 99) {
     errori.push("I pezzi posseduti devono essere tra 1 e 99");

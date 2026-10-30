@@ -1,5 +1,7 @@
 import { api, esc, formattaData, oggiISO } from "./api.js";
 import "./menu.js";
+import { segno } from "./segni.js";
+import { ATTIVITA } from "./categorie.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -20,6 +22,7 @@ const bottoneChiudi = document.querySelector("#chiudi");       // la X in alto n
 let viaggi = [];
 let filtro = "tutti"; // "tutti" | "da-fare" | "organizzati"
 let inModifica = null; // id del viaggio in modifica (arrivo dalla scheda con ?modifica=ID), oppure null se creo
+let prima = null;      // il viaggio com'era prima della modifica (per capire se lo zaino va aggiornato)
 
 // "Modifica viaggio" nella scheda porta qui con ?modifica=7: apriamo la finestra già compilata
 const daModificare = Number(new URLSearchParams(location.search).get("modifica")) || null;
@@ -66,7 +69,7 @@ function render() {
 // Una riga: è un link alla scheda del viaggio
 function rigaViaggio(v) {
   const dettagli = [
-    v.attivita,
+    ATTIVITA[v.attivita] ?? v.attivita,
     `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`,
     `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`,
   ].join(", ");
@@ -77,7 +80,7 @@ function rigaViaggio(v) {
         <span class="riga-nome">${esc(v.nome)}</span>
         <span class="riga-dettagli">
           <span class="riga-nota">${esc(dettagli)}</span>
-          ${v.pianificato ? '<span class="badge preferito">Da fare</span>' : ""}
+          ${v.pianificato ? segno("da-fare") : ""}
         </span>
       </span>
       <span class="riga-valore">${v.data_partenza ? formattaData(v.data_partenza) : "—"}</span>
@@ -137,6 +140,7 @@ finestra.addEventListener("close", () => {
 function apriModifica(v) {
   svuotaForm();
   inModifica = v.id;
+  prima = v;
   titoloForm.textContent = `Modifica: ${v.nome}`;
   bottoneSalva.textContent = "Salva le modifiche";
   rigaGenera.hidden = true; // lo zaino c'è già: "genera" lo trovi nella scheda
@@ -196,14 +200,19 @@ form.addEventListener("submit", async (e) => {
   bottoneSalva.disabled = true;
   try {
     let id = inModifica;
+    let zainoDaAggiornare = false;
     if (inModifica) {
-      // Modifica: PUT con il viaggio intero (lo zaino non cambia)
+      // Modifica: PUT con il viaggio intero. Lo zaino non cambia da solo, ma se sono cambiati
+      // i dati che decidono cosa ci va dentro, nella scheda proponiamo di aggiornarlo.
       await api(`/api/viaggi/${inModifica}`, { method: "PUT", body: dati });
+      zainoDaAggiornare = ["attivita", "pernotto", "serve_cucina", "n_giorni"]
+        .some((campo) => String(dati[campo]) !== String(prima[campo]));
     } else {
       const url = campi.genera.checked ? "/api/viaggi?genera=true" : "/api/viaggi";
       id = (await api(url, { method: "POST", body: dati })).id;
     }
-    location.href = `/scheda-viaggio.html?id=${id}`; // si va (o si torna) alla scheda del viaggio
+    // si va (o si torna) alla scheda del viaggio; "&aggiorna=1" = mostra la proposta di aggiornare lo zaino
+    location.href = `/scheda-viaggio.html?id=${id}${zainoDaAggiornare ? "&aggiorna=1" : ""}`;
   } catch (err) {
     mostraErrore(err.message); // US3 CA2: gli errori del server mostrati nel form
     bottoneSalva.disabled = false;

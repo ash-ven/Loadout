@@ -49,7 +49,7 @@
             <h2><img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Il tuo zaino</h2>
             <div class="azioni">
               <button type="button" id="genera">Genera zaino</button>
-              <button type="button" class="secondario" id="svuota">Svuota checklist</button>
+              <button type="button" class="secondario" id="svuota">Togli tutte le spunte</button>
             </div>
           </div>
           <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti<span class="muto" id="peso-addosso" hidden></span></p>
@@ -57,19 +57,19 @@
           <p class="avviso" id="avviso-peso" hidden><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24"><span id="testo-avviso-peso"></span></p>
           <p class="muto" id="messaggio-zaino" hidden></p>
           <p class="errore" id="errore-zaino" hidden></p>
-        </section>
 
-        <!-- La checklist, divisa per categoria come l'armadio: la riempie scheda-viaggio.js -->
-        <div class="gruppi una-colonna" id="checklist"></div>
-
-        <section class="card">
-          <h3>Aggiungi dall'armadio</h3>
+          <!-- Aggiungi dall'armadio: IN CIMA, dentro la card dello zaino (prima era in fondo, dopo tutta la checklist) -->
+          <h3 class="titolo-aggiungi">Aggiungi dall'armadio</h3>
           <form id="form-aggiungi" class="aggiungi">
             <select name="oggetto_id" aria-label="Oggetto dall'armadio"></select>
             <input name="quantita" type="number" min="1" max="99" step="1" value="1" aria-label="Quantità">
             <button type="submit">Aggiungi</button>
           </form>
         </section>
+
+        <!-- La checklist, divisa per categoria come l'armadio: la riempie scheda-viaggio.js -->
+        <div class="gruppi una-colonna" id="checklist"></div>
+
       </div>
 
       <!-- Colonna destra: i consigli -->
@@ -102,7 +102,7 @@
         <!-- C1: numero di emergenza e il contatto inserito nel profilo -->
         <div class="consiglio">
           <h3><img class="icona" src="/img/icone/categorie/sicurezza.svg" alt="" width="24" height="24">Emergenza</h3>
-          <p id="emergenza">In caso di emergenza chiama il <strong>112</strong>.</p>
+          <p id="emergenza">In caso di emergenza chiama il <a href="tel:112"><strong>112</strong></a>.</p>
         </div>
       </section>
     </div>

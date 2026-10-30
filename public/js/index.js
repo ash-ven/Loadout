@@ -68,8 +68,7 @@ function frasiVive(v) {
   // 2. Che tipo di viaggio è: "5 giorni di trekking, notti in rifugio"
   const durata = v.n_giorni === 1 ? "una giornata" : `${v.n_giorni} giorni`;
   const attivita = {
-    escursione: "di escursione",
-    trekking: "di trekking",
+    escursione: v.n_giorni > 1 ? "di trekking" : "di escursione", // stessa attività: il nome dipende dai giorni
     alpinismo: "di alpinismo",
     ciaspolata: "con le ciaspole",
     ferrata: "in ferrata",
