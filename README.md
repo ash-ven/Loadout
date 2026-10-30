@@ -151,7 +151,8 @@ Aggiornato a giovedì 29 ottobre.
 ### Da fare
 - [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
 - [x] Sicurezza: helmet con CSP severa (solo il nostro sito + Google Fonts e unpkg; niente script inline), limite di tentativi su login (10 errori in 15 min per IP) e registrazione (10 all'ora), `trust proxy` per Caddy, cookie `HttpOnly` + `Secure` (in produzione) + `SameSite=Lax`, CORS chiuso di default (`CORS_ORIGINS` per ammettere altri siti)
-- [ ] Almeno 5 test automatici (i primi 5 ci sono: `api/test/prodotti.test.js`, si lanciano con `npm test` dalla cartella `api`), `npm audit`, NOTE.md (venerdì)
+- [x] 20 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, vestiario)
+- [ ] `npm audit`, NOTE.md, pulizia del codice (venerdì)
 
 ## User story MVP
 
