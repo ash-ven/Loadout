@@ -1,0 +1,216 @@
+// =====================================================================
+//  ZAINO INTELLIGENTE (B5)
+//  Per ogni uscita l'app sa quale attrezzatura serve (le VOCI qui sotto) e la cerca
+//  nell'armadio dell'utente per PAROLE CHIAVE, nel nome, nel marchio e nelle caratteristiche.
+//  Per cambiare le liste basta modificare questo file.
+// =====================================================================
+import { query } from "../db.js";
+import * as consigli from "./consigli.js";
+
+// Ogni voce: id, nome da mostrare, categoria (per "Aggiungi all'armadio"), parole chiave (con i SINONIMI:
+// italiano, varianti, nomi inglesi che si trovano sulle etichette), quando serve (una funzione dell'uscita)
+// e il perché da mostrare.
+// u = { attivita, pernotto, serve_cucina, freddo, neve, quota_alta, caldo }
+const VOCI = [
+  // --- sempre ---
+  { id: "frontale", nome: "Frontale", categoria: "elettronica",
+    parole: ["frontale", "lampada frontale", "lampada da testa", "pila frontale", "torcia", "torcia frontale", "headlamp", "tikka", "tikkina"],
+    quando: () => true, perche: "sempre: se fai tardi" },
+  { id: "pronto-soccorso", nome: "Kit di pronto soccorso", categoria: "sicurezza",
+    parole: ["pronto soccorso", "primo soccorso", "kit di soccorso", "kit soccorso", "kit medico", "medikit", "first aid", "cerotti"],
+    quando: () => true, perche: "sempre" },
+  { id: "guscio", nome: "Giacca impermeabile (guscio)", categoria: "abbigliamento",
+    parole: ["guscio", "giacca impermeabile", "impermeabile", "antipioggia", "giacca da pioggia", "mantella", "poncho",
+             "k-way", "kway", "gore-tex", "goretex", "hardshell", "rain jacket"],
+    quando: () => true, perche: "sempre: in montagna il tempo cambia in fretta" },
+  { id: "borraccia", nome: "Borraccia", categoria: "attrezzatura",
+    parole: ["borraccia", "borracce", "thermos", "termos", "sacca idrica", "camelbak", "bottiglia", "water bottle"],
+    quando: () => true, perche: "sempre" },
+  { id: "telo-termico", nome: "Telo termico", categoria: "sicurezza",
+    parole: ["telo termico", "coperta termica", "coperta isotermica", "telo isotermico", "telo di sopravvivenza",
+             "coperta di sopravvivenza", "metallina", "emergency blanket"],
+    quando: () => true, perche: "sempre: pesa pochi grammi e in emergenza ti tiene caldo" },
+  // --- ferrata e alpinismo ---
+  { id: "casco", nome: "Casco", categoria: "sicurezza", parole: ["casco", "caschetto", "elmetto", "helmet"],
+    quando: (u) => u.attivita === "ferrata" || u.attivita === "alpinismo", perche: "per la ferrata e l'alpinismo" },
+  { id: "imbrago", nome: "Imbrago", categoria: "sicurezza",
+    parole: ["imbrago", "imbraco", "imbracatura", "imbragatura", "harness"],
+    quando: (u) => u.attivita === "ferrata" || u.attivita === "alpinismo", perche: "per la ferrata e l'alpinismo" },
+  { id: "set-ferrata", nome: "Set da ferrata (longe con dissipatore)", categoria: "sicurezza",
+    parole: ["set da ferrata", "set ferrata", "kit da ferrata", "kit ferrata", "longe", "longes", "dissipatore", "via ferrata set"],
+    quando: (u) => u.attivita === "ferrata", perche: "per la ferrata" },
+  { id: "ramponi", nome: "Ramponi", categoria: "attrezzatura", parole: ["ramponi", "rampone", "crampons"],
+    quando: (u) => u.attivita === "alpinismo", perche: "per l'alpinismo" },
+  { id: "piccozza", nome: "Piccozza", categoria: "attrezzatura", parole: ["piccozza", "picozza", "piolet", "ice axe"],
+    quando: (u) => u.attivita === "alpinismo", perche: "per l'alpinismo" },
+  // --- ciaspolata ---
+  { id: "ciaspole", nome: "Ciaspole", categoria: "attrezzatura",
+    parole: ["ciaspole", "ciaspola", "ciaspe", "racchette da neve", "snowshoes"],
+    quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata" },
+  { id: "artva", nome: "ARTVA", categoria: "sicurezza",
+    parole: ["artva", "arva", "pieps", "beacon", "trasmettitore valanghe", "apparecchio di ricerca"],
+    quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata (autosoccorso in valanga)" },
+  { id: "pala", nome: "Pala da neve", categoria: "sicurezza", parole: ["pala", "pala da neve", "pala da valanga"],
+    quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata (autosoccorso in valanga)" },
+  { id: "sonda", nome: "Sonda", categoria: "sicurezza", parole: ["sonda", "sonda da valanga"],
+    quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata (autosoccorso in valanga)" },
+  { id: "bastoncini", nome: "Bastoncini", categoria: "attrezzatura",
+    parole: ["bastoncini", "bastoncino", "bastoni da trekking", "bastoncini da trekking", "trekking poles", "poles"],
+    quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata" },
+  // --- pernotto (in giornata NON servono: vedi SOLO_PERNOTTO) ---
+  { id: "sacco-lenzuolo", nome: "Sacco lenzuolo", categoria: "attrezzatura",
+    parole: ["sacco lenzuolo", "sacco lenzuola", "sacco letto", "sacco da rifugio", "lenzuolo da rifugio", "sacco a pelo leggero", "liner"],
+    quando: (u) => u.pernotto === "rifugio", perche: "per il rifugio (obbligatorio nei rifugi CAI)" },
+  { id: "sacco-a-pelo", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag"],
+    quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },
+  { id: "materassino", nome: "Materassino", categoria: "attrezzatura",
+    parole: ["materassino", "materasso", "stuoino", "tappetino", "sleeping pad"],
+    quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },
+  { id: "tenda", nome: "Tenda", categoria: "attrezzatura", parole: ["tenda", "tendina"],
+    quando: (u) => u.pernotto === "tenda", perche: "per dormire in tenda" },
+  // --- cucina ---
+  { id: "fornello", nome: "Fornello", categoria: "cucina", parole: ["fornello", "fornellino", "jetboil", "bruciatore", "stove"],
+    quando: (u) => u.serve_cucina, perche: "serve la cucina" },
+  { id: "pentolino", nome: "Pentolino", categoria: "cucina",
+    parole: ["pentolino", "pentola", "gavetta", "set pentole", "kit cucina"],
+    quando: (u) => u.serve_cucina, perche: "serve la cucina" },
+  { id: "gas", nome: "Cartuccia del gas", categoria: "cucina", parole: ["cartuccia", "bombola", "bomboletta", "gas", "combustibile"],
+    quando: (u) => u.serve_cucina, perche: "serve la cucina" },
+  // --- freddo e neve ---
+  { id: "berretto", nome: "Berretto", categoria: "abbigliamento",
+    parole: ["berretto", "cappello di lana", "cuffia", "beanie", "papalina"],
+    quando: (u) => u.freddo, perche: "farà freddo" },
+  { id: "guanti", nome: "Guanti", categoria: "abbigliamento", parole: ["guanti", "guanto", "muffole", "manopole", "gloves"],
+    quando: (u) => u.freddo, perche: "farà freddo" },
+  { id: "strato-caldo", nome: "Strato caldo (pile o piumino)", categoria: "abbigliamento",
+    parole: ["pile", "piumino", "piumino leggero", "giacca termica", "maglia termica", "giacca imbottita", "primaloft", "fleece"],
+    quando: (u) => u.freddo, perche: "farà freddo" },
+  { id: "scaldacollo", nome: "Scaldacollo", categoria: "abbigliamento", parole: ["scaldacollo", "buff", "sciarpa", "passamontagna"],
+    quando: (u) => u.freddo, perche: "farà freddo (e c'è vento in quota)" },
+  // Per neve e ghiaccio sui sentieri vanno bene i ramponcini, ma anche i ramponi (più pesanti):
+  // se ci sono tutti e due, migliorOggetto sceglie il più leggero
+  { id: "ramponcini", nome: "Ramponcini (o ramponi)", categoria: "attrezzatura",
+    parole: ["ramponcini", "catenelle", "microspikes", "ramponi", "rampone", "crampons"],
+    quando: (u) => u.neve && u.attivita !== "alpinismo", perche: "potresti trovare neve o ghiaccio" },
+  // --- sole: in quota, sulla neve o con il caldo ---
+  { id: "occhiali-sole", nome: "Occhiali da sole", categoria: "abbigliamento", parole: ["occhiali da sole", "occhiali", "occhiale", "sunglasses"],
+    quando: (u) => u.neve || u.quota_alta || u.caldo, perche: "in quota e sulla neve il sole riflette e abbaglia" },
+  { id: "crema-solare", nome: "Crema solare", categoria: "igiene", parole: ["crema solare", "protezione solare", "latte solare", "spf", "sunscreen"],
+    quando: (u) => u.neve || u.quota_alta || u.caldo, perche: "in quota il sole scotta di più" },
+  { id: "cappello-sole", nome: "Cappello da sole", categoria: "abbigliamento", parole: ["cappello", "cappellino", "visiera"],
+    quando: (u) => u.caldo, perche: "farà caldo" },
+];
+
+// Le voci che servono SOLO per dormire fuori: in un'uscita in giornata non entrano mai,
+// neanche se sono tra i preferiti (es. il sacco a pelo preferito in una gita di un giorno)
+const SOLO_PERNOTTO = VOCI.filter((v) => ["sacco-lenzuolo", "sacco-a-pelo", "materassino", "tenda"].includes(v.id));
+
+// --- Funzioni "pure" (niente database né rete): le provano i test in test/kit.test.js ---
+
+// "Imbracatura Petzl Corax" → "imbracatura petzl corax" (minuscole, senza accenti)
+function normalizza(testo) {
+  return String(testo ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+// L'oggetto corrisponde alla voce? Una parola chiave deve comparire all'INIZIO di una parola
+// (così "pala" trova "Pala da neve" ma non "Spalaneve", e "ramponi" non trova "Ramponcini")
+export function corrisponde(oggetto, voce) {
+  const testo = normalizza(`${oggetto.nome} ${oggetto.marchio ?? ""} ${oggetto.caratteristiche ?? ""}`);
+  return voce.parole.some((parola) => new RegExp(`(^|[^a-z0-9])${normalizza(parola)}`).test(testo));
+}
+
+// Le voci che servono per questa uscita
+export function vociPerUscita(uscita) {
+  return VOCI.filter((v) => v.quando(uscita));
+}
+
+// Tra gli oggetti che corrispondono alla voce, il migliore: prima indispensabili e preferiti, poi il più leggero
+export function migliorOggetto(voce, oggetti) {
+  return oggetti
+    .filter((o) => corrisponde(o, voce))
+    .sort((a, b) => (b.is_indispensabile || b.is_preferito) - (a.is_indispensabile || a.is_preferito) || a.peso_g - b.peso_g)[0] ?? null;
+}
+
+// --- Con il database ---
+
+// Le condizioni dell'uscita: attività, pernotto, cucina, freddo, neve.
+// Freddo: minima (in cima, se c'è la quota) sotto i 5 °C; senza previsioni, da novembre a marzo.
+// Quota alta: dai 2000 m in su. Caldo: massima in partenza sopra i 25 °C.
+export async function condizioni(viaggio) {
+  const meteo = await consigli.meteo(viaggio);
+  const minima = meteo.disponibile ? (meteo.cima?.temp_min ?? meteo.temp_min) : null;
+  const mese = viaggio.data_partenza ? Number(viaggio.data_partenza.slice(5, 7)) : null;
+  const neve = consigli.rischioNeve(viaggio.quota_max_m, viaggio.data_partenza, minima);
+  const freddo = neve || (minima != null ? minima < 5 : mese != null && (mese >= 11 || mese <= 3));
+  const quotaAlta = viaggio.quota_max_m != null && viaggio.quota_max_m >= 2000; // C1: occhiali e crema solare in quota
+  const caldo = meteo.disponibile && meteo.temp_max > 25;                        // C1: cappello e crema con il caldo
+  return { attivita: viaggio.attivita, pernotto: viaggio.pernotto, serve_cucina: viaggio.serve_cucina,
+           freddo, neve, quota_alta: quotaAlta, caldo };
+}
+
+async function armadio(db, utenteId) {
+  const { rows } = await db.query(
+    "SELECT id, nome, marchio, caratteristiche, peso_g, is_indispensabile, is_preferito FROM oggetto WHERE utente_id = $1",
+    [utenteId]
+  );
+  return rows;
+}
+
+async function idNelloZaino(db, viaggioId) {
+  const { rows } = await db.query("SELECT oggetto_id FROM viaggio_oggetto WHERE viaggio_id = $1", [viaggioId]);
+  return new Set(rows.map((r) => r.oggetto_id));
+}
+
+// Il nuovo "Genera zaino". Va chiamato DENTRO una transazione (db = il client con BEGIN già fatto):
+//   1. indispensabili e preferiti con fn_genera_zaino (la logica di base resta nel database);
+//   2. in giornata toglie quello che serve solo per dormire fuori (tra gli oggetti appena aggiunti);
+//   3. aggiunge dall'armadio l'attrezzatura del kit che manca nello zaino.
+export async function generaIntelligente(db, utenteId, viaggio, uscita) {
+  const prima = await idNelloZaino(db, viaggio.id);
+  const { rows } = await db.query("SELECT fn_genera_zaino($1) AS aggiunti", [viaggio.id]);
+  const oggetti = await armadio(db, utenteId);
+  const perId = new Map(oggetti.map((o) => [o.id, o]));
+
+  let esclusi = 0;
+  if (uscita.pernotto === "nessuno") {
+    const nuovi = [...(await idNelloZaino(db, viaggio.id))].filter((id) => !prima.has(id));
+    const daTogliere = nuovi.filter((id) => SOLO_PERNOTTO.some((voce) => corrisponde(perId.get(id), voce)));
+    if (daTogliere.length) {
+      await db.query("DELETE FROM viaggio_oggetto WHERE viaggio_id = $1 AND oggetto_id = ANY($2::int[])", [viaggio.id, daTogliere]);
+      esclusi = daTogliere.length;
+    }
+  }
+
+  let dalKit = 0;
+  const nelloZaino = await idNelloZaino(db, viaggio.id);
+  for (const voce of vociPerUscita(uscita)) {
+    const giaDentro = [...nelloZaino].some((id) => corrisponde(perId.get(id), voce));
+    if (giaDentro) continue;
+    const scelto = migliorOggetto(voce, oggetti);
+    if (!scelto) continue; // non c'è nell'armadio: lo dirà il riquadro "Per questa uscita"
+    await db.query(
+      "INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id, quantita) VALUES ($1, $2, 1) ON CONFLICT DO NOTHING",
+      [viaggio.id, scelto.id]
+    );
+    nelloZaino.add(scelto.id);
+    dalKit++;
+  }
+
+  const base = rows[0].aggiunti - esclusi;
+  return { aggiunti: base + dalKit, base, dal_kit: dalKit, esclusi };
+}
+
+// Il riquadro "Per questa uscita": per ogni voce, se è nello zaino, nell'armadio o se manca
+export async function stato(utenteId, viaggio) {
+  const uscita = await condizioni(viaggio);
+  const oggetti = await armadio({ query }, utenteId);
+  const nelloZaino = await idNelloZaino({ query }, viaggio.id);
+  const nelloZainoOggetti = oggetti.filter((o) => nelloZaino.has(o.id));
+  return vociPerUscita(uscita).map((voce) => {
+    const dentro = migliorOggetto(voce, nelloZainoOggetti);
+    if (dentro) return { voce: voce.nome, perche: voce.perche, categoria: voce.categoria, stato: "nello_zaino", oggetto: { id: dentro.id, nome: dentro.nome } };
+    const fuori = migliorOggetto(voce, oggetti);
+    if (fuori) return { voce: voce.nome, perche: voce.perche, categoria: voce.categoria, stato: "nell_armadio", oggetto: { id: fuori.id, nome: fuori.nome } };
+    return { voce: voce.nome, perche: voce.perche, categoria: voce.categoria, stato: "manca", oggetto: null };
+  });
+}

@@ -94,7 +94,7 @@
     <!-- Peso corporeo e soglia dello zaino (stretch 5) -->
     <section class="card">
       <h2><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24">Peso corporeo</h2>
-      <p class="muto">Lo zaino non dovrebbe superare il 20% del tuo peso. Con il peso impostato, Loadout ti avvisa nella scheda di ogni viaggio.</p>
+      <p class="muto">Lo zaino, senza acqua e cibo, non dovrebbe superare il 10% del tuo peso nelle uscite in giornata e il 20% quando dormi fuori. Con il peso impostato, Loadout ti avvisa nella scheda di ogni uscita.</p>
       <form id="form-profilo" class="aggiungi" novalidate>
         <label>Peso corporeo (kg)
           <input name="peso_corporeo_kg" type="number" min="20" max="300" step="0.1">
@@ -104,7 +104,59 @@
       <p class="avviso" id="profilo-info" hidden></p>
       <p class="errore" id="profilo-errore" hidden></p>
     </section>
+
+    <!-- B7: account e privacy (GDPR): password, i miei dati, eliminazione -->
+    <section class="card" id="account-privacy">
+      <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Account e privacy</h2>
+
+      <h3>Cambia password</h3>
+      <form id="form-password" novalidate>
+        <label>Password attuale
+          <input name="attuale" type="password" autocomplete="current-password" required>
+        </label>
+        <div class="riga2">
+          <label>Nuova password
+            <input name="nuova" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <label>Ripeti la nuova
+            <input name="ripeti" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+        </div>
+        <p class="avviso" id="password-info" hidden></p>
+        <p class="errore" id="password-errore" hidden></p>
+        <div class="azioni"><button type="submit">Cambia password</button></div>
+      </form>
+
+      <h3>I tuoi dati</h3>
+      <p class="muto">Tutto quello che Loadout sa di te (profilo, armadio, uscite e zaini) in un file che puoi conservare o portare altrove.</p>
+      <div class="azioni"><a class="btn secondario" href="/api/auth/me/dati" download>Scarica i miei dati</a></div>
+
+      <h3>Elimina l'account</h3>
+      <p class="muto">Cancella per sempre il tuo account, l'armadio, le uscite e gli zaini. Non si può annullare.</p>
+      <div class="azioni"><button type="button" class="pericolo" id="apri-elimina">Elimina l'account…</button></div>
+    </section>
   </main>
+
+  <!-- B7: conferma dell'eliminazione, con la password -->
+  <dialog class="finestra" id="finestra-elimina" aria-labelledby="titolo-elimina">
+    <div class="finestra-contenuto">
+      <div class="finestra-testa">
+        <h2 id="titolo-elimina">Eliminare l'account?</h2>
+        <button type="button" class="chiudi" id="chiudi-elimina" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <p>Verranno cancellati <strong>per sempre</strong> il tuo profilo, tutto l'armadio, le uscite e i loro zaini. Se vuoi tenerne una copia, prima scarica i tuoi dati.</p>
+      <form id="form-elimina" novalidate>
+        <label>Per confermare, scrivi la tua password
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <p class="errore" id="elimina-errore" hidden></p>
+        <div class="azioni">
+          <button type="submit" class="pericolo">Elimina per sempre</button>
+          <button type="button" class="secondario" id="annulla-elimina">Annulla</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
 
   <script type="module" src="/js/profilo.js"></script>
 </body>

@@ -131,14 +131,79 @@ formProfilo.addEventListener("submit", async (e) => {
   }
 });
 
-// Mostra la soglia: il 20% del peso corporeo, in formato italiano (es. "12,4")
+// Mostra le due soglie (B4): 10% in giornata, 20% con pernotto, in formato italiano (es. "5,7")
 function mostraSoglia(peso, appenaSalvato = false) {
   if (peso == null) {
     info.textContent = "Peso non ancora impostato: l'avviso sullo zaino è disattivato.";
   } else {
-    const soglia = (peso * 0.2).toLocaleString("it-IT", { maximumFractionDigits: 1 });
+    const kg = (percento) => (peso * percento / 100).toLocaleString("it-IT", { maximumFractionDigits: 1 });
     const prefisso = appenaSalvato ? "Peso salvato. " : "";
-    info.textContent = `${prefisso}Il tuo zaino non dovrebbe superare ${soglia} kg.`;
+    info.textContent = `${prefisso}Il tuo zaino, senza acqua e cibo, non dovrebbe superare ${kg(10)} kg in giornata e ${kg(20)} kg con il pernotto.`;
   }
   info.hidden = false;
 }
+
+// =====================================================================
+//  B7: ACCOUNT E PRIVACY
+// =====================================================================
+
+// --- Cambia password ---
+const formPassword = document.querySelector("#form-password");
+const infoPassword = document.querySelector("#password-info");
+const errorePassword = document.querySelector("#password-errore");
+
+formPassword.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  infoPassword.hidden = true;
+  errorePassword.hidden = true;
+  const { attuale, nuova, ripeti } = Object.fromEntries(new FormData(formPassword));
+  const problema = !attuale || !nuova ? "Scrivi la password attuale e quella nuova"
+    : nuova.length < 8 ? "La nuova password deve avere almeno 8 caratteri"
+    : nuova !== ripeti ? "Le due nuove password non sono uguali"
+    : null;
+  if (problema) {
+    errorePassword.textContent = problema;
+    errorePassword.hidden = false;
+    return;
+  }
+  try {
+    await api("/api/auth/me/password", { method: "PUT", body: { attuale, nuova } });
+    formPassword.reset();
+    infoPassword.textContent = "Password cambiata.";
+    infoPassword.hidden = false;
+  } catch (err) {
+    errorePassword.textContent = err.message; // es. "La password attuale non è corretta"
+    errorePassword.hidden = false;
+  }
+});
+
+// --- Elimina account: una finestra di conferma con la password ---
+const finestraElimina = document.querySelector("#finestra-elimina");
+const formElimina = document.querySelector("#form-elimina");
+const erroreElimina = document.querySelector("#elimina-errore");
+
+document.querySelector("#apri-elimina").addEventListener("click", () => {
+  formElimina.reset();
+  erroreElimina.hidden = true;
+  finestraElimina.showModal();
+  formElimina.elements.password.focus();
+});
+document.querySelector("#chiudi-elimina").addEventListener("click", () => finestraElimina.close());
+document.querySelector("#annulla-elimina").addEventListener("click", () => finestraElimina.close());
+
+formElimina.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const password = formElimina.elements.password.value;
+  if (!password) {
+    erroreElimina.textContent = "Scrivi la tua password per confermare";
+    erroreElimina.hidden = false;
+    return;
+  }
+  try {
+    await api("/api/auth/me", { method: "DELETE", body: { password } });
+    location.href = "/login.html?eliminato=1"; // account cancellato: torniamo all'ingresso
+  } catch (err) {
+    erroreElimina.textContent = err.message; // es. "Password non corretta"
+    erroreElimina.hidden = false;
+  }
+});

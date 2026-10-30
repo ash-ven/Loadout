@@ -12,6 +12,7 @@ const elAcqua = document.querySelector("#acqua");
 const elAcquaPersona = document.querySelector("#acqua-persona");
 const formOre = document.querySelector("#form-ore");
 const elSole = document.querySelector("#sole");
+const elOraLimite = document.querySelector("#ora-limite"); // B2
 const elMeteo = document.querySelector("#meteo");
 const elPercorso = document.querySelector("#percorso");
 const elEmergenza = document.querySelector("#emergenza");
@@ -24,6 +25,7 @@ const elPesoTotale = document.querySelector("#peso-totale");
 const elPesoAddosso = document.querySelector("#peso-addosso"); // B3: quello che indossi, a parte
 const barraRiempimento = document.querySelector("#barra-riempimento");
 const elAvvisoPeso = document.querySelector("#avviso-peso");
+const elPesoAcqua = document.querySelector("#peso-acqua"); // B4
 const elTestoAvvisoPeso = document.querySelector("#testo-avviso-peso"); // il testo: l'icona accanto resta fissa
 const elMessaggioZaino = document.querySelector("#messaggio-zaino");
 const elChecklist = document.querySelector("#checklist");
@@ -39,7 +41,7 @@ let armadio = [];                         // tutti i miei oggetti, per il selett
 const elenco = (parti) => parti.length < 2 ? parti.join("") : `${parti.slice(0, -1).join(", ")} e ${parti.at(-1)}`;
 
 // Numeri in formato italiano: 3.5 → "3,5"; e con 2 decimali: 5.6 → "5,60"
-const num = (n) => Number(n).toLocaleString("it-IT");
+const num = (n) => Number(n).toLocaleString("it-IT", { useGrouping: "always" });
 const num2 = (n) => Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // =====================================================================
@@ -59,6 +61,8 @@ function renderIntestazione() {
   titolo.textContent = v.nome;
   const parti = [
     ATTIVITA[v.attivita] ?? v.attivita,
+    ...(v.luogo_partenza ? [`da ${v.luogo_partenza}`] : []),
+    ...(v.quota_max_m != null ? [`fino a ${v.quota_max_m.toLocaleString("it-IT", { useGrouping: "always" })} m`] : []),
     v.data_partenza ? `partenza ${formattaData(v.data_partenza)}` : "data da decidere",
     `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`,
     `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`,
@@ -115,19 +119,48 @@ function renderConsigli() {
   elSole.textContent = c.sole.disponibile
     ? `Alba alle ${c.sole.alba}, tramonto alle ${c.sole.tramonto}.`
     : `Non disponibile: ${c.sole.motivo}.`;
+  // B2: l'ora limite di partenza, in evidenza (è il consiglio più utile d'inverno)
+  const limite = c.ora_limite_partenza;
+  elOraLimite.hidden = !limite;
+  if (limite) {
+    // tutto dentro uno <span>: .avviso è un flex, e ogni pezzo di testo diventerebbe una "colonna"
+    elOraLimite.innerHTML = limite.prima_dell_alba
+      ? `<span><strong>Attenzione:</strong> con ${num(c.ore_cammino_giorno)} ore di cammino non c'è abbastanza luce
+         (alba ${esc(c.sole.alba)}, tramonto ${esc(c.sole.tramonto)}). Valuta di accorciare il percorso o di dividerlo in più giorni.</span>`
+      : `<span>Parti <strong>entro le ${esc(limite.ora)}</strong> per arrivare almeno un'ora prima del tramonto
+         (${num(c.ore_cammino_giorno)} ore di cammino, soste comprese nel margine).</span>`;
+  }
 
   // Meteo e vestiario
+  let htmlMeteo;
   if (c.meteo.disponibile) {
     const m = c.meteo;
-    elMeteo.innerHTML = `
-      <p>Massima ${esc(num(m.temp_max))} °C · minima ${esc(num(m.temp_min))} °C · pioggia ${esc(m.prob_pioggia)}%</p>
+    const quota = (metri) => (metri != null ? ` (${metri.toLocaleString("it-IT", { useGrouping: "always" })} m)` : "");
+    const righe = [
+      `<strong>In partenza</strong>${m.quota_partenza_m != null ? ` (circa ${m.quota_partenza_m.toLocaleString("it-IT", { useGrouping: "always" })} m)` : ""}:
+       massima ${esc(num(m.temp_max))} °C · minima ${esc(num(m.temp_min))} °C · pioggia ${esc(m.prob_pioggia)}%`,
+    ];
+    // B3: la stima in cima, se conosciamo la quota massima
+    if (m.cima) righe.push(`<strong>In cima</strong>${quota(m.cima.quota_m)}, stima: massima ${esc(num(m.cima.temp_max))} °C · minima ${esc(num(m.cima.temp_min))} °C`);
+    if (m.vento_kmh != null) righe.push(`<strong>Vento</strong> fino a ${esc(num(m.vento_kmh))} km/h${m.raffiche_kmh != null ? `, raffiche ${esc(num(m.raffiche_kmh))} km/h` : ""}`);
+    htmlMeteo = `${righe.map((r) => `<p>${r}</p>`).join("")}
       <ul>${m.vestiario.map((consiglio) => `<li>${esc(consiglio)}</li>`).join("")}</ul>`;
   } else {
-    elMeteo.innerHTML = `<p>Non disponibile: ${esc(c.meteo.motivo)}.</p>`;
+    htmlMeteo = `<p>Non disponibile: ${esc(c.meteo.motivo)}.</p>`;
   }
+  // B3: neve e ghiaccio, bollettino valanghe (valgono anche senza previsioni meteo)
+  if (c.neve_ghiaccio) {
+    htmlMeteo += `<p class="avviso"><span><strong>Neve e ghiaccio:</strong> sopra i 2000 m potresti trovarne.
+      Valuta ramponcini o ramponi e informati sulle condizioni (rifugi, guide alpine).</span></p>`;
+  }
+  if (c.bollettino_valanghe) {
+    htmlMeteo += `<p>Prima di partire controlla il <a href="https://www.aineva.it/bollettino/" target="_blank" rel="noopener">bollettino valanghe (AINEVA)</a>.</p>`;
+  }
+  elMeteo.innerHTML = htmlMeteo;
 
   // Percorso
   const parti = [];
+  if (viaggio.luogo_arrivo) parti.push(`arrivo a ${viaggio.luogo_arrivo}`);
   if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km di sentiero`);
   if (viaggio.dislivello_m != null) parti.push(`${num(viaggio.dislivello_m)} m di dislivello`);
   if (c.distanza_linea_aria_km != null) parti.push(`${num(c.distanza_linea_aria_km)} km in linea d'aria tra partenza e arrivo`);
@@ -154,7 +187,63 @@ formOre.addEventListener("submit", async (e) => {
 async function caricaZaino() {
   zaino = await api(`/api/viaggi/${id}/zaino`);
   renderZaino();
+  caricaKit(); // B5: anche il riquadro "Per questa uscita" dipende da cosa c'è nello zaino
 }
+
+// =====================================================================
+//  B5: "PER QUESTA USCITA" – l'attrezzatura che serve, e dove si trova
+// =====================================================================
+const kitCard = document.querySelector("#kit-card");
+const elKit = document.querySelector("#kit");
+const elKitRiepilogo = document.querySelector("#kit-riepilogo");
+
+async function caricaKit() {
+  try {
+    const voci = await api(`/api/viaggi/${id}/kit`);
+    const mancano = voci.filter((v) => v.stato === "manca").length;
+    const daAggiungere = voci.filter((v) => v.stato === "nell_armadio").length;
+    elKitRiepilogo.textContent = mancano + daAggiungere === 0
+      ? "Hai tutto quello che serve per questa uscita."
+      : [daAggiungere ? `${daAggiungere} da mettere nello zaino` : "", mancano ? `${mancano} che non hai nell'armadio` : ""]
+          .filter(Boolean).join(" · ");
+    elKit.innerHTML = voci.map(rigaKit).join("");
+    kitCard.hidden = false;
+  } catch {
+    kitCard.hidden = true; // il riquadro è un aiuto in più: se non arriva, la scheda funziona lo stesso
+  }
+}
+
+function rigaKit(v) {
+  const perche = `<span class="kit-perche">${esc(v.perche)}</span>`;
+  if (v.stato === "nello_zaino") {
+    return `<li class="kit-ok"><span class="kit-segno" aria-hidden="true">✓</span>
+      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nello zaino: ${esc(v.oggetto.nome)}${perche}</span></li>`;
+  }
+  if (v.stato === "nell_armadio") {
+    return `<li><span class="kit-segno" aria-hidden="true">○</span>
+      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nell'armadio: ${esc(v.oggetto.nome)}${perche}</span>
+      <button type="button" class="btn-piccolo" data-aggiungi="${v.oggetto.id}">Aggiungi</button></li>`;
+  }
+  const link = `/armadio.html?nuovo=${encodeURIComponent(v.voce)}&categoria=${encodeURIComponent(v.categoria)}`;
+  return `<li class="kit-manca"><span class="kit-segno" aria-hidden="true">!</span>
+    <span class="kit-testo"><strong>${esc(v.voce)}</strong> · ti manca${perche}</span>
+    <a class="btn-piccolo btn secondario" href="${link}">Aggiungi all'armadio</a></li>`;
+}
+
+// "Aggiungi": l'oggetto dell'armadio entra nello zaino (stessa API di "Aggiungi dall'armadio")
+elKit.addEventListener("click", async (e) => {
+  const bottone = e.target.closest("[data-aggiungi]");
+  if (!bottone) return;
+  bottone.disabled = true;
+  nascondiErrore();
+  try {
+    await api(`/api/viaggi/${id}/zaino`, { method: "POST", body: { oggetto_id: Number(bottone.dataset.aggiungi), quantita: 1 } });
+    await caricaZaino();
+  } catch (err) {
+    mostraErrore(err.message);
+    bottone.disabled = false;
+  }
+});
 
 function renderZaino() {
   const p = zaino.peso;
@@ -174,8 +263,14 @@ function renderZaino() {
   elAvvisoPeso.hidden = !troppoPesante;
   barraRiempimento.classList.toggle("oltre-soglia", Boolean(troppoPesante));
   if (troppoPesante) {
-    elTestoAvvisoPeso.textContent = `Lo zaino pesa ${num2(p.peso_totale_kg)} kg: più del 20% del tuo peso corporeo (limite consigliato ${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
+    const uscita = viaggio.pernotto === "nessuno" ? "per un'uscita in giornata" : "con il pernotto";
+    elTestoAvvisoPeso.textContent = `Lo zaino, senza acqua e cibo, pesa ${num2(p.peso_totale_kg)} kg: più del ${avviso.soglia_percento}% ` +
+      `del tuo peso corporeo, il limite consigliato ${uscita} (${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
   }
+  // B4: solo un promemoria, fuori dai calcoli: l'acqua pesa 1 kg al litro
+  const litri = viaggio?.consigli.acqua_persona_giorno;
+  elPesoAcqua.hidden = litri == null;
+  if (litri != null) elPesoAcqua.textContent = `Più circa ${num(litri)} kg d'acqua a persona al giorno (1 litro = 1 kg), meno se lungo il percorso trovi fontane o rifugi.`;
 
   // Checklist: un gruppo per categoria, con il peso del gruppo (come nell'armadio)
   if (zaino.oggetti.length === 0) {
@@ -244,12 +339,18 @@ bottoneGenera.addEventListener("click", async () => {
   nascondiErrore();
   bottoneGenera.disabled = true;
   try {
-    const { aggiunti } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
+    const { aggiunti, base, dal_kit: dalKit, esclusi } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
     await caricaZaino();
     // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
-    mostraInfo(aggiunti > 0
-      ? `Aggiunti ${aggiunti} ${aggiunti === 1 ? "oggetto" : "oggetti"} tra indispensabili e preferiti adatti a: ${ATTIVITA[viaggio.attivita] ?? viaggio.attivita}.`
-      : `Nessun oggetto nuovo: lo zaino contiene già i tuoi indispensabili e preferiti adatti a: ${ATTIVITA[viaggio.attivita] ?? viaggio.attivita}.`);
+    // B5: cosa ha fatto "Genera", in parole
+    const parti = [];
+    if (base > 0) parti.push(`${base} tra indispensabili e preferiti`);
+    if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questa uscita`);
+    let messaggio = aggiunti > 0
+      ? `Aggiunti ${aggiunti} ${aggiunti === 1 ? "oggetto" : "oggetti"}: ${parti.join(" e ")}.`
+      : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
+    if (esclusi > 0) messaggio += ` In giornata ho lasciato fuori ${esclusi === 1 ? "un oggetto" : `${esclusi} oggetti`} che servono solo per dormire fuori.`;
+    mostraInfo(messaggio);
   } catch (err) {
     mostraErrore(err.message);
   } finally {
@@ -399,7 +500,52 @@ function mostraEmergenza(utente) {
   if (!nome && !telefono && !note && !tessera) {
     html += ' <a href="/profilo.html">Aggiungi nel profilo</a> un contatto di emergenza, le note mediche e la tessera CAI.';
   }
+  // B6: "Lascia detto": un messaggio già scritto per il contatto di emergenza (lo mandi tu, l'app non invia niente)
+  if (telefono) {
+    const testo = encodeURIComponent(messaggioLasciaDetto(nome));
+    const cifre = numeroInternazionale(telefono);
+    html += `<span class="lascia-detto"><strong>Lascia detto</strong> dove vai prima di partire:
+      <a class="btn btn-piccolo" href="https://wa.me/${cifre}?text=${testo}" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn btn-piccolo secondario" href="sms:+${cifre}?body=${testo}">SMS</a></span>`;
+  } else {
+    html += '<span class="lascia-detto"><strong>Lascia detto</strong> dove vai: <a href="/profilo.html">aggiungi il telefono del contatto</a> e ti preparo il messaggio.</span>';
+  }
   elEmergenza.innerHTML = html;
+}
+
+// "+39 333 123 4567" → "393331234567" (wa.me vuole solo cifre, con il prefisso del paese).
+// Un numero italiano scritto senza prefisso (es. "333 1234567") riceve il 39 davanti.
+function numeroInternazionale(telefono) {
+  const cifre = telefono.replace(/\D/g, "");
+  if (telefono.trim().startsWith("+")) return cifre;
+  if (cifre.startsWith("00")) return cifre.slice(2);
+  return `39${cifre}`;
+}
+
+// Il testo del messaggio, con quello che l'app sa già dell'uscita
+function messaggioLasciaDetto(nomeContatto) {
+  const v = viaggio;
+  const giorno = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+  const quando = v.data_partenza ? giorno(v.data_partenza) : "nei prossimi giorni";
+  const tipo = v.pernotto === "nessuno"
+    ? "in giornata"
+    : `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}, pernotto in ${v.pernotto}`;
+  // "Escursione / trekking" nel messaggio diventa la parola giusta: trekking se dura più giorni
+  const attivita = v.attivita === "escursione" ? (v.n_giorni > 1 ? "trekking" : "escursione") : (ATTIVITA[v.attivita] ?? v.attivita).toLowerCase();
+  const frasi = [`Ciao${nomeContatto ? ` ${nomeContatto}` : ""}, ${quando} vado a «${v.nome}» (${attivita}, ${tipo}).`];
+  const limite = v.consigli?.ora_limite_partenza;
+  if (v.luogo_partenza) frasi.push(`Parto da ${v.luogo_partenza}${limite?.ora && !limite.prima_dell_alba ? ` entro le ${limite.ora}` : ""}.`);
+  if (v.luogo_arrivo) frasi.push(`Arrivo a ${v.luogo_arrivo}.`);
+  // Il rientro: in giornata prima del tramonto; su più giorni, l'ultimo giorno
+  if (v.pernotto === "nessuno" && v.consigli?.sole?.disponibile) frasi.push(`Rientro previsto prima delle ${v.consigli.sole.tramonto}.`);
+  if (v.pernotto !== "nessuno" && v.data_partenza && v.n_giorni > 1) {
+    const ultimo = new Date(`${v.data_partenza}T12:00:00`);
+    ultimo.setDate(ultimo.getDate() + v.n_giorni - 1);
+    frasi.push(`Rientro previsto ${ultimo.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}.`);
+  }
+  frasi.push(v.n_persone === 1 ? "Non viene nessuno con me." : `Siamo in ${v.n_persone}.`);
+  frasi.push("Se non ti scrivo entro sera, chiama il 112.");
+  return frasi.join(" ");
 }
 
 // --- Modifica viaggio: usa la finestra della pagina Viaggi, già compilata ---

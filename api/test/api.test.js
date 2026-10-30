@@ -55,3 +55,23 @@ test("con un login valido, un codice a barre fatto di lettere: 400 BAD_CODICE", 
   assert.equal(risposta.status, 400);
   assert.equal(risposta.body.error, "BAD_CODICE");
 });
+
+// --- B7: account ---
+test("cambio password senza login: 401", async () => {
+  const risposta = await request(app).put("/api/auth/me/password").send({ attuale: "Password123!", nuova: "NuovaPassword1" });
+  assert.equal(risposta.status, 401);
+});
+
+test("cambio password: la nuova troppo corta viene rifiutata (400) prima ancora di guardare il database", async () => {
+  const token = jwt.sign({ sub: 1, nome: "Asiha" }, process.env.JWT_SECRET);
+  const risposta = await request(app).put("/api/auth/me/password").set("Cookie", `token=${token}`)
+    .send({ attuale: "Password123!", nuova: "corta" });
+  assert.equal(risposta.status, 400);
+  assert.equal(risposta.body.error, "WEAK_PASSWORD");
+});
+
+test("eliminare l'account senza scrivere la password: 400", async () => {
+  const token = jwt.sign({ sub: 1, nome: "Asiha" }, process.env.JWT_SECRET);
+  const risposta = await request(app).delete("/api/auth/me").set("Cookie", `token=${token}`).send({});
+  assert.equal(risposta.status, 400);
+});

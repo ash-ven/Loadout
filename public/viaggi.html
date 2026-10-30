@@ -81,6 +81,26 @@
         <label>Data di partenza
           <input name="data_partenza" type="date">
         </label>
+
+        <!-- B1: il luogo per nome, con i suggerimenti (OpenStreetMap). Scegliendo un suggerimento
+             si compilano anche le coordinate qui sotto, in "Percorso e coordinate". -->
+        <div class="campo-luogo">
+          <label>Da dove parti
+            <input name="luogo_partenza" type="text" maxlength="200" required autocomplete="off"
+                   placeholder="es. Malga Prato, Rifugio Vajolet, Cortina…"
+                   role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggerimenti-partenza">
+          </label>
+          <ul class="suggerimenti" id="suggerimenti-partenza" role="listbox" hidden></ul>
+          <p class="muto nota-luogo" id="nota-partenza" hidden></p>
+        </div>
+        <div class="campo-luogo">
+          <label>Arrivo <span class="muto">(se diverso)</span>
+            <input name="luogo_arrivo" type="text" maxlength="200" autocomplete="off" placeholder="es. Rifugio Lagazuoi"
+                   role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggerimenti-arrivo">
+          </label>
+          <ul class="suggerimenti" id="suggerimenti-arrivo" role="listbox" hidden></ul>
+          <p class="muto nota-luogo" id="nota-arrivo" hidden></p>
+        </div>
         <label class="check"><input name="serve_cucina" type="checkbox"> Serve la cucina</label>
 
         <details>
@@ -93,6 +113,10 @@
               <input name="dislivello_m" type="number" min="0" max="9000" step="1">
             </label>
           </div>
+          <!-- B3: il punto più alto del percorso → freddo stimato in cima, avviso neve e ghiaccio -->
+          <label>Quota massima (m)
+            <input name="quota_max_m" type="number" min="0" max="9000" step="1" placeholder="es. 2400">
+          </label>
           <div class="riga2">
             <label>Latitudine partenza
               <input name="lat_partenza" type="number" min="-90" max="90" step="any" placeholder="es. 44.22">

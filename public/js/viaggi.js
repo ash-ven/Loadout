@@ -2,6 +2,7 @@ import { api, esc, formattaData, oggiISO } from "./api.js";
 import "./menu.js";
 import { segno } from "./segni.js";
 import { ATTIVITA } from "./categorie.js";
+import { attivaCampoLuogo } from "./campo-luogo.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -117,6 +118,16 @@ finestra.addEventListener("click", (e) => {
   if (e.target === finestra) finestra.close();
 });
 
+// B1: i due campi luogo con i suggerimenti (il nome e, scegliendo, le coordinate)
+const luogoPartenza = attivaCampoLuogo({
+  campoTesto: campi.luogo_partenza, lista: document.querySelector("#suggerimenti-partenza"),
+  campoLat: campi.lat_partenza, campoLon: campi.lon_partenza, nota: document.querySelector("#nota-partenza"),
+});
+const luogoArrivo = attivaCampoLuogo({
+  campoTesto: campi.luogo_arrivo, lista: document.querySelector("#suggerimenti-arrivo"),
+  campoLat: campi.lat_arrivo, campoLon: campi.lon_arrivo, nota: document.querySelector("#nota-arrivo"),
+});
+
 // Quando la finestra si chiude, il form torna pulito per la prossima volta
 function svuotaForm() {
   form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
@@ -125,6 +136,8 @@ function svuotaForm() {
   titoloForm.textContent = "Prepara il tuo cammino";
   bottoneSalva.textContent = "Crea il viaggio";
   rigaGenera.hidden = false;
+  luogoPartenza.aggiorna();
+  luogoArrivo.aggiorna();
 }
 
 finestra.addEventListener("close", () => {
@@ -145,9 +158,12 @@ function apriModifica(v) {
   bottoneSalva.textContent = "Salva le modifiche";
   rigaGenera.hidden = true; // lo zaino c'è già: "genera" lo trovi nella scheda
   for (const nome of ["nome", "attivita", "n_persone", "n_giorni", "pernotto", "data_partenza", "distanza_km",
-                      "dislivello_m", "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo", "note"]) {
+                      "dislivello_m", "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo", "note",
+                      "luogo_partenza", "luogo_arrivo", "quota_max_m"]) {
     campi[nome].value = v[nome] ?? "";
   }
+  luogoPartenza.aggiorna(); // mostra "Coordinate: …" se ci sono
+  luogoArrivo.aggiorna();
   campi.serve_cucina.checked = v.serve_cucina;
   campi.pianificato.checked = v.pianificato;
   apriFinestra();
@@ -173,12 +189,19 @@ function leggiForm() {
     lon_arrivo: numero("lon_arrivo"),
     note: campi.note.value.trim(),
     pianificato: campi.pianificato.checked,
+    luogo_partenza: campi.luogo_partenza.value.trim(),
+    luogo_arrivo: campi.luogo_arrivo.value.trim(),
+    quota_max_m: numero("quota_max_m"),
   };
 }
 
 function validaLatoClient(d) {
   const errori = [];
   if (!d.nome) errori.push("Il nome dell'uscita è obbligatorio");
+  if (!d.luogo_partenza) errori.push("Scrivi da dove parti");
+  if (d.quota_max_m !== undefined && (!Number.isInteger(d.quota_max_m) || d.quota_max_m < 0 || d.quota_max_m > 9000)) {
+    errori.push("La quota massima deve essere un numero intero di metri, tra 0 e 9000");
+  }
   if (d.n_persone !== undefined && (!Number.isInteger(d.n_persone) || d.n_persone < 1 || d.n_persone > 50)) {
     errori.push("Le persone devono essere tra 1 e 50");
   }

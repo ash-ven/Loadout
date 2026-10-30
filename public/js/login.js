@@ -3,6 +3,13 @@ import { api } from "./api.js";
 const form = document.querySelector("#form-login");
 const errore = document.querySelector("#errore");
 
+// B7: arrivo dopo aver eliminato l'account
+if (new URLSearchParams(location.search).has("eliminato")) {
+  const avviso = document.querySelector("#avviso-login");
+  avviso.textContent = "Il tuo account e tutti i tuoi dati sono stati eliminati.";
+  avviso.hidden = false;
+}
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault(); // altrimenti il browser ricarica la pagina
   errore.hidden = true;

@@ -142,3 +142,66 @@ router.get("/me/foto", requireAuth, async (req, res, next) => {
     res.set("Cache-Control", "private, no-cache").type(tipo).send(Buffer.from(base64, "base64"));
   } catch (err) { next(err); }
 });
+
+// =====================================================================
+//  B7: ACCOUNT E PRIVACY (GDPR): cambio password, scarica i miei dati, elimina account
+// =====================================================================
+
+// === PUT /api/auth/me/password — cambia la password (serve quella attuale) ===
+// Stesso limite di tentativi del login: chi ha rubato il cookie non può provare mille password "attuali"
+const schemaPassword = {
+  attuale: { type: "string", required: true },
+  nuova:   { type: "string", required: true },
+};
+router.put("/me/password", requireAuth, limiteLogin, validate(schemaPassword), async (req, res, next) => {
+  try {
+    const { attuale, nuova } = req.validated;
+    if (nuova.length < 8) throw new HttpError(400, "WEAK_PASSWORD", "La nuova password deve avere almeno 8 caratteri");
+    if (nuova === attuale) throw new HttpError(400, "SAME_PASSWORD", "La nuova password deve essere diversa da quella attuale");
+    const { rows } = await query("SELECT password_hash FROM utente WHERE id = $1", [req.user.sub]);
+    if (!rows[0] || !(await bcrypt.compare(attuale, rows[0].password_hash))) {
+      throw new HttpError(403, "WRONG_PASSWORD", "La password attuale non è corretta"); // 403, non 401: sei loggata, ma la conferma è sbagliata
+    }
+    await query("UPDATE utente SET password_hash = $1 WHERE id = $2", [await bcrypt.hash(nuova, 12), req.user.sub]);
+    res.status(204).end();
+  } catch (err) { next(err); }
+});
+
+// === GET /api/auth/me/dati — tutti i miei dati in un file JSON (diritto di accesso e portabilità) ===
+router.get("/me/dati", requireAuth, async (req, res, next) => {
+  try {
+    const id = req.user.sub;
+    const profilo = (await query(
+      `SELECT email, nome, peso_corporeo_kg, livello_esperienza, emergenza_nome, emergenza_telefono,
+              note_mediche, tessera_soccorso, sensibilita_freddo, foto FROM utente WHERE id = $1`, [id])).rows[0];
+    const oggetti = (await query("SELECT * FROM oggetto WHERE utente_id = $1 ORDER BY categoria, nome", [id])).rows;
+    const viaggi = (await query("SELECT * FROM viaggio WHERE utente_id = $1 ORDER BY data_partenza NULLS LAST, id", [id])).rows;
+    const zaini = (await query(
+      `SELECT vo.viaggio_id, o.nome, vo.quantita, vo.inserito, vo.indossato
+       FROM viaggio_oggetto vo JOIN viaggio v ON v.id = vo.viaggio_id JOIN oggetto o ON o.id = vo.oggetto_id
+       WHERE v.utente_id = $1 ORDER BY o.nome`, [id])).rows;
+    const dati = {
+      esportato_il: new Date().toISOString(),
+      profilo,
+      oggetti,
+      viaggi: viaggi.map((v) => ({ ...v, zaino: zaini.filter((z) => z.viaggio_id === v.id) })),
+    };
+    // "attachment": il browser lo scarica come file invece di mostrarlo
+    res.set("Content-Disposition", 'attachment; filename="loadout-i-miei-dati.json"').json(dati);
+  } catch (err) { next(err); }
+});
+
+// === DELETE /api/auth/me — elimina l'account e TUTTI i suoi dati (serve la password) ===
+// Oggetti, viaggi e zaini spariscono da soli: nel database sono collegati con ON DELETE CASCADE
+const schemaElimina = { password: { type: "string", required: true } };
+router.delete("/me", requireAuth, limiteLogin, validate(schemaElimina), async (req, res, next) => {
+  try {
+    const { rows } = await query("SELECT password_hash FROM utente WHERE id = $1", [req.user.sub]);
+    if (!rows[0] || !(await bcrypt.compare(req.validated.password, rows[0].password_hash))) {
+      throw new HttpError(403, "WRONG_PASSWORD", "Password non corretta");
+    }
+    await query("DELETE FROM utente WHERE id = $1", [req.user.sub]);
+    res.clearCookie("token").status(204).end(); // e il cookie di login non serve più
+  } catch (err) { next(err); }
+});
+

@@ -31,12 +31,22 @@ Regole dei campi del profilo:
 - `sensibilita_freddo` tra `alta` (soffro il freddo), `normale`, `bassa` (sento poco il freddo): sposta di 4 °C le soglie dei consigli di vestiario del meteo
 - `foto`: data URL `data:image/(jpeg|png|webp);base64,...`, max 200.000 caratteri (il frontend la riduce a 256×256 prima di mandarla). Body JSON massimo 300 kB
 
+### Account e privacy (B7)
+| Metodo | URL | Body | Risposta | Status |
+| --- | --- | --- | --- | --- |
+| PUT | /api/auth/me/password | `{ attuale*, nuova* }` – nuova ≥ 8 caratteri e diversa dall'attuale | nessun corpo | 204, 400 (`WEAK_PASSWORD`, `SAME_PASSWORD`), 401, 403 (`WRONG_PASSWORD`), 429 |
+| GET | /api/auth/me/dati | — | file JSON scaricabile `{ esportato_il, profilo, oggetti, viaggi: [ { …, zaino } ] }` (diritto di accesso e portabilità) | 200, 401 |
+| DELETE | /api/auth/me | `{ password* }` | nessun corpo; cancella l'utente e, a cascata, oggetti, viaggi e zaini; toglie il cookie | 204, 400, 401, 403 (`WRONG_PASSWORD`), 429 |
+
+Password sbagliata qui = **403** e non 401: sei loggata, è la conferma a essere sbagliata (con 401 il frontend ti rimanderebbe al login).
+Cambio password ed eliminazione hanno lo stesso limite di tentativi del login.
+
 ## Armadio (oggetti dell'utente loggato)
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
 | GET | /api/oggetti?q=&categoria=&limit=&offset= | — | array dei miei oggetti, ordinati per categoria e nome; `q` cerca nel nome; `categoria` tra quelle ammesse; limit 1–200 (default 50), offset ≥ 0 | 200, 400, 401 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
-| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta, attivita_adatte }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
+| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
 | PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano al valore di default) | l'oggetto aggiornato. Se `quantita_posseduta` scende sotto la quantità messa in qualche zaino, in quegli zaini la quantità scende allo stesso valore (stessa query, atomica) | 200, 400, 401, 404, 409 |
 | DELETE | /api/oggetti/:id | — | nessun corpo (sparisce anche dagli zaini: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
@@ -48,8 +58,6 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 - `codice_etichetta` max 64; `note` max 1000
 - `marchio` max 80; `caratteristiche` max 500 (caratteristiche tecniche, testo libero)
 - `quantita_posseduta` intero 1–99 (default 1): quanti pezzi ne possiedo
-- `attivita_adatte` elenco (array) di attività tra escursione, alpinismo, ciaspolata, ferrata; senza doppioni.
-  **Vuoto (default) = adatto a tutte le attività**
 
 ## Viaggi
 | Metodo | URL | Body | Risposta | Status |
@@ -68,6 +76,7 @@ Regole dei campi del viaggio (* = obbligatorio):
 - `lat_*` tra −90 e 90; `lon_*` tra −180 e 180
 - `dislivello_m` intero 0–9000 (salita di **tutto** il percorso); `distanza_km` 0.1–999 (lunghezza del sentiero, inserita dall'utente)
 - `note` max 1000; `pianificato` booleano (default false) – percorsi da fare in futuro
+- `luogo_partenza`, `luogo_arrivo` testo max 200 (B1); `quota_max_m` intero 0–9000 (B3, il punto più alto del percorso)
 
 Blocco `consigli` del dettaglio:
 - `ore_cammino_giorno`: da `?ore_cammino=` se presente (`fonte_ore: "utente"`), altrimenti stimate dal percorso
@@ -84,13 +93,21 @@ Blocco `consigli` del dettaglio:
 - `meteo`: `{ disponibile: true, temp_max, temp_min, prob_pioggia, vestiario: [...] }` da Open-Meteo per la data e le coordinate di partenza;
   `{ disponibile: false, motivo }` se mancano coordinate/data, se la partenza è passata o oltre 16 giorni, o se il servizio non risponde
   I consigli di `vestiario` tengono conto della `sensibilita_freddo` del profilo (temperatura percepita ±4 °C).
-- `avviso_peso`: `{ disponibile: true, peso_corporeo_kg, soglia_kg, troppo_pesante }` – soglia = 20% del peso corporeo,
-  confrontata con il peso dello zaino (senza gli oggetti indossati); `{ disponibile: false, motivo }` se il peso corporeo non è impostato
+  In più (B3): `quota_partenza_m` (da Open-Meteo), `cima` = `{ quota_m, temp_min, temp_max }` stimata con −6 °C ogni 1000 m se il viaggio
+  ha `quota_max_m` (altrimenti `null`), `vento_kmh` e `raffiche_kmh`; il vestiario si decide sulla minima in cima.
+- `ora_limite_partenza` (B2): `{ ora: "09:25", prima_dell_alba, margine_ore: 1 }` = tramonto − ore di cammino − 1 h; `null` senza alba/tramonto o ore
+- `neve_ghiaccio` (B3): `true` se `quota_max_m` ≥ 2000 e la data è tra ottobre e maggio (o senza data, o con minima in cima ≤ 0 °C)
+- `bollettino_valanghe` (B3): `true` con neve possibile oppure attività ciaspolata/alpinismo
+- `avviso_peso`: `{ disponibile: true, peso_corporeo_kg, soglia_percento, soglia_kg, troppo_pesante }` – soglia = **10%** del peso corporeo in giornata
+  (`pernotto` nessuno), **20%** con pernotto; confrontata con il **peso base** (zaino senza acqua e cibo, senza gli oggetti indossati); `{ disponibile: false, motivo }` se il peso corporeo non è impostato
 
 ## Zaino
+Le liste del kit (voci, parole chiave, quando servono) sono in `api/src/services/kit.js`: gli oggetti si riconoscono per parole chiave nel nome, nel marchio e nelle caratteristiche (senza maiuscole e accenti, a inizio parola); tra più oggetti adatti vince un indispensabile/preferito, poi il più leggero.
+
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| POST | /api/viaggi/:id/genera | — | `{ aggiunti: n }` – indispensabili + preferiti, cucina solo se `serve_cucina`, solo oggetti adatti all'attività del viaggio (o adatti a tutte); generare di nuovo non duplica | 200, 400, 401, 404 |
+| POST | /api/viaggi/:id/genera | — | `{ aggiunti, base, dal_kit, esclusi }` – **zaino intelligente** (B5), in una transazione: indispensabili + preferiti con `fn_genera_zaino` (cucina solo se `serve_cucina`) = `base`; in giornata toglie tra i nuovi quello che serve solo per dormire fuori (`esclusi`); aggiunge dall'armadio l'attrezzatura del kit dell'uscita (`dal_kit`); generare di nuovo non duplica | 200, 400, 401, 404 |
+| GET | /api/viaggi/:id/kit | — | `[ { voce, perche, categoria, stato, oggetto } ]` – l'attrezzatura che serve per l'uscita (attività, pernotto, cucina, freddo, neve): `stato` = `nello_zaino` / `nell_armadio` (con `oggetto: { id, nome }`) / `manca` | 200, 400, 401, 404 |
 | GET | /api/viaggi/:id/zaino | — | `{ peso, oggetti }` – vedi sotto | 200, 400, 401, 404 |
 | POST | /api/viaggi/:id/zaino | `{ oggetto_id*, quantita }` – quantita intero 1–99 (default 1) e non oltre i pezzi posseduti; l'oggetto deve essere mio | la riga dello zaino | 201, 400 (`QUANTITA_OLTRE_POSSEDUTI`), 401, 404, 409 (già nello zaino) |
 | PATCH | /api/viaggi/:id/zaino/:oggettoId | `{ inserito, quantita, indossato }` – almeno uno; cambia solo i campi inviati. `quantita` non oltre i pezzi posseduti; `indossato: true` solo per l'abbigliamento | la riga aggiornata | 200, 400 (`QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`), 401, 404 |
@@ -101,6 +118,15 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 - `peso`: `{ n_oggetti, peso_totale_g, peso_inserito_g, peso_totale_kg, peso_inserito_kg, peso_addosso_g, peso_addosso_kg }`.
   Gli oggetti **indossati** non contano in `peso_totale` e `peso_inserito`: il loro peso è in `peso_addosso`
 - `oggetti`: `[ { oggetto_id, nome, categoria, peso_g, quantita, peso_riga_g, inserito, is_indispensabile, is_preferito, indossato, quantita_posseduta, marchio } ]`
+
+## Luoghi (B1)
+| Metodo | URL | Body | Risposta | Status |
+| --- | --- | --- | --- | --- |
+| GET | /api/luoghi?q=malga prato | — | fino a 6 luoghi: `[ { etichetta, tipo, lat, lon } ]` (es. `"Rifugio Vajolet (Pozza di Fassa, TN)"`, `"rifugio"`) | 200, 400 (`BAD_QUERY`: 3–100 caratteri), 401, 502 (`LUOGHI_NON_DISPONIBILI`) |
+
+- Il server interroga Nominatim (OpenStreetMap), al massimo una richiesta al secondo, e tiene i risultati in memoria.
+- Nel viaggio si salvano `luogo_partenza` e `luogo_arrivo` (testo, max 200) insieme alle coordinate. Nel form "Da dove parti" è
+  obbligatorio; l'API lo accetta facoltativo (viaggi creati prima, richieste di prova). Le coordinate restano facoltative e modificabili a mano.
 
 ## Prodotti (dal codice a barre, stretch 2)
 | Metodo | URL | Body | Risposta | Status |

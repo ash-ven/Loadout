@@ -54,25 +54,50 @@ export async function sole(viaggio) {
   }
 }
 
+// B2: entro che ora partire per arrivare con UN'ORA DI LUCE di margine.
+//   ora limite = tramonto − ore di cammino − margine
+// Funzione "pura" (lavora solo sui dati che riceve): la provano i test in test/consigli.test.js
+export function oraLimitePartenza(alba, tramonto, oreCammino, margineOre = 1) {
+  if (!alba || !tramonto || oreCammino == null) return null;
+  const minuti = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; }; // "16:55" → 1015
+  const limite = minuti(tramonto) - Math.round((oreCammino + margineOre) * 60);
+  const dueCifre = (n) => String(n).padStart(2, "0");
+  return {
+    ora: limite >= 0 ? `${dueCifre(Math.floor(limite / 60))}:${dueCifre(limite % 60)}` : null,
+    prima_dell_alba: limite < minuti(alba), // il cammino è più lungo delle ore di luce
+    margine_ore: margineOre,
+  };
+}
+
 function oraItaliana(iso) {
   return new Date(iso).toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
 }
 
-// 5. Avviso se lo zaino supera il 20% del peso corporeo (stretch 5)
-export async function avvisoPeso(utenteId, pesoZainoKg) {
+// 5. Avviso se lo zaino è troppo pesante rispetto al peso corporeo (stretch 5)
+//    B4: la soglia dipende dall'uscita: 10% in giornata, 20% con pernotto.
+//    Conta il PESO BASE: lo zaino senza acqua e cibo (cambiano a ogni uscita e calano mentre cammini).
+export function sogliaPeso(pesoCorporeoKg, pernotto) {
+  const percento = pernotto === "nessuno" ? 10 : 20;
+  return { percento, soglia_kg: Math.round(pesoCorporeoKg * percento) / 100 };
+}
+
+export async function avvisoPeso(utenteId, pesoZainoKg, pernotto) {
   const { rows } = await query("SELECT peso_corporeo_kg FROM utente WHERE id = $1", [utenteId]);
   const pesoCorporeo = rows[0]?.peso_corporeo_kg ?? null;
   if (pesoCorporeo == null) {
     return { disponibile: false, motivo: "imposta il tuo peso corporeo nel profilo" };
   }
-  const soglia = Math.round(pesoCorporeo * 0.2 * 100) / 100;
+  const { percento, soglia_kg } = sogliaPeso(pesoCorporeo, pernotto);
   return {
     disponibile: true,
     peso_corporeo_kg: pesoCorporeo,
-    soglia_kg: soglia,
-    troppo_pesante: pesoZainoKg > soglia,
+    soglia_percento: percento,
+    soglia_kg,
+    troppo_pesante: pesoZainoKg > soglia_kg,
   };
 }
+
+const memoriaMeteo = new Map(); // indirizzo della richiesta → { quando, json }
 
 // 6. Meteo del giorno di partenza da Open-Meteo + suggerimenti sul vestiario (stretch 1)
 //    sensibilita = la sensibilità al freddo del profilo ("alta", "normale", "bassa" o null)
@@ -91,20 +116,38 @@ export async function meteo(viaggio, sensibilita = null) {
   try {
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max` +
       `&timezone=Europe%2FRome&start_date=${data}&end_date=${data}`;
-    const risposta = await fetch(url, { signal: AbortSignal.timeout(3000) });
-    if (!risposta.ok) throw new Error(`HTTP ${risposta.status}`);
-    const { daily } = await risposta.json();
+    // Memoria di 30 minuti: il meteo lo chiedono sia il dettaglio sia il riquadro del kit (B5)
+    let dati = memoriaMeteo.get(url);
+    if (!dati || Date.now() - dati.quando > 30 * 60 * 1000) {
+      const risposta = await fetch(url, { signal: AbortSignal.timeout(3000) });
+      if (!risposta.ok) throw new Error(`HTTP ${risposta.status}`);
+      dati = { quando: Date.now(), json: await risposta.json() };
+      if (memoriaMeteo.size > 200) memoriaMeteo.clear();
+      memoriaMeteo.set(url, dati);
+    }
+    const { daily, elevation } = dati.json; // elevation = la quota del punto di partenza (m)
     const tMax = daily.temperature_2m_max[0];
     const tMin = daily.temperature_2m_min[0];
     const pioggia = daily.precipitation_probability_max[0];
+    const vento = daily.wind_speed_10m_max?.[0] ?? null;    // km/h
+    const raffiche = daily.wind_gusts_10m_max?.[0] ?? null; // km/h
+    const quotaPartenza = elevation != null ? Math.round(elevation) : null;
+    // B3: con la quota massima, stimiamo le temperature in cima (−6 °C ogni 1000 m di salita)
+    const cima = quotaPartenza != null && viaggio.quota_max_m != null
+      ? stimaInCima(tMin, tMax, quotaPartenza, viaggio.quota_max_m) : null;
     return {
       disponibile: true,
       temp_max: tMax,
       temp_min: tMin,
       prob_pioggia: pioggia,
-      vestiario: consigliVestiario(tMin, tMax, pioggia, sensibilita),
+      quota_partenza_m: quotaPartenza,
+      cima,                          // { quota_m, temp_min, temp_max } oppure null
+      vento_kmh: vento,
+      raffiche_kmh: raffiche,
+      // il vestiario si decide sul punto più freddo: la cima, se la conosciamo
+      vestiario: consigliVestiario(cima?.temp_min ?? tMin, tMax, pioggia, sensibilita, vento),
     };
   } catch (err) {
     console.error("open-meteo non disponibile:", err.message);
@@ -117,7 +160,7 @@ export async function meteo(viaggio, sensibilita = null) {
 const GRADI_PERCEPITI = { alta: -4, normale: 0, bassa: +4 };
 
 // Funzione "pura" (niente rete né database): la provano i test in test/consigli.test.js
-export function consigliVestiario(tMin, tMax, pioggia, sensibilita = null) {
+export function consigliVestiario(tMin, tMax, pioggia, sensibilita = null, ventoKmh = null) {
   const spostamento = GRADI_PERCEPITI[sensibilita] ?? 0;
   const minPercepita = tMin + spostamento;
   const maxPercepita = tMax + spostamento;
@@ -127,10 +170,30 @@ export function consigliVestiario(tMin, tMax, pioggia, sensibilita = null) {
   else if (minPercepita < 8) consigli.push("Pile o piumino leggero per le ore più fresche");
   if (maxPercepita > 25) consigli.push("Abbigliamento traspirante, cappello e crema solare");
   if (pioggia >= 50) consigli.push("Giacca impermeabile e copri-zaino");
+  if (ventoKmh != null && ventoKmh >= 30) consigli.push("Giacca antivento: il vento fa sentire più freddo");
   if (consigli.length === 0) consigli.push("Abbigliamento a strati: temperature miti");
   if (spostamento < 0) consigli.push("Consigli adattati al tuo profilo: soffri il freddo");
   if (spostamento > 0) consigli.push("Consigli adattati al tuo profilo: senti poco il freddo");
   return consigli;
+}
+
+// B3: temperature stimate in cima. In montagna l'aria si raffredda di circa 6 °C ogni 1000 m di salita.
+// È una stima (d'inverno, con l'inversione termica, in quota può fare anche più caldo che a valle).
+export function stimaInCima(tMin, tMax, quotaPartenza, quotaCima, gradiOgni1000 = 6) {
+  const salita = quotaCima - quotaPartenza;
+  if (salita <= 0) return null; // la cima non è più in alto della partenza: niente da stimare
+  const calo = (gradiOgni1000 * salita) / 1000;
+  const unDecimale = (n) => Math.round(n * 10) / 10;
+  return { quota_m: quotaCima, temp_min: unDecimale(tMin - calo), temp_max: unDecimale(tMax - calo) };
+}
+
+// B3: neve o ghiaccio possibili? Sopra i 2000 m, tra ottobre e maggio, oppure con la minima in cima sotto zero.
+// Senza data non possiamo escluderlo: meglio avvisare.
+export function rischioNeve(quotaMax, dataISO, tempMinCima = null) {
+  if (quotaMax == null || quotaMax < 2000) return false;
+  if (!dataISO) return true;
+  const mese = Number(dataISO.slice(5, 7));
+  return mese >= 10 || mese <= 5 || (tempMinCima != null && tempMinCima <= 0);
 }
 
 // La sensibilità al freddo dell'utente (null se non l'ha indicata)

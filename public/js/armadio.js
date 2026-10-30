@@ -1,6 +1,6 @@
 import { api, esc } from "./api.js";
 import "./menu.js";
-import { CATEGORIE, ATTIVITA } from "./categorie.js";
+import { CATEGORIE } from "./categorie.js";
 import { segno, iconaSegno } from "./segni.js";
 
 // --- Elementi della pagina ---
@@ -52,7 +52,6 @@ const grammi = (g) => `${g.toLocaleString("it-IT", { useGrouping: "always" })}&n
 
 
 // Le checkbox "Adatto a" hanno tutte lo stesso name: querySelectorAll le prende tutte
-const spunteAttivita = () => [...form.querySelectorAll('input[name="attivita_adatte"]')];
 
 // Peso di un oggetto contando tutti i pezzi che possiedi (B2): 3 paia di calze da 60 g = 180 g
 const pesoTuttiIPezzi = (o) => o.peso_g * (o.quantita_posseduta ?? 1);
@@ -151,7 +150,6 @@ function apriDettaglio(o, nota = "") {
     ["Categoria", CATEGORIE[o.categoria]],
     ["Peso", `${o.peso_g.toLocaleString("it-IT", { useGrouping: "always" })} g`],
     ["Pezzi", o.quantita_posseduta],
-    ["Adatto a", o.attivita_adatte?.length ? o.attivita_adatte.map((a) => ATTIVITA[a]).join(", ") : "Tutte le attività"],
     ["Caratteristiche", o.caratteristiche],
     ["Codice etichetta", o.codice_etichetta],
     ["Note", o.note],
@@ -206,7 +204,6 @@ function riempiForm(o) {
   campi.marchio.value = o.marchio ?? "";
   campi.quantita_posseduta.value = o.quantita_posseduta ?? 1;
   campi.caratteristiche.value = o.caratteristiche ?? "";
-  spunteAttivita().forEach((c) => { c.checked = (o.attivita_adatte ?? []).includes(c.value); });
   campi.is_indispensabile.checked = o.is_indispensabile;
   campi.is_preferito.checked = o.is_preferito;
   campi.codice_etichetta.value = o.codice_etichetta ?? "";
@@ -421,7 +418,6 @@ function leggiForm() {
     marchio: campi.marchio.value.trim(),
     quantita_posseduta: Number(campi.quantita_posseduta.value || 1),
     caratteristiche: campi.caratteristiche.value.trim(),
-    attivita_adatte: spunteAttivita().filter((c) => c.checked).map((c) => c.value), // [] = tutte
     is_indispensabile: campi.is_indispensabile.checked,
     is_preferito: campi.is_preferito.checked,
     codice_etichetta: campi.codice_etichetta.value.trim(),
@@ -478,3 +474,16 @@ function nascondiErrore() {
 q.addEventListener("input", carica);
 
 carica(); // primo caricamento all'apertura della pagina
+
+// B5: arrivo dal riquadro "Per questa uscita" con ?nuovo=Casco&categoria=sicurezza:
+// apro il form del nuovo oggetto con nome e categoria già scritti (poi tolgo i parametri dall'indirizzo)
+const richiesta = new URLSearchParams(location.search);
+if (richiesta.has("nuovo")) {
+  history.replaceState(null, "", location.pathname);
+  svuotaForm();
+  campi.nome.value = richiesta.get("nuovo");
+  if (CATEGORIE[richiesta.get("categoria")]) campi.categoria.value = richiesta.get("categoria");
+  infoForm.textContent = "Dalla tua uscita: completa peso e dettagli, poi salva. Torna all'uscita e premi «Genera zaino».";
+  infoForm.hidden = false;
+  apriFinestra(campi.peso_g); // nome e categoria ci sono già: si parte dal peso
+}

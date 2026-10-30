@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as svc from "../services/viaggi.js";
 import * as zaino from "../services/zaino.js";
 import * as consigli from "../services/consigli.js";
+import * as kit from "../services/kit.js";
 import { validate } from "../middleware/validate.js";
 
 export const router = Router();
@@ -25,6 +26,9 @@ const schemaViaggio = {
   distanza_km:   { type: "number", min: 0.1, max: 999 },
   note:          { type: "string", maxLength: 1000 },
   pianificato:   { type: "boolean" },
+  luogo_partenza:{ type: "string", maxLength: 200 },   // B1: obbligatorio nel form; qui facoltativo (viaggi vecchi, richieste di prova)
+  luogo_arrivo:  { type: "string", maxLength: 200 },
+  quota_max_m:   { type: "number", integer: true, min: 0, max: 9000 }, // B3
 };
 
 // === Middleware "guardiano": il viaggio :id esiste ed è mio? ===
@@ -78,6 +82,8 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
     const sole = await consigli.sole(v);
     const meteo = await consigli.meteo(v, await consigli.sensibilitaFreddo(req.user.sub));
     const tempMax = meteo.disponibile ? meteo.temp_max : null;
+    const neve = consigli.rischioNeve(v.quota_max_m, v.data_partenza,
+      meteo.disponibile ? (meteo.cima?.temp_min ?? meteo.temp_min) : null);
     const acqua = ore == null ? null : await consigli.acqua(v, ore, tempMax); // { persona_giorno, totale }
 
     res.json({
@@ -93,8 +99,13 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
         acqua_con_dislivello: v.dislivello_m != null,
         acqua_con_cucina: v.serve_cucina,
         sole,
+        // B2: "parti entro le 9:25" (tramonto − ore di cammino − 1 ora di margine)
+        ora_limite_partenza: sole.disponibile && ore != null ? consigli.oraLimitePartenza(sole.alba, sole.tramonto, ore) : null,
         meteo,
-        avviso_peso: await consigli.avvisoPeso(req.user.sub, peso.peso_totale_kg),
+        // B3: neve e ghiaccio possibili sopra i 2000 m; bollettino valanghe per ciaspole, alpinismo o neve
+        neve_ghiaccio: neve,
+        bollettino_valanghe: neve || ["ciaspolata", "alpinismo"].includes(v.attivita),
+        avviso_peso: await consigli.avvisoPeso(req.user.sub, peso.peso_totale_kg, v.pernotto),
       },
     });
   } catch (err) { next(err); }
@@ -145,8 +156,14 @@ router.delete("/:id", async (req, res, next) => {
 // === POST /api/viaggi/:id/genera (US4) ===
 router.post("/:id/genera", caricaViaggio, async (req, res, next) => {
   try {
-    const aggiunti = await zaino.genera(req.viaggio.id);
-    res.json({ aggiunti });
+    res.json(await zaino.genera(req.user.sub, req.viaggio)); // B5: { aggiunti, base, dal_kit, esclusi }
+  } catch (err) { next(err); }
+});
+
+// === GET /api/viaggi/:id/kit (B5: "Per questa uscita": per ogni voce, nello zaino / nell'armadio / manca) ===
+router.get("/:id/kit", caricaViaggio, async (req, res, next) => {
+  try {
+    res.json(await kit.stato(req.user.sub, req.viaggio));
   } catch (err) { next(err); }
 });
 

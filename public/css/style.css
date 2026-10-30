@@ -415,3 +415,32 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 /* Scheda viaggio: "Aggiungi dall'armadio" dentro la card dello zaino, separato da una riga */
 .titolo-aggiungi { margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--bordo); font-size: 1rem; }
 .segmenti button svg { flex-shrink: 0; margin-right: .3rem; vertical-align: -.2em; }   /* icona-legenda accanto al nome del filtro */
+
+/* --- B1: campo luogo con i suggerimenti --- */
+.campo-luogo { display: grid; gap: .3rem; }
+.suggerimenti { list-style: none; margin: 0; padding: .3rem; display: grid; gap: .15rem;
+                background: var(--lana-chiara); border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); }
+.suggerimento { display: flex; justify-content: space-between; gap: .75rem; width: 100%; padding: .55rem .7rem; text-align: left;
+                background: transparent; color: var(--testo); font-weight: 500; border-radius: 8px; }
+.suggerimento:hover, .suggerimento:focus-visible { background: var(--salvia-chiaro); }
+.suggerimento .muto { flex-shrink: 0; font-size: .8rem; }
+.suggerimento-info { padding: .55rem .7rem; font-size: .88rem; color: var(--terra); }
+.nota-luogo { margin: 0; font-size: .8rem; }
+.riga-acqua { margin: -.25rem 0 .5rem; font-size: .85rem; }   /* B4: il promemoria sull'acqua sotto il peso */
+
+/* --- B5: riquadro "Per questa uscita" --- */
+.kit { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .1rem; }
+.kit li { display: flex; align-items: center; gap: .6rem; padding: .55rem 0; border-top: 1px solid var(--bordo); }
+.kit li:first-child { border-top: 0; }
+.kit-segno { flex-shrink: 0; display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%;
+             font-weight: 700; font-size: .85rem; background: var(--lana-chiara); color: var(--terra); border: 1px solid var(--bordo); }
+.kit-ok .kit-segno { background: var(--salvia-chiaro); color: var(--muschio); border-color: transparent; }
+.kit-manca .kit-segno { background: var(--ocra-chiaro); color: #6e4f0f; border-color: transparent; }
+.kit-testo { flex: 1; min-width: 0; font-size: .92rem; }
+.kit-perche { display: block; font-size: .78rem; color: var(--terra); }
+.kit li > .btn-piccolo { flex-shrink: 0; }
+/* B6: "Lascia detto" nel riquadro Emergenza */
+.lascia-detto { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: .75rem; padding-top: .75rem; border-top: 1px dashed var(--bordo); }
+/* B7: le tre parti di "Account e privacy", separate da una riga */
+#account-privacy h3 { margin: 1.5rem 0 .5rem; padding-top: 1.25rem; border-top: 1px solid var(--bordo); font-size: 1.05rem; }
+#account-privacy h2 + h3 { margin-top: .75rem; padding-top: 0; border-top: 0; }

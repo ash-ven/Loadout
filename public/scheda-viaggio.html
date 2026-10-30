@@ -52,7 +52,10 @@
               <button type="button" class="secondario" id="svuota">Togli tutte le spunte</button>
             </div>
           </div>
-          <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti<span class="muto" id="peso-addosso" hidden></span></p>
+          <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti
+            <span class="muto">(senza acqua e cibo)</span><span class="muto" id="peso-addosso" hidden></span></p>
+          <!-- B4: l'acqua si porta in più, ma non entra nel calcolo (peso base) -->
+          <p class="muto riga-acqua" id="peso-acqua" hidden></p>
           <div class="barra"><div id="barra-riempimento"></div></div>
           <p class="avviso" id="avviso-peso" hidden><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24"><span id="testo-avviso-peso"></span></p>
           <p class="muto" id="messaggio-zaino" hidden></p>
@@ -65,6 +68,13 @@
             <input name="quantita" type="number" min="1" max="99" step="1" value="1" aria-label="Quantità">
             <button type="submit">Aggiungi</button>
           </form>
+        </section>
+
+        <!-- B5: "Per questa uscita": l'attrezzatura che serve per questa uscita e dove si trova -->
+        <section class="card" id="kit-card" hidden>
+          <h2><img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Per questa uscita</h2>
+          <p class="muto" id="kit-riepilogo"></p>
+          <ul class="kit" id="kit"></ul>
         </section>
 
         <!-- La checklist, divisa per categoria come l'armadio: la riempie scheda-viaggio.js -->
@@ -90,6 +100,7 @@
         <div class="consiglio">
           <h3><img class="icona" src="/img/icone/sole.svg" alt="" width="24" height="24">Alba e tramonto</h3>
           <p id="sole"></p>
+          <p class="avviso" id="ora-limite" hidden></p>
         </div>
         <div class="consiglio">
           <h3><img class="icona" src="/img/icone/meteo.svg" alt="" width="24" height="24">Meteo</h3>

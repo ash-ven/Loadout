@@ -1,9 +1,22 @@
-import { query } from "../db.js";
+import { query, pool } from "../db.js";
+import * as kit from "./kit.js";
 
-// Riempie lo zaino con indispensabili e preferiti (logica nel database)
-export async function genera(viaggioId) {
-  const { rows } = await query("SELECT fn_genera_zaino($1) AS aggiunti", [viaggioId]);
-  return rows[0].aggiunti;
+// B5: "Genera zaino" intelligente, tutto in UNA transazione (o tutto, o niente):
+// indispensabili e preferiti (fn_genera_zaino) + l'attrezzatura del kit trovata nell'armadio.
+export async function genera(utenteId, viaggio) {
+  const uscita = await kit.condizioni(viaggio); // prima della transazione: chiede il meteo (rete), non tiene occupato il database
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const risultato = await kit.generaIntelligente(client, utenteId, viaggio, uscita);
+    await client.query("COMMIT");
+    return risultato; // { aggiunti, base, dal_kit, esclusi }
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // La checklist: una riga per oggetto, con categoria, peso, quantità, inserito

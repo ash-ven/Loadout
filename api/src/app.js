@@ -13,6 +13,7 @@ import { router as authRouter } from "./routes/auth.js";
 import { router as oggettiRouter } from "./routes/oggetti.js";
 import { router as viaggiRouter } from "./routes/viaggi.js";
 import { router as prodottiRouter } from "./routes/prodotti.js";
+import { router as luoghiRouter } from "./routes/luoghi.js";
 
 // Cartella di questo file (api/src) e cartella del frontend (loadout/public)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -73,6 +74,7 @@ app.get("/api/health", async (req, res) => {
 app.use("/api/auth", authRouter);                        // libera (login, register…)
 app.use("/api/oggetti", requireAuth, oggettiRouter);     // protetta
 app.use("/api/viaggi", requireAuth, viaggiRouter);       // protetta
+app.use("/api/luoghi", requireAuth, luoghiRouter);       // protetta (B1: cerca un luogo per nome)
 app.use("/api/prodotti", requireAuth, prodottiRouter);   // protetta (stretch 2: cerca il prodotto dal codice a barre)
 
 // === 4. CHIUSURA (dopo tutte le rotte) ===
