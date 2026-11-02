@@ -1,7 +1,7 @@
 // Test dello zaino intelligente: le liste del kit e il riconoscimento degli oggetti (niente database)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { corrisponde, vociPerUscita, migliorOggetto, doppioni } from "../src/services/kit.js";
+import { corrisponde, vociPerUscita, migliorOggetto, doppioni, litriConsigliati, scegliZaino, avvisoZainoPiccolo } from "../src/services/kit.js";
 
 const uscita = (altro) => ({ attivita: "escursione", pernotto: "nessuno", serve_cucina: false, freddo: false, neve: false, ...altro });
 const ids = (voci) => voci.map((v) => v.id);
@@ -86,4 +86,41 @@ test("sacco a pelo in rifugio solo se la notte è fredda (sotto 10 °C)", () => 
   assert.ok(ids({ ...base, notte_fredda: true }).includes("sacco-a-pelo-rifugio"));
   assert.ok(!ids({ ...base, notte_fredda: false }).includes("sacco-a-pelo-rifugio"));
   assert.ok(ids({ ...base, notte_fredda: false }).includes("sacco-lenzuolo"));          // il lenzuolo serve sempre in rifugio
+});
+
+// --- Zaini con i litri: quale zaino per quale viaggio ---
+const giornata = { attivita: "escursione", pernotto: "nessuno", n_giorni: 1 };
+const ciaspole = { attivita: "ciaspolata", pernotto: "nessuno", n_giorni: 1 };
+const rifugio = { attivita: "escursione", pernotto: "rifugio", n_giorni: 2 };
+const tenda = { attivita: "escursione", pernotto: "tenda", n_giorni: 2 };
+const lungo = { attivita: "escursione", pernotto: "rifugio", n_giorni: 5 }; // più di 3 giorni: come la tenda
+
+test("zaini: litri consigliati per tipo di viaggio", () => {
+  assert.deepEqual(litriConsigliati(giornata), { min: 20, max: 30 });
+  assert.deepEqual(litriConsigliati(ciaspole), { min: 30, max: 40 });
+  assert.deepEqual(litriConsigliati(rifugio), { min: 30, max: 45 });
+  assert.deepEqual(litriConsigliati(tenda), { min: 50, max: 70 });
+  assert.deepEqual(litriConsigliati(lungo), { min: 50, max: 70 });
+});
+
+const z = (id, litri, peso_g, extra = {}) => ({ id, nome: `Zaino ${litri ?? "?"}`, litri, peso_g, is_indispensabile: false, is_preferito: false, ...extra });
+
+test("zaini: sceglie il più piccolo che basta (in giornata il 25 L, non il 45 L)", () => {
+  const scelta = scegliZaino([z(1, 45, 1500), z(2, 25, 900), z(3, 18, 600)], giornata);
+  assert.equal(scelta.zaino.id, 2);
+  assert.equal(scelta.troppo_piccolo, false);
+  assert.equal(avvisoZainoPiccolo(scelta), null);
+});
+
+test("zaini: se nessuno basta prende il più grande e avvisa", () => {
+  const scelta = scegliZaino([z(1, 35, 1200), z(2, 25, 900)], tenda);
+  assert.equal(scelta.zaino.id, 1);
+  assert.equal(scelta.troppo_piccolo, true);
+  assert.match(avvisoZainoPiccolo(scelta), /più grande è da 35 L.*50–70/);
+});
+
+test("zaini: a parità di litri il più leggero; senza litri conta prima il preferito", () => {
+  assert.equal(scegliZaino([z(1, 30, 1100), z(2, 30, 800)], rifugio).zaino.id, 2);
+  assert.equal(scegliZaino([z(1, null, 700), z(2, null, 1200, { is_preferito: true })], giornata).zaino.id, 2);
+  assert.equal(scegliZaino([], giornata).zaino, null); // nessuno zaino nell'armadio
 });

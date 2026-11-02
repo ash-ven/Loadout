@@ -127,6 +127,43 @@ export function vociPerUscita(uscita) {
   return VOCI.filter((v) => v.quando(uscita));
 }
 
+// --- Lo ZAINO giusto per il viaggio (in base ai litri) ---
+// Quanti litri servono, a seconda del viaggio (scelta di Asiha):
+//   tenda o bivacco, oppure più di 3 giorni         → 50–70 L
+//   in rifugio                                      → 30–45 L
+//   in giornata con ciaspole, alpinismo o ferrata   → 30–40 L (pala, sonda, corda, imbrago…)
+//   in giornata                                     → 20–30 L
+export function litriConsigliati(u) {
+  if (u.pernotto === "tenda" || u.pernotto === "bivacco" || u.n_giorni > 3) return { min: 50, max: 70 };
+  if (u.pernotto === "rifugio") return { min: 30, max: 45 };
+  if (["ciaspolata", "alpinismo", "ferrata"].includes(u.attivita)) return { min: 30, max: 40 };
+  return { min: 20, max: 30 };
+}
+
+// Tra gli zaini dell'armadio sceglie quello giusto: il PIÙ PICCOLO che basta (di solito anche il più leggero).
+// Se nessuno basta, il più grande che hai, e troppo_piccolo = true (l'app ti avvisa).
+// Gli zaini senza litri si usano solo se non ce n'è nessuno con i litri (prima indispensabili e preferiti, poi il più leggero).
+// → { zaino, troppo_piccolo, consigliati } oppure { zaino: null, … } se nell'armadio non hai zaini
+export function scegliZaino(zaini, u) {
+  const consigliati = litriConsigliati(u);
+  const conLitri = zaini.filter((z) => z.litri != null);
+  if (conLitri.length === 0) {
+    const zaino = [...zaini].sort((a, b) => (b.is_indispensabile || b.is_preferito) - (a.is_indispensabile || a.is_preferito)
+      || a.peso_g - b.peso_g)[0] ?? null;
+    return { zaino, troppo_piccolo: false, consigliati };
+  }
+  const bastano = conLitri.filter((z) => z.litri >= consigliati.min).sort((a, b) => a.litri - b.litri || a.peso_g - b.peso_g);
+  if (bastano.length) return { zaino: bastano[0], troppo_piccolo: false, consigliati };
+  const piuGrande = [...conLitri].sort((a, b) => b.litri - a.litri || a.peso_g - b.peso_g)[0];
+  return { zaino: piuGrande, troppo_piccolo: true, consigliati };
+}
+
+// Il testo dell'avviso se lo zaino scelto è troppo piccolo (lo mostrano "Genera zaino" e il riquadro "Per questo viaggio")
+export function avvisoZainoPiccolo(scelta) {
+  if (!scelta.troppo_piccolo) return null;
+  return `Il tuo zaino più grande è da ${scelta.zaino.litri} L: per questo viaggio ne servono ${scelta.consigliati.min}–${scelta.consigliati.max}, potrebbe stare stretto`;
+}
+
 // Tra gli oggetti che corrispondono alla voce, il migliore: prima indispensabili e preferiti, poi il più leggero
 export function migliorOggetto(voce, oggetti) {
   return oggetti
@@ -150,13 +187,13 @@ export async function condizioni(viaggio) {
   const notteFredda = minima != null ? minima < 10 : mese != null && (mese >= 10 || mese <= 5);
   const quotaAlta = viaggio.quota_max_m != null && viaggio.quota_max_m >= 2000; // C1: occhiali e crema solare in quota
   const caldo = meteo.disponibile && meteo.temp_max > 25;                        // C1: cappello e crema con il caldo
-  return { attivita: viaggio.attivita, pernotto: viaggio.pernotto, serve_cucina: viaggio.serve_cucina,
+  return { attivita: viaggio.attivita, pernotto: viaggio.pernotto, serve_cucina: viaggio.serve_cucina, n_giorni: viaggio.n_giorni,
            freddo, notte_fredda: notteFredda, neve, quota_alta: quotaAlta, caldo };
 }
 
 async function armadio(db, utenteId) {
   const { rows } = await db.query(
-    "SELECT id, nome, marchio, caratteristiche, peso_g, is_indispensabile, is_preferito FROM oggetto WHERE utente_id = $1",
+    "SELECT id, nome, categoria, litri, marchio, caratteristiche, peso_g, is_indispensabile, is_preferito FROM oggetto WHERE utente_id = $1",
     [utenteId]
   );
   return rows;
@@ -188,7 +225,8 @@ export function doppioni(nuovi, giaPresenti, voci = VOCI) {
 // Il nuovo "Genera zaino". Va chiamato DENTRO una transazione (db = il client con BEGIN già fatto):
 //   1. indispensabili e preferiti con fn_genera_zaino (la logica di base resta nel database);
 //   2. in giornata toglie quello che serve solo per dormire fuori (tra gli oggetti appena aggiunti);
-//   3. aggiunge dall'armadio l'attrezzatura del kit che manca nello zaino.
+//   3. aggiunge dall'armadio l'attrezzatura del kit che manca nello zaino;
+//   4. sceglie lo zaino giusto per i litri (fn_genera_zaino gli zaini non li aggiunge più).
 export async function generaIntelligente(db, utenteId, viaggio, uscita) {
   const prima = await idNelloZaino(db, viaggio.id);
   const { rows } = await db.query("SELECT fn_genera_zaino($1) AS aggiunti", [viaggio.id]);
@@ -240,8 +278,22 @@ export async function generaIntelligente(db, utenteId, viaggio, uscita) {
     dalKit++;
   }
 
+  // Lo zaino: se nello zaino del viaggio non ce n'è già uno (messo a mano), l'app sceglie quello giusto per i litri
+  let zaino = null;
+  const zainiArmadio = oggetti.filter((o) => o.categoria === "zaini");
+  const giaUnoZaino = zainiArmadio.some((z) => nelloZaino.has(z.id));
+  if (!giaUnoZaino && zainiArmadio.length) {
+    const scelta = scegliZaino(zainiArmadio, uscita);
+    await db.query(
+      "INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id, quantita) VALUES ($1, $2, 1) ON CONFLICT DO NOTHING",
+      [viaggio.id, scelta.zaino.id]
+    );
+    zaino = { id: scelta.zaino.id, nome: scelta.zaino.nome, litri: scelta.zaino.litri, avviso: avvisoZainoPiccolo(scelta) };
+  }
+
   const base = rows[0].aggiunti - esclusi - esclusiRifugio - doppi.length;
-  return { aggiunti: base + dalKit, base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio, doppioni: doppi.length };
+  return { aggiunti: base + dalKit + (zaino ? 1 : 0), base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio,
+           doppioni: doppi.length, zaino };
 }
 
 // Il riquadro "Per questo viaggio": per ogni voce, se è nello zaino, nell'armadio o se manca
@@ -250,11 +302,29 @@ export async function stato(utenteId, viaggio) {
   const oggetti = await armadio({ query }, utenteId);
   const nelloZaino = await idNelloZaino({ query }, viaggio.id);
   const nelloZainoOggetti = oggetti.filter((o) => nelloZaino.has(o.id));
-  return vociPerUscita(uscita).map((voce) => {
+  return [statoZaino(oggetti, nelloZaino, uscita), ...vociPerUscita(uscita).map((voce) => {
     const dentro = migliorOggetto(voce, nelloZainoOggetti);
     if (dentro) return { voce: voce.nome, perche: voce.perche, categoria: voce.categoria, stato: "nello_zaino", oggetto: { id: dentro.id, nome: dentro.nome } };
     const fuori = migliorOggetto(voce, oggetti);
     if (fuori) return { voce: voce.nome, perche: voce.perche, categoria: voce.categoria, stato: "nell_armadio", oggetto: { id: fuori.id, nome: fuori.nome } };
     return { voce: voce.nome, perche: voce.perche, categoria: voce.categoria, stato: "manca", oggetto: null };
-  });
+  })];
+}
+
+// La prima riga del riquadro: lo zaino (quello nello zaino del viaggio, oppure quello che l'app sceglierebbe)
+function statoZaino(oggetti, nelloZaino, uscita) {
+  const zaini = oggetti.filter((o) => o.categoria === "zaini");
+  const scelta = scegliZaino(zaini, uscita);
+  const { min, max } = scelta.consigliati;
+  const riga = { voce: "Zaino", perche: `per questo viaggio: ${min}–${max} litri`, categoria: "zaini" };
+  const dentro = zaini.find((z) => nelloZaino.has(z.id));
+  if (dentro) {
+    const stretto = dentro.litri != null && dentro.litri < min;
+    return { ...riga, stato: "nello_zaino", oggetto: { id: dentro.id, nome: dentro.nome },
+             avviso: stretto ? `«${dentro.nome}» è da ${dentro.litri} L: per questo viaggio potrebbe stare stretto` : null };
+  }
+  if (scelta.zaino) {
+    return { ...riga, stato: "nell_armadio", oggetto: { id: scelta.zaino.id, nome: scelta.zaino.nome }, avviso: avvisoZainoPiccolo(scelta) };
+  }
+  return { ...riga, stato: "manca", oggetto: null, avviso: null };
 }

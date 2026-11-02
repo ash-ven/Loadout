@@ -46,7 +46,7 @@ Cambio password ed eliminazione hanno lo stesso limite di tentativi del login.
 | --- | --- | --- | --- | --- |
 | GET | /api/oggetti?q=&categoria=&limit=&offset= | — | array dei miei oggetti, ordinati per categoria e nome; `q` cerca nel nome; `categoria` tra quelle ammesse; limit 1–200 (default 50), offset ≥ 0 | 200, 400, 401 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
-| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
+| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta, litri }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
 | PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano al valore di default) | l'oggetto aggiornato. Se `quantita_posseduta` scende sotto la quantità messa in qualche zaino, in quegli zaini la quantità scende allo stesso valore (stessa query, atomica) | 200, 400, 401, 404, 409 |
 | DELETE | /api/oggetti/:id | — | nessun corpo (sparisce anche dagli zaini: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
@@ -58,6 +58,7 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 - `codice_etichetta` max 64; `note` max 1000
 - `marchio` max 80; `caratteristiche` max 500 (caratteristiche tecniche, testo libero)
 - `quantita_posseduta` intero 1–99 (default 1): quanti pezzi ne possiedo
+- `categoria` comprende `zaini`; `litri` intero 1–150 o null: la capienza, salvata solo per gli zaini (per le altre categorie resta null)
 
 ## Viaggi
 | Metodo | URL | Body | Risposta | Status |
@@ -120,7 +121,7 @@ Le liste del kit (voci, parole chiave, quando servono) sono in `api/src/services
 
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| POST | /api/viaggi/:id/genera | — | `{ aggiunti, base, dal_kit, esclusi, esclusi_rifugio, doppioni }` – **zaino intelligente** (B5), in una transazione: indispensabili + preferiti con `fn_genera_zaino` (cucina solo se `serve_cucina`) = `base`; in giornata toglie tra i nuovi quello che serve solo per dormire fuori (`esclusi`); in rifugio toglie il sacco a pelo se la minima prevista non scende sotto 10 °C (`esclusi_rifugio`); tra i nuovi tiene un solo oggetto per tipo, prima l'indispensabile, poi il preferito, poi il più leggero (`doppioni`); aggiunge dall'armadio l'attrezzatura del kit dell'uscita (`dal_kit`); generare di nuovo non duplica | 200, 400, 401, 404 |
+| POST | /api/viaggi/:id/genera | — | `{ aggiunti, base, dal_kit, esclusi, esclusi_rifugio, doppioni, zaino }` – **zaino intelligente** (B5), in una transazione: indispensabili + preferiti con `fn_genera_zaino` (cucina solo se `serve_cucina`) = `base`; in giornata toglie tra i nuovi quello che serve solo per dormire fuori (`esclusi`); in rifugio toglie il sacco a pelo se la minima prevista non scende sotto 10 °C (`esclusi_rifugio`); tra i nuovi tiene un solo oggetto per tipo, prima l'indispensabile, poi il preferito, poi il più leggero (`doppioni`); aggiunge dall'armadio l'attrezzatura del kit dell'uscita (`dal_kit`); se nello zaino non c'è già uno zaino, sceglie tra gli zaini dell'armadio il più piccolo che basta per i litri consigliati (in giornata 20–30, con ciaspole/alpinismo/ferrata 30–40, in rifugio 30–45, tenda/bivacco o più di 3 giorni 50–70), altrimenti il più grande con un avviso (`zaino: { id, nome, litri, avviso }` o null); generare di nuovo non duplica | 200, 400, 401, 404 |
 | GET | /api/viaggi/:id/kit | — | `[ { voce, perche, categoria, stato, oggetto } ]` – l'attrezzatura che serve per l'uscita (attività, pernotto, cucina, freddo, neve): `stato` = `nello_zaino` / `nell_armadio` (con `oggetto: { id, nome }`) / `manca` | 200, 400, 401, 404 |
 | GET | /api/viaggi/:id/zaino | — | `{ peso, oggetti }` – vedi sotto | 200, 400, 401, 404 |
 | POST | /api/viaggi/:id/zaino | `{ oggetto_id*, quantita }` – quantita intero 1–99 (default 1) e non oltre i pezzi posseduti; l'oggetto deve essere mio | la riga dello zaino | 201, 400 (`QUANTITA_OLTRE_POSSEDUTI`), 401, 404, 409 (già nello zaino) |

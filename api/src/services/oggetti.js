@@ -21,21 +21,22 @@ export async function getById(utenteId, id) {
   return rows[0] ?? null;
 }
 
-// I campi facoltativi hanno un valore di default: chi non li manda ottiene null (o 1 pezzo)
+// I campi facoltativi hanno un valore di default: chi non li manda ottiene null (o 1 pezzo).
+// I litri hanno senso solo per gli zaini: per le altre categorie si salvano sempre vuoti
 function campi(dati) {
   const {
     nome, categoria, peso_g, is_indispensabile = false, is_preferito = false,
-    codice_etichetta = null, note = null, marchio = null, caratteristiche = null, quantita_posseduta = 1,
+    codice_etichetta = null, note = null, marchio = null, caratteristiche = null, quantita_posseduta = 1, litri = null,
   } = dati;
   return [nome, categoria, peso_g, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche,
-          quantita_posseduta];
+          quantita_posseduta, categoria === "zaini" ? litri : null];
 }
 
 export async function create(utenteId, dati) {
   const { rows } = await query(
     `INSERT INTO oggetto (utente_id, nome, categoria, peso_g, is_indispensabile, is_preferito,
-                          codice_etichetta, note, marchio, caratteristiche, quantita_posseduta)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                          codice_etichetta, note, marchio, caratteristiche, quantita_posseduta, litri)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING *`,
     [utenteId, ...campi(dati)]
   );
@@ -49,7 +50,8 @@ export async function update(utenteId, id, dati) {
     `WITH aggiornato AS (
        UPDATE oggetto
        SET nome = $3, categoria = $4, peso_g = $5, is_indispensabile = $6, is_preferito = $7,
-           codice_etichetta = $8, note = $9, marchio = $10, caratteristiche = $11, quantita_posseduta = $12
+           codice_etichetta = $8, note = $9, marchio = $10, caratteristiche = $11, quantita_posseduta = $12,
+           litri = $13
        WHERE id = $1 AND utente_id = $2
        RETURNING *
      ), negli_zaini AS (
