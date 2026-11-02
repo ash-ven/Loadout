@@ -192,7 +192,7 @@ dettaglio.addEventListener("click", (e) => {
 });
 
 // --- Segmenti Tutti / Indispensabili / Preferiti ---
-// Le stesse icone della lista accanto ai nomi dei filtri: fanno anche da "legenda" (lucchetto = indispensabile, stella = preferito)
+// Le stesse icone della lista accanto ai nomi dei filtri: fanno anche da "legenda" (puntina = indispensabile, stella = preferito)
 segmenti.querySelector('[data-filtro="indispensabili"]').insertAdjacentHTML("afterbegin", iconaSegno("indispensabile"));
 segmenti.querySelector('[data-filtro="preferiti"]').insertAdjacentHTML("afterbegin", iconaSegno("preferito"));
 segmenti.addEventListener("click", (e) => {

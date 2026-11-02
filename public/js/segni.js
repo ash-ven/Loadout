@@ -7,7 +7,9 @@
 
 // Il disegno di ogni segno: solo l'interno dell'<svg> (viewBox 24×24)
 const DISEGNI = {
-  indispensabile: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', // lucchetto
+  // C3 (revisione UX 2): una puntina al posto del lucchetto (che faceva pensare a "bloccato" o "privato").
+  // Dall'alto: la testa, il corpo che si allarga, la base e l'ago.
+  indispensabile: '<path d="M8.5 3h7"/><path d="M10 3v6l-3.5 4h11L14 9V3"/><path d="M12 13v8"/>', // puntina
   preferito: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',  // stella
   "da-fare": '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',                                        // bandierina
 };
