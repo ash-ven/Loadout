@@ -60,7 +60,8 @@ export async function sole(viaggio) {
 export function oraLimitePartenza(alba, tramonto, oreCammino, margineOre = 1, oraPartenza = null) {
   if (!alba || !tramonto || oreCammino == null) return null;
   const minuti = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; }; // "16:55" → 1015
-  const limite = minuti(tramonto) - Math.round((oreCammino + margineOre) * 60);
+  // B7 (revisione UX 2): arrotondata al quarto d'ora PRIMA ("entro le 12:00", non "entro le 12:01")
+  const limite = Math.floor((minuti(tramonto) - Math.round((oreCammino + margineOre) * 60)) / 15) * 15;
   const dueCifre = (n) => String(n).padStart(2, "0");
   return {
     ora: limite >= 0 ? `${dueCifre(Math.floor(limite / 60))}:${dueCifre(limite % 60)}` : null,

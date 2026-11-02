@@ -108,7 +108,7 @@ Blocco `consigli` del dettaglio:
   (codici meteo 95–99). Se la seconda richiesta fallisce resta la stima con −6 °C ogni 1000 m (`fonte: "stima"`, solo `temp_min`/`temp_max`).
   `avvisi`: `[{ tipo, livello, testo }]` per vento (raffiche massime in vetta: da 40, 62 e 88 km/h), zero termico sotto la vetta, temporali.
   Il vestiario si decide sulla percepita minima in vetta (o sulla minima, se manca).
-- `ora_limite_partenza` (B2): `{ ora: "09:25", prima_dell_alba, margine_ore: 1, ora_partenza, in_ritardo }` = tramonto − ore di cammino − 1 h;
+- `ora_limite_partenza` (B2): `{ ora: "09:25", prima_dell_alba, margine_ore: 1, ora_partenza, in_ritardo }` = tramonto − ore di cammino − 1 h, arrotondato al quarto d'ora prima;
   `in_ritardo: true` se l'`ora_partenza` del viaggio è dopo il limite; `null` senza alba/tramonto o ore
 - `neve_ghiaccio` (B3): `true` se `quota_max_m` ≥ 2000 e la data è tra ottobre e maggio (o senza data, o con minima in vetta ≤ 0 °C)
 - `bollettino_valanghe` (B3): `true` con neve possibile oppure attività ciaspolata/alpinismo

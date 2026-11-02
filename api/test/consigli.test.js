@@ -24,10 +24,10 @@ test("vestiario: sotto zero vero vale per tutti, la pioggia non dipende dal prof
   assert.ok(consigli.includes("Giacca impermeabile e copri-zaino"));
 });
 
-test("ora limite di partenza: tramonto 16:55, 6,5 ore di cammino, 1 ora di margine → 09:25", async () => {
+test("ora limite di partenza: tramonto 16:55, 6,5 ore di cammino, 1 ora di margine → 09:25, arrotondata al quarto d'ora prima: 09:15", async () => {
   const { oraLimitePartenza } = await import("../src/services/consigli.js");
   assert.deepEqual(oraLimitePartenza("07:05", "16:55", 6.5),
-    { ora: "09:25", prima_dell_alba: false, margine_ore: 1, ora_partenza: null, in_ritardo: false });
+    { ora: "09:15", prima_dell_alba: false, margine_ore: 1, ora_partenza: null, in_ritardo: false });
 });
 
 test("ora limite di partenza: cammino più lungo delle ore di luce → avviso; senza ore → null", async () => {

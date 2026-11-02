@@ -53,6 +53,7 @@ function renderIntestazione() {
     ...(v.luogo_partenza ? [`da ${v.luogo_partenza}`] : []),
     ...(v.quota_max_m != null ? [`fino a ${v.quota_max_m.toLocaleString("it-IT", { useGrouping: "always" })} m`] : []),
     v.data_partenza ? `partenza ${formattaData(v.data_partenza)}` : "data da decidere",
+    ...(v.ora_partenza ? [`ore ${v.ora_partenza}`] : []), // B7: l'ora di partenza si vede subito
     `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`,
     `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`,
     v.pernotto === "nessuno" ? "in giornata" : `pernotto in ${v.pernotto}`,
@@ -110,6 +111,18 @@ function renderConsigli() {
     : `Non disponibile: ${c.sole.motivo}.`;
   // B2: l'ora limite di partenza, in evidenza (è il consiglio più utile d'inverno)
   const limite = c.ora_limite_partenza;
+  // B7 (revisione UX 2): se parti dopo il limite, un avviso in cima alla scheda che dice cosa rischi
+  const avvisoTardi = document.querySelector("#avviso-tardi");
+  avvisoTardi.hidden = !limite?.in_ritardo;
+  if (limite?.in_ritardo) {
+    const arrivo = minutiDa(limite.ora_partenza) + Math.round(c.ore_cammino_giorno * 60);
+    const quando = arrivo > minutiDa(c.sole.tramonto) ? "dopo il tramonto" : "a meno di un'ora dal tramonto";
+    const testo = document.querySelector("#testo-avviso-tardi");
+    const titolo = document.createElement("strong");
+    titolo.textContent = "Parti troppo tardi. ";
+    testo.replaceChildren(titolo, `Partendo alle ${orarioBreve(minutiDa(limite.ora_partenza))} arrivi verso le ${orarioBreve(arrivo)}, ` +
+      `${quando} (${c.sole.tramonto}). Anticipa la partenza entro le ${orarioBreve(minutiDa(limite.ora))} o accorcia il giro, e porta la frontale.`);
+  }
   elOraLimite.hidden = !limite;
   if (limite) {
     // tutto dentro uno <span>: .avviso è un flex, e ogni pezzo di testo diventerebbe una "colonna"
