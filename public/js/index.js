@@ -106,7 +106,7 @@ try {
   const { chiave } = await api("/api/mappe/config"); // 503 se sul server manca la chiave MapTiler
   const mappa = creaMappa(elMappa, chiave, {
     centro: ITALIA, zoom: 5,
-    sfondo: "Satellite", // scelta di Asiha: più bella per la Home
+    sfondoIniziale: "Satellite", // scelta di Asiha: più bella per la Home
     opzioni: { boxZoom: false }, // niente "rettangolo" con Maiusc: qui non serve
   });
   const livello = L.featureGroup().addTo(mappa);
