@@ -116,7 +116,7 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | Pagina | JavaScript | Cosa fa |
 | --- | --- | --- |
 | `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (dopo la registrazione entra da sola) |
-| `index.html` | `index.js` | home (ci si arriva dal logo): saluto, frase casuale (anche "viva" sul prossimo viaggio), «La tua mappa»: cartina ferma (solo zoom) con un segnaposto sulla partenza di ogni viaggio fatto, il fumetto porta al viaggio; totali da sempre |
+| `index.html` | `index.js` | home (ci si arriva dal logo): saluto, frase casuale (anche "viva" sul prossimo viaggio), «La tua mappa»: cartina sul Satellite con un segnaposto sulla partenza di ogni viaggio fatto, il fumetto porta al viaggio; totali da sempre |
 | `armadio.html` | `armadio.js` | lista per categoria con ricerca e filtri Tutti/Indispensabili/Preferiti, scheda di dettaglio, aggiungi/modifica/elimina in una finestra |
 | `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" (da `form-uscita.js`, la stessa che nella scheda modifica l'uscita) |
 | `scheda-viaggio.html?id=` | `scheda-viaggio.js` | l'uscita: collegamenti allo zaino e alla mappa (o "Genera lo zaino" / "Disegna la mappa" se non ci sono ancora), consigli (acqua, alba e tramonto, ora limite, meteo in partenza e in vetta, percorso, emergenza), modifica ed elimina viaggio |

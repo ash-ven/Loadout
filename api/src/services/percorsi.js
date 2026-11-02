@@ -13,11 +13,22 @@ export class NessunPercorso extends Error {}
 
 export const PROFILI = { sentieri: "hiking-mountain", breve: "shortest" };
 
+// Ferrate e alpinismo: il profilo dei sentieri, di serie, VIETA i passaggi sopra T3 della scala SAC
+// (T1 sentiero facile … T6 alpinismo difficile), e le ferrate su OpenStreetMap sono quasi sempre T4–T6:
+// BRouter le aggirava. Per queste attività gli chiediamo di accettare fino a T6 e di preferire T4.
+// BRouter permette di cambiare i parametri del profilo nella richiesta: &profile:NOME=VALORE
+export const ATTIVITA_IMPEGNATIVE = ["ferrata", "alpinismo"];
+export function parametriDifficolta(profilo, attivita) {
+  if (profilo !== "sentieri" || !ATTIVITA_IMPEGNATIVE.includes(attivita)) return "";
+  return "&profile:SAC_scale_limit=6&profile:SAC_scale_preferred=4";
+}
+
 // punti: [[lat, lon], [lat, lon], ...] (per l'anello il browser rimette la partenza in fondo)
-// profilo: "sentieri" (predefinito) oppure "breve"
-export async function calcola(punti, profilo = "sentieri") {
+// profilo: "sentieri" (predefinito) oppure "breve"; attivita: quella del viaggio (per ferrate e alpinismo)
+export async function calcola(punti, profilo = "sentieri", attivita = null) {
   const lonlats = punti.map(([lat, lon]) => `${lon},${lat}`).join("|"); // BRouter vuole PRIMA la longitudine, separati da |
-  const url = `${BROUTER}?lonlats=${lonlats}&profile=${PROFILI[profilo]}&alternativeidx=0&format=geojson`;
+  const url = `${BROUTER}?lonlats=${lonlats}&profile=${PROFILI[profilo]}&alternativeidx=0&format=geojson`
+    + parametriDifficolta(profilo, attivita);
 
   const risposta = await fetch(url, { signal: AbortSignal.timeout(10_000) }); // massimo 10 secondi
   if (!risposta.ok) {

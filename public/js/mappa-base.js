@@ -22,8 +22,9 @@ function sfondo(url, chiave, suErrore) {
 // suTessereSbagliate: chiamata una volta se le tessere non arrivano (di solito: chiave sbagliata)
 // opzioni (facoltative): altre opzioni di Leaflet (es. la Home: dragging false = la mappa non si sposta, si ingrandisce soltanto);
 // toccoUnDito: il messaggio quando sul telefono scorri la mappa con un dito
+// sfondo: con quale sfondo si apre ("Outdoor", "Topo", "Inverno" o "Satellite")
 export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom = 14, suTessereSbagliate = () => {},
-                                              opzioni = {}, toccoUnDito = "Usa due dita per spostare la mappa" } = {}) {
+                                              opzioni = {}, toccoUnDito = "Usa due dita per spostare la mappa", sfondo = "Outdoor" } = {}) {
   let errori = 0;
   const suErrore = () => { errori += 1; if (errori === 3) suTessereSbagliate(); };
   const sfondi = {
@@ -37,7 +38,7 @@ export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom 
   const touch = window.matchMedia("(pointer: coarse)").matches;
   const mappa = L.map(elemento, { dragging: !touch, ...opzioni }).setView(centro, zoom);
   gestiComodi(elemento, toccoUnDito);
-  sfondi["Outdoor"].addTo(mappa);
+  (sfondi[sfondo] ?? sfondi["Outdoor"]).addTo(mappa);
   // A8 (revisione UX 2, scelta di Asiha): il selettore degli sfondi parte SEMPRE chiuso (icona a strati),
   // su qualsiasi schermo: aperto copriva un pezzo di mappa e la puntina di partenza. Si apre con un tocco.
   L.control.layers(sfondi, null, { collapsed: true }).addTo(mappa);

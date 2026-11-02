@@ -25,6 +25,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   let linea = null;            // la traccia dell'ultimo percorso calcolato: [[lat, lon, quota], ...]
   let discesa = null;          // il dislivello negativo dell'ultimo percorso calcolato (metri), o null
   let profilo = "sentieri";    // come chiedere il percorso: "sentieri" (preferisce i sentieri) o "breve" (il più corto)
+  let attivita = null;         // l'attività del viaggio: con ferrata e alpinismo il server accetta i passaggi difficili
   let daRipristinare = null;   // in modifica: la traccia salvata, da rimettere quando la mappa nasce
   let centro = null;           // dove aprire la mappa (il luogo scelto, o la partenza)
   let ultimaRichiesta = 0;     // se tocchi in fretta partono più richieste: vale solo la risposta dell'ultima
@@ -189,7 +190,8 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     const parametro = giro.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(";");
 
     try {
-      const dati = await api(`/api/percorso?punti=${parametro}&profilo=${profilo}`);
+      const conAttivita = attivita ? `&attivita=${encodeURIComponent(attivita)}` : "";
+      const dati = await api(`/api/percorso?punti=${parametro}&profilo=${profilo}${conAttivita}`);
       if (numero !== ultimaRichiesta) return;           // nel frattempo è partita una richiesta più nuova
       livelloPercorso.clearLayers();
       disegnaTracciato(livelloPercorso, dati.traccia.map(([lat, lon]) => [lat, lon]));
@@ -287,6 +289,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     // La traccia salvata del viaggio (se c'è): da chiamare PRIMA di apri()
     carica(viaggio) {
       this.svuota();
+      attivita = viaggio.attivita ?? null;
       if (viaggio.lat_partenza != null && viaggio.lon_partenza != null) centro = [viaggio.lat_partenza, viaggio.lon_partenza];
       if (!viaggio.traccia?.tappe?.length || !viaggio.traccia?.linea?.length) return;
       mostraProfilo(viaggio.traccia.profilo ?? "sentieri"); // le mappe di prima non lo dicono: erano tutte "sentieri"

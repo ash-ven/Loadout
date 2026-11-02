@@ -77,7 +77,7 @@ function frasiVive(v) {
 // =====================================================================
 //  LA CARTINA DEI VIAGGI FATTI (C8, scelte di Asiha)
 //  - solo i viaggi già fatti, con un segnaposto sulla PARTENZA (niente percorsi);
-//  - la cartina non si sposta: si può solo ingrandire e rimpicciolire (pulsanti + e −, Ctrl + rotella, due dita);
+//  - si apre sul Satellite e si sposta in tutte le direzioni (come le altre mappe: sul telefono con due dita);
 //  - si toccano solo i segnaposto: si apre il fumetto con il link al viaggio.
 // =====================================================================
 const ITALIA = [42.5, 12.5];
@@ -106,9 +106,8 @@ try {
   const { chiave } = await api("/api/mappe/config"); // 503 se sul server manca la chiave MapTiler
   const mappa = creaMappa(elMappa, chiave, {
     centro: ITALIA, zoom: 5,
-    // ferma: niente trascinamento (né col mouse né col dito), niente tastiera, niente "rettangolo" con Maiusc
-    opzioni: { dragging: false, keyboard: false, boxZoom: false },
-    toccoUnDito: "Usa due dita per ingrandire la mappa",
+    sfondo: "Satellite", // scelta di Asiha: più bella per la Home
+    opzioni: { boxZoom: false }, // niente "rettangolo" con Maiusc: qui non serve
   });
   const livello = L.featureGroup().addTo(mappa);
   for (const v of fattiSullaMappa) {

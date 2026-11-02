@@ -2,7 +2,7 @@
 // non serve internet e il risultato è sempre lo stesso.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { daBRouter, semplifica, discesa, NessunPercorso } from "../src/services/percorsi.js";
+import { daBRouter, semplifica, discesa, parametriDifficolta, NessunPercorso } from "../src/services/percorsi.js";
 
 // Una risposta come quella di BRouter: coordinate [lon, lat, quota], lunghezza e salita come TESTO
 const finta = {
@@ -47,4 +47,13 @@ test("semplifica: tiene sempre primo, ultimo e il punto da tenere, anche se vici
 
 test("BRouter: una risposta senza percorso diventa NessunPercorso (la rotta risponde 404)", () => {
   assert.throws(() => daBRouter({ features: [] }), NessunPercorso);
+});
+
+// Ferrate e alpinismo: sul profilo dei sentieri si accettano i passaggi fino a T6 (gli altri casi non cambiano)
+test("BRouter: per ferrata e alpinismo i passaggi difficili sono permessi", () => {
+  assert.equal(parametriDifficolta("sentieri", "ferrata"), "&profile:SAC_scale_limit=6&profile:SAC_scale_preferred=4");
+  assert.equal(parametriDifficolta("sentieri", "alpinismo"), "&profile:SAC_scale_limit=6&profile:SAC_scale_preferred=4");
+  assert.equal(parametriDifficolta("sentieri", "escursione"), "");
+  assert.equal(parametriDifficolta("breve", "ferrata"), ""); // il più breve non guarda la scala SAC
+  assert.equal(parametriDifficolta("sentieri", null), "");
 });
