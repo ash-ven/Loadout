@@ -29,12 +29,44 @@ export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom 
     "Inverno":   sfondo("https://api.maptiler.com/maps/winter-v2/{z}/{x}/{y}.png", chiave, suErrore),
     "Satellite": sfondo("https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}", chiave, suErrore),
   };
-  const mappa = L.map(elemento).setView(centro, zoom);
+  // A9 (revisione UX 2): sui dispositivi touch (telefono, tablet) un dito fa scorrere la PAGINA, non la mappa:
+  // la mappa si sposta e si ingrandisce con due dita (il "pizzico" di Leaflet, touchZoom). Un tocco aggiunge ancora la tappa.
+  const touch = window.matchMedia("(pointer: coarse)").matches;
+  const mappa = L.map(elemento, { dragging: !touch }).setView(centro, zoom);
+  gestiComodi(elemento);
   sfondi["Outdoor"].addTo(mappa);
   // A8 (revisione UX 2, scelta di Asiha): il selettore degli sfondi parte SEMPRE chiuso (icona a strati),
   // su qualsiasi schermo: aperto copriva un pezzo di mappa e la puntina di partenza. Si apre con un tocco.
   L.control.layers(sfondi, null, { collapsed: true }).addTo(mappa);
   return mappa;
+}
+
+// A9 (revisione UX 2): niente zoom o spostamenti per sbaglio mentre scorri la pagina.
+// - Rotella SENZA Ctrl sopra la mappa: la fermiamo prima che arrivi a Leaflet (fase di "cattura" sul contenitore),
+//   così la pagina scorre normalmente e compare la scritta. Con Ctrl (o ⌘ su Mac) passa a Leaflet, che ingrandisce.
+// - Un dito che scorre sulla mappa (non su una puntina): la pagina scorre e ricordiamo che servono due dita.
+// (Esiste un componente già fatto, GestureHandling, ma mostra l'avviso anche mentre trascini una puntina.)
+function gestiComodi(elemento) {
+  const avviso = document.createElement("div");
+  avviso.className = "avviso-gesti";
+  avviso.hidden = true;
+  elemento.append(avviso);
+  let timer = null;
+  const mostra = (testo) => {
+    avviso.textContent = testo;
+    avviso.hidden = false;
+    clearTimeout(timer);
+    timer = setTimeout(() => { avviso.hidden = true; }, 1500);
+  };
+  const tasto = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
+  elemento.addEventListener("wheel", (e) => {
+    if (e.ctrlKey || e.metaKey) return;       // Ctrl + rotella (o il pizzico del touchpad): zoom di Leaflet
+    e.stopPropagation();                      // Leaflet non la vede, e senza preventDefault la pagina scorre
+    mostra(`Usa ${tasto} + rotella per ingrandire la mappa`);
+  }, { capture: true });
+  elemento.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 1 && !e.target.closest(".leaflet-marker-icon")) mostra("Usa due dita per spostare la mappa");
+  }, { passive: true });
 }
 
 // Le puntine: piccoli SVG dentro un divIcon. Goccia per partenza / arrivo / anello

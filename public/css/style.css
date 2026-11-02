@@ -602,3 +602,10 @@ button.togli { margin-left: .2rem; }
                   text-decoration: underline; text-underline-offset: 3px; }
 .annulla button:hover, .annulla button:focus-visible { background: rgba(246, 239, 223, .12); }
 @media (min-width: 761px) { .annulla { bottom: 1.5rem; } }
+
+/* --- A9 (revisione UX 2): la scritta "Usa Ctrl + rotella…" / "Usa due dita…" al centro della mappa --- */
+.avviso-gesti { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1000; max-width: 80%;
+                padding: .6rem 1rem; border-radius: 12px; background: rgba(35, 58, 45, .85); color: #f6efdf;
+                font-weight: 600; text-align: center; pointer-events: none; }
+/* Le puntine si trascinano con un dito anche se la mappa (sul telefono) lascia scorrere la pagina */
+.leaflet-marker-draggable { touch-action: none; }
