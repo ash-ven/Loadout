@@ -63,7 +63,7 @@ function frasiVive(v) {
   const contoAllaRovescia =
     mancano === 0 ? [`Oggi ${v.nome}:`, "buon cammino!"]
     : mancano === 1 ? [`${v.nome} è domani:`, "scarponi pronti?"]
-    : [`${v.nome} tra ${mancano} giorni:`, "inizia a scaldare gli scarponi."];
+    : [`${v.nome} tra ${mancano} giorni:`, "inizia a scaldare gli scarponi."]; // B3: qui mancano è sempre ≥ 2
 
   // 2. Che tipo di viaggio è: "5 giorni di trekking, notti in rifugio"
   const durata = v.n_giorni === 1 ? "una giornata" : `${v.n_giorni} giorni`;

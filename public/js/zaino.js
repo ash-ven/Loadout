@@ -1,6 +1,7 @@
 import { api, esc } from "./api.js";
 import "./menu.js";
 import { CATEGORIE } from "./categorie.js";
+import { plurale } from "./testi.js"; // B3: numeri e parole accordati
 
 // Pagina dello zaino di un'uscita: zaino.html?id=7 (prima stava dentro la scheda del viaggio).
 // Con &genera=1 (pulsante "Genera lo zaino" della scheda) lo zaino si riempie appena la pagina si apre.
@@ -223,10 +224,11 @@ bottoneGenera.addEventListener("click", async () => {
     // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
     // B5: cosa ha fatto "Genera", in parole
     const parti = [];
-    if (base > 0) parti.push(`${base} tra indispensabili e preferiti`);
+    // B3: "Aggiunto 1 oggetto: 1 indispensabile o preferito." / "Aggiunti 5 oggetti: 3 indispensabili o preferiti e 2 …"
+    if (base > 0) parti.push(plurale(base, "indispensabile o preferito", "indispensabili o preferiti"));
     if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questa uscita`);
     let messaggio = aggiunti > 0
-      ? `Aggiunti ${aggiunti} ${aggiunti === 1 ? "oggetto" : "oggetti"}: ${parti.join(" e ")}.`
+      ? `${aggiunti === 1 ? "Aggiunto" : "Aggiunti"} ${plurale(aggiunti, "oggetto", "oggetti")}: ${parti.join(" e ")}.`
       : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
     if (esclusi > 0) messaggio += ` In giornata ho lasciato fuori ${esclusi === 1 ? "un oggetto" : `${esclusi} oggetti`} che servono solo per dormire fuori.`;
     mostraInfo(messaggio);

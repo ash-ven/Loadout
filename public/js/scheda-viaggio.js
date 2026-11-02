@@ -1,6 +1,7 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
+import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
 
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
@@ -91,14 +92,14 @@ function renderConsigli() {
     elAcquaPersona.hidden = false;
 
     // Da cosa dipende il calcolo: un pezzo di frase per ogni fattore usato
-    const fattori = [`${num(c.ore_cammino_giorno)} ore di cammino al giorno (${c.fonte_ore === "utente" ? "inserite da te" : "stimate dal percorso"})`];
+    const fattori = [`${ore(c.ore_cammino_giorno)} di cammino al giorno (${c.fonte_ore === "utente" ? "inserite da te" : "stimate dal percorso"})`];
     if (c.acqua_con_dislivello) fattori.push(`${num(Math.round(v.dislivello_m / v.n_giorni))} m di dislivello positivo al giorno`);
     if (c.acqua_con_temperatura) fattori.push(`la temperatura prevista (${num(c.meteo.temp_max)} °C)`);
     if (c.acqua_con_cucina) fattori.push("l'acqua per cucinare");
 
     const persone = `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`;
     const giorni = `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`;
-    elAcqua.textContent = `In tutto ${num(c.acqua_litri)} litri per ${persone} e ${giorni}. Calcolata su ${elenco(fattori)}.` +
+    elAcqua.textContent = `In tutto ${plurale(c.acqua_litri, "litro", "litri")} per ${persone} e ${giorni}. Calcolata su ${elenco(fattori)}.` +
       (v.n_giorni > 1 ? " Sui percorsi di più giorni informati su fontane e rifugi per rifornirti." : "");
   }
   formOre.elements.ore.value = c.ore_cammino_giorno ?? "";
@@ -113,10 +114,10 @@ function renderConsigli() {
   if (limite) {
     // tutto dentro uno <span>: .avviso è un flex, e ogni pezzo di testo diventerebbe una "colonna"
     elOraLimite.innerHTML = limite.prima_dell_alba
-      ? `<span><strong>Attenzione:</strong> con ${num(c.ore_cammino_giorno)} ore di cammino non c'è abbastanza luce
+      ? `<span><strong>Attenzione:</strong> con ${ore(c.ore_cammino_giorno)} di cammino non c'è abbastanza luce
          (alba ${esc(c.sole.alba)}, tramonto ${esc(c.sole.tramonto)}). Valuta di accorciare il percorso o di dividerlo in più giorni.</span>`
       : `<span>Parti <strong>entro le ${esc(limite.ora)}</strong> per arrivare almeno un'ora prima del tramonto
-         (${num(c.ore_cammino_giorno)} ore di cammino, soste comprese nel margine).${limite.in_ritardo
+         (${ore(c.ore_cammino_giorno)} di cammino, soste comprese nel margine).${limite.in_ritardo
            ? ` <strong>Hai segnato la partenza alle ${esc(limite.ora_partenza)}: è più tardi del limite.</strong>` : ""}</span>`;
   }
 
@@ -191,7 +192,7 @@ function renderCollegamenti() {
   if (p.n_oggetti > 0) {
     linkZaino.href = `/zaino.html?id=${id}`;
     testo("#titolo-zaino", "Lo zaino");
-    const quanti = p.n_inseriti != null ? `${p.n_inseriti} su ${p.n_oggetti} nello zaino` : `${p.n_oggetti} oggetti`;
+    const quanti = p.n_inseriti != null ? `${p.n_inseriti} su ${p.n_oggetti} nello zaino` : plurale(p.n_oggetti, "oggetto", "oggetti");
     testo("#riepilogo-zaino", `${quanti} · ${num2(p.peso_totale_kg)} kg`);
   } else {
     linkZaino.href = `/zaino.html?id=${id}&genera=1`; // la pagina dello zaino lo riempie appena si apre
