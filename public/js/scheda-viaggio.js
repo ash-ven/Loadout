@@ -138,29 +138,34 @@ function renderConsigli() {
   let htmlMeteo;
   if (c.meteo.disponibile) {
     const m = c.meteo;
-    const quota = (metri) => (metri != null ? ` (${metri.toLocaleString("it-IT", { useGrouping: "always" })} m)` : "");
-    const righe = [
-      `<strong>In partenza</strong>${m.quota_partenza_m != null ? ` (circa ${m.quota_partenza_m.toLocaleString("it-IT", { useGrouping: "always" })} m)` : ""}:
-       massima ${esc(num(m.temp_max))} °C · minima ${esc(num(m.temp_min))} °C · pioggia ${esc(m.prob_pioggia)}%`,
-    ];
-    // Mappe, fase 1: il meteo in vetta (sulla quota massima), all'ora in cui stimiamo che arriverai
+    // B8 (revisione UX 2): una tabellina Partenza / Vetta al posto di cinque righe di numeri.
+    // Numeri interi (niente decimali inutili); "–" dove il dato non c'è. Tutti numeri o testi nostri: niente rischio XSS
+    const n0 = (n) => (n == null ? "–" : Math.round(n).toLocaleString("it-IT", { useGrouping: "always" }));
+    const metri = (q) => (q != null ? ` (${n0(q)} m)` : "");
     const vt = m.vetta;
-    if (vt) {
-      righe.unshift(`<span class="muto">Meteo calcolato sul punto più alto che raggiungerai${quota(vt.quota_m)}</span>`);
-      if (vt.fonte === "stima") {
-        // Open-Meteo non ha risposto per la vetta: resta la stima di prima (−6 °C ogni 1000 m)
-        righe.push(`<strong>In vetta</strong>, stima: massima ${esc(num(vt.temp_max))} °C · minima ${esc(num(vt.temp_min))} °C`);
-      } else {
-        const allArrivo = [];
-        if (vt.temp != null) allArrivo.push(`${esc(num(vt.temp))} °C`);
-        if (vt.percepita != null) allArrivo.push(`percepiti ${esc(num(vt.percepita))} °C`);
-        if (vt.raffiche_kmh != null) allArrivo.push(`raffiche ${esc(num(vt.raffiche_kmh))} km/h`);
-        righe.push(`<strong>In vetta verso le ${esc(vt.ora_arrivo_stimata)}</strong>${allArrivo.length ? `: ${allArrivo.join(" · ")}` : ""}`);
-        righe.push(`Nella giornata, in vetta: massima ${esc(num(vt.temp_max))} °C · minima ${esc(num(vt.temp_min))} °C`);
-      }
-    }
-    if (m.vento_kmh != null) righe.push(`<strong>Vento</strong> fino a ${esc(num(m.vento_kmh))} km/h${m.raffiche_kmh != null ? `, raffiche ${esc(num(m.raffiche_kmh))} km/h` : ""}`);
-    htmlMeteo = `${righe.map((r) => `<p>${r}</p>`).join("")}
+    const stima = vt?.fonte === "stima"; // Open-Meteo non ha risposto per la vetta: resta la stima (−6 °C ogni 1000 m)
+    const colonnaVetta = vt ? {
+      titolo: `Vetta${metri(vt.quota_m)}${!stima && vt.ora_arrivo_stimata ? ` · verso le ${esc(vt.ora_arrivo_stimata)}` : ""}${stima ? " · stima" : ""}`,
+      temperatura: !stima && vt.temp != null ? `${n0(vt.temp)} °C <span class="muto">(min ${n0(vt.temp_min)} / max ${n0(vt.temp_max)})</span>`
+                                              : `${n0(vt.temp_min)} / ${n0(vt.temp_max)} °C`,
+      percepita: !stima && vt.percepita != null ? `${n0(vt.percepita)} °C` : "–",
+      raffiche: !stima && vt.raffiche_kmh != null ? `${n0(vt.raffiche_kmh)} km/h` : "–",
+      pioggia: "–",
+    } : null;
+    const colonnaPartenza = {
+      titolo: `Partenza${m.quota_partenza_m != null ? ` (circa ${n0(m.quota_partenza_m)} m)` : ""}`,
+      temperatura: `${n0(m.temp_min)} / ${n0(m.temp_max)} °C`,
+      percepita: "–",
+      raffiche: m.raffiche_kmh != null ? `${n0(m.raffiche_kmh)} km/h` : "–",
+      pioggia: `${n0(m.prob_pioggia)}%`,
+    };
+    const colonne = [colonnaPartenza, ...(colonnaVetta ? [colonnaVetta] : [])];
+    const riga = (nome, chiave) => `<tr><th scope="row">${nome}</th>${colonne.map((col) => `<td>${col[chiave]}</td>`).join("")}</tr>`;
+    htmlMeteo = `${vt ? `<p class="muto">Meteo calcolato sul punto più alto che raggiungerai${metri(vt.quota_m)}</p>` : ""}
+      <table class="tabella-meteo">
+        <thead><tr><td></td>${colonne.map((col) => `<th scope="col">${col.titolo}</th>`).join("")}</tr></thead>
+        <tbody>${riga("Temperatura", "temperatura")}${riga("Percepita", "percepita")}${riga("Raffiche", "raffiche")}${riga("Pioggia", "pioggia")}</tbody>
+      </table>
       <ul>${m.vestiario.map((consiglio) => `<li>${esc(consiglio)}</li>`).join("")}</ul>`;
     // gli avvisi della vetta (vento, zero termico, temporali) nel riquadro ocra, come gli altri avvisi
     for (const a of m.avvisi ?? []) htmlMeteo += `<p class="avviso"><span>${esc(a.testo)}</span></p>`;
