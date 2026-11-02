@@ -4,6 +4,7 @@ import { attivaDisegnoMappa } from "./mappa-disegno.js";
 import { staccaPostItScrivendo } from "./post-it.js";
 import { erroriCoordinate, erroriQuote, uniformaDecimali } from "./controlli.js";
 import { mostraErroriCampi, pulisciScrivendo } from "./errori-campi.js";
+import { scaricaGpx } from "./gpx.js";
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
 // Qui si disegna il percorso; «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate
@@ -141,6 +142,19 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+// --- Scarica GPX: il percorso che vedi sulla mappa (anche se non l'hai ancora salvato) ---
+let nomeViaggio = "percorso";
+const erroreGpx = document.querySelector("#errore-gpx");
+document.querySelector("#scarica-gpx").addEventListener("click", () => {
+  const traccia = disegno.traccia();
+  erroreGpx.hidden = Boolean(traccia);
+  if (!traccia) {
+    erroreGpx.textContent = "Prima disegna il percorso sulla mappa: servono almeno la partenza e un altro punto.";
+    return;
+  }
+  scaricaGpx(nomeViaggio, traccia);
+});
+
 // =====================================================================
 //  AVVIO
 // =====================================================================
@@ -152,6 +166,7 @@ if (!Number.isInteger(id) || id <= 0) {
     const v = await api(`/api/viaggi/${id}`);
     document.title = `Loadout – Mappa: ${v.nome}`;
     titolo.textContent = `Mappa: ${v.nome}`;
+    nomeViaggio = v.nome;
     document.querySelector("#intestazione").hidden = false;
     document.querySelector("#corpo-mappa").hidden = false; // prima visibile, poi la mappa (Leaflet misura il contenitore)
     riempi(v);

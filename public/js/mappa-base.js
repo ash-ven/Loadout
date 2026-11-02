@@ -109,6 +109,40 @@ export function disegnaTracciato(livello, punti) {
   L.polyline(punti, { ...comune, color: "#31503f", weight: 5, opacity: 1 }).addTo(livello);
 }
 
+// Il verso di percorrenza: piccole frecce lungo la linea, che puntano verso l'arrivo (nell'anello: il senso del giro).
+// Una ogni tanto: la distanza tra due frecce è 1/6 del percorso, ma almeno 300 m e al massimo 1 km.
+// La rotazione sta nell'attributo transform dell'SVG (disegno), non in uno style="" (la CSP non lo permetterebbe).
+export function disegnaFrecce(livello, linea) {
+  if (!linea || linea.length < 2) return;
+  const tratti = [];
+  let totale = 0;
+  for (let i = 0; i < linea.length - 1; i++) {
+    const m = metriTra(linea[i], linea[i + 1]);
+    tratti.push({ da: linea[i], a: linea[i + 1], inizio: totale, lungo: m });
+    totale += m;
+  }
+  const passo = Math.min(1000, Math.max(300, totale / 6));
+  for (let d = passo / 2; d < totale; d += passo) {   // la prima a metà passo: non sopra la puntina di partenza
+    const t = tratti.find((x) => d <= x.inizio + x.lungo) ?? tratti.at(-1);
+    const f = t.lungo ? (d - t.inizio) / t.lungo : 0;
+    const punto = [t.da[0] + (t.a[0] - t.da[0]) * f, t.da[1] + (t.a[1] - t.da[1]) * f];
+    L.marker(punto, { icon: iconaFreccia(direzione(t.da, t.a)), interactive: false, keyboard: false }).addTo(livello);
+  }
+}
+
+// La direzione da un punto all'altro in gradi, 0 = nord, 90 = est (la longitudine "pesa" meno andando verso nord)
+function direzione([lat1, lon1], [lat2, lon2]) {
+  const x = (lon2 - lon1) * Math.cos((lat1 * Math.PI) / 180);
+  const y = lat2 - lat1;
+  return (Math.atan2(x, y) * 180) / Math.PI;
+}
+
+function iconaFreccia(gradi) {
+  return L.divIcon({ className: "freccia-verso", iconSize: [16, 16], iconAnchor: [8, 8],
+    html: `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><g transform="rotate(${gradi.toFixed(0)} 8 8)">` +
+          '<path d="M8 2.5 13 12.5 8 10 3 12.5Z" fill="#f6efdf" stroke="#31503f" stroke-width="1.6" stroke-linejoin="round"/></g></svg>' });
+}
+
 // B11 (revisione UX 2): se la puntina è lontana dall'inizio (o dalla fine) del sentiero, una linea tratteggiata sottile
 // le collega, così si vede che partenza e arrivo fanno parte del percorso. giro = i punti [lat, lon] toccati, linea = la traccia
 export function disegnaCollegamenti(livello, giro, linea) {

@@ -8,7 +8,7 @@
 // =====================================================================
 import { api } from "./api.js";
 import { proponi } from "./post-it.js";
-import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, eUnAnello, scriviStato } from "./mappa-base.js";
+import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, disegnaFrecce, eUnAnello, scriviStato } from "./mappa-base.js";
 
 const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 
@@ -153,7 +153,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   function aggiornaLegenda() {
     if (!legenda) return;
     const presenti = new Set(punti.map((p, i) => tipoDelPunto(i, punti.length, interruttoreAnello.checked)));
-    if (linea) presenti.add("sentieri");
+    if (linea) { presenti.add("sentieri"); presenti.add("verso"); }
     legenda.querySelectorAll("[data-tipo]").forEach((voce) => {
       voce.hidden = punti.length === 0 ? voce.dataset.tipo === "anello" : !presenti.has(voce.dataset.tipo);
     });
@@ -196,6 +196,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       livelloPercorso.clearLayers();
       disegnaTracciato(livelloPercorso, dati.traccia.map(([lat, lon]) => [lat, lon]));
       disegnaCollegamenti(livelloPercorso, giro.map((p) => [p.lat, p.lng]), dati.traccia); // B11
+      disegnaFrecce(livelloPercorso, dati.traccia); // il verso di percorrenza
       linea = dati.traccia;
       discesa = dati.discesa_m ?? null;
       aggiornaLegenda();
@@ -229,6 +230,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
     const tappe = traccia.tappe.map(([lat, lon]) => [lat, lon]);
     disegnaCollegamenti(livelloPercorso, interruttoreAnello.checked ? [...tappe, tappe[0]] : tappe, linea); // B11
+    disegnaFrecce(livelloPercorso, linea); // il verso di percorrenza
     aggiornaConteggio();
     inquadraTutto();
     scriviStato(stato, "");
