@@ -12,7 +12,8 @@ const num = (n) => Number(n).toLocaleString("it-IT", { useGrouping: "always" });
 
 // Una riga: link alla mappa dell'uscita
 function rigaMappa(v) {
-  const parti = [ATTIVITA[v.attivita] ?? v.attivita];
+  // B4 (revisione UX 2): qui contano i numeri del percorso; l'attività si vede aprendo l'uscita
+  const parti = [];
   if (v.distanza_km != null) parti.push(`${num(v.distanza_km)} km`);
   if (v.dislivello_m != null) parti.push(`D+ ${num(v.dislivello_m)} m`);
   return `
@@ -20,7 +21,7 @@ function rigaMappa(v) {
       <span class="riquadro-icona"><img src="/img/icone/mappe.svg" alt="" width="22" height="22"></span>
       <span class="riga-testo">
         <span class="riga-nome">${esc(v.nome)}</span>
-        <span class="riga-nota">${esc(parti.join(" · "))}</span>
+        <span class="riga-nota">${esc(parti.join(" · ") || (ATTIVITA[v.attivita] ?? v.attivita))}</span>
       </span>
       <span class="riga-valore">${v.data_partenza ? formattaData(v.data_partenza) : "—"}</span>
     </a>`;

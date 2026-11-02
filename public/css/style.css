@@ -342,7 +342,9 @@ button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
 .riga-testo { flex: 1; min-width: 0; display: grid; gap: .25rem; }
 .riga-nome { font-size: .98rem; font-weight: 600; color: var(--testo); }
 .riga-dettagli { display: flex; align-items: center; flex-wrap: wrap; gap: .35rem; }
-.riga-nota { max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .8rem; color: var(--terra); }
+/* B4 (revisione UX 2): la nota va a capo (al massimo 2 righe) invece di tagliare proprio i numeri con i puntini */
+.riga-nota { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+             font-size: .8rem; color: var(--terra); }
 .riga-valore { white-space: nowrap; font-size: .92rem; font-weight: 700; color: var(--muschio); }
 .vuoto { padding: 2rem 1rem; text-align: center; color: var(--terra); }
 
