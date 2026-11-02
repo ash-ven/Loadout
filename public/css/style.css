@@ -618,3 +618,7 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus, textarea[ar
 .errore-riga { margin: 0; padding: .35rem .9rem .6rem 3.2rem; color: var(--rosso); font-size: .85rem; font-weight: 600;
                border-bottom: 1px solid var(--bordo); }
 .errore-riga a { color: var(--muschio); }
+
+/* --- B2 (revisione UX 2): "1 di 23 oggetti" sopra la lista mentre cerchi --- */
+.conteggio-ricerca { margin: 0; font-weight: 600; }
+.vuoto .btn-piccolo { margin: .35rem .2rem 0; }

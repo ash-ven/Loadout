@@ -36,6 +36,7 @@ const bottoneCercaProdotto = document.querySelector("#cerca-prodotto");
 
 // --- Stato ---
 let oggetti = [];        // gli oggetti arrivati dall'API (già filtrati dalla ricerca)
+let tutti = [];          // B2: TUTTO l'armadio, per il totale della testata (che non cambia mentre cerchi)
 let filtro = "tutti";    // "tutti" | "indispensabili" | "preferiti"
 let inModifica = null;   // id dell'oggetto in modifica, oppure null se stiamo creando
 let aperto = null;       // l'oggetto mostrato nella scheda di dettaglio
@@ -43,7 +44,13 @@ let aperto = null;       // l'oggetto mostrato nella scheda di dettaglio
 // --- Caricamento dall'API: aggiorna lo stato e ridisegna ---
 async function carica() {
   const parametri = new URLSearchParams({ q: q.value, limit: 200 });
-  oggetti = await api(`/api/oggetti?${parametri}`);
+  // B2: mentre cerchi chiediamo anche l'armadio intero (in parallelo), per il totale; senza ricerca è la stessa lista
+  const [trovati, interi] = await Promise.all([
+    api(`/api/oggetti?${parametri}`),
+    q.value.trim() ? api("/api/oggetti?limit=200") : null,
+  ]);
+  oggetti = trovati;
+  tutti = interi ?? trovati;
   render();
 }
 
@@ -59,10 +66,14 @@ const pesoTuttiIPezzi = (o) => o.peso_g * (o.quantita_posseduta ?? 1);
 
 // --- Render: dallo stato all'HTML ---
 function render() {
-  // Riepilogo nella testata: "4 oggetti, 0,96 kg in tutto"
-  const pesoTotale = oggetti.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
+  // Riepilogo nella testata: "23 oggetti, 9,60 kg in tutto". B2: sempre l'armadio INTERO, anche mentre cerchi
+  const pesoTotale = tutti.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
   const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  riepilogo.innerHTML = `<strong>${oggetti.length} ${oggetti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
+  riepilogo.innerHTML = `<strong>${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
+  // B2: sopra la lista, solo mentre cerchi: "1 di 23 oggetti"
+  const conteggioRicerca = document.querySelector("#conteggio-ricerca");
+  conteggioRicerca.hidden = !q.value.trim();
+  conteggioRicerca.textContent = `${oggetti.length} di ${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}`;
   segmenti.querySelector('[data-filtro="tutti"]').textContent = `Tutti · ${oggetti.length}`;
 
   // Filtro dei segmenti: si applica qui, senza richiamare l'API (i dati li abbiamo già)
@@ -75,7 +86,8 @@ function render() {
     if (cercato && oggetti.length === 0) {
       // La ricerca non ha trovato niente: lo diciamo, e offriamo di cancellarla
       lista.innerHTML = `<p class="vuoto">Nessun oggetto contiene «${esc(cercato)}» nel nome, nel marchio o nelle note.
-        <button type="button" class="btn-piccolo secondario" id="cancella-ricerca">Cancella la ricerca</button></p>`;
+        <button type="button" class="btn-piccolo secondario" id="cancella-ricerca">Cancella la ricerca</button>
+        <button type="button" class="btn-piccolo" id="aggiungi-cercato">Aggiungi «${esc(cercato)}» all'armadio</button></p>`;
     } else {
       lista.innerHTML = `<p class="vuoto">${
         oggetti.length === 0 ? "Nessun oggetto qui. Premi «Aggiungi» per inserire il primo." : "Nessun oggetto con questo filtro."
@@ -122,6 +134,14 @@ function sottotitolo(o) {
 
 // --- Clic su un oggetto della lista (event delegation: UN solo listener per tutte le righe) ---
 lista.addEventListener("click", (e) => {
+  // B2: la ricerca non ha trovato niente → "Aggiungi «ramponi» all'armadio" apre il form con il nome già scritto
+  if (e.target.id === "aggiungi-cercato") {
+    const nome = q.value.trim();
+    svuotaForm();
+    campi.nome.value = nome;
+    apriFinestra(campi.categoria); // il nome c'è già: si parte dalla categoria
+    return;
+  }
   if (e.target.id === "cancella-ricerca") {
     q.value = "";
     carica();
