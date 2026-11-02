@@ -672,3 +672,35 @@ button.etichetta-piu { cursor: pointer; font: inherit; font-weight: 600; backgro
 button.occhio { position: absolute; top: 0; right: 0; bottom: 0; width: 44px; padding: 0; border: 0; border-radius: 0 var(--raggio-piccolo) var(--raggio-piccolo) 0;
                 background: none; color: var(--terra); }
 button.occhio:hover, button.occhio:focus-visible { background: none; color: var(--muschio); }
+
+/* C7 (revisione UX 2): pagina Zaino, riquadro "Da preparare" */
+.da-preparare { margin-bottom: 1.5rem; }
+.da-preparare h2 { margin-top: 0; }
+.da-preparare h2 .muto { font-family: var(--font); font-size: .85rem; font-weight: 500; }
+.preparare-voce { padding: .9rem 0; border-top: 1px solid var(--bordo); }
+.preparare-voce:first-of-type { border-top: 0; padding-top: .25rem; }
+.preparare-testa { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .2rem .8rem; margin-bottom: .5rem; }
+.preparare-nome { font-weight: 700; color: var(--testo); }
+.barra-grande { height: 18px; }
+.preparare-stato { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin: .45rem 0 0; }
+.riga-genera { color: var(--muschio); font-weight: 700; }
+
+/* C10 (revisione UX 2): glossario nei Consigli e «?» nella scheda del viaggio */
+.glossario { margin-top: 1.5rem; scroll-margin-top: 5rem; }
+.glossario dl { margin: .5rem 0 0; }
+.glossario dt { margin-top: .9rem; font-weight: 700; color: var(--testo); scroll-margin-top: 5rem; }
+.glossario dd { margin: .2rem 0 0; }
+.glossario dt:target, .glossario dt:target + dd { background: var(--ocra-chiaro); }   /* la voce arrivando da un «?» */
+.glossario dt:target { padding: .3rem .5rem 0; border-radius: var(--raggio-piccolo) var(--raggio-piccolo) 0 0; }
+.glossario dt:target + dd { padding: .2rem .5rem .4rem; border-radius: 0 0 var(--raggio-piccolo) var(--raggio-piccolo); }
+a.aiuto { position: relative; display: inline-grid; place-items: center; width: 1.2rem; height: 1.2rem; vertical-align: .1em;
+          border: 1.5px solid currentColor; border-radius: 50%; color: var(--muschio); font-size: .72rem; font-weight: 700;
+          line-height: 1; text-decoration: none; }
+a.aiuto::after { content: ""; position: absolute; inset: -.7rem; }  /* zona da toccare più grande del cerchietto */
+a.aiuto:hover, a.aiuto:focus-visible { background: var(--salvia-chiaro); }
+
+/* C9 (revisione UX 2): profilo che si salva da solo; consenso per le note mediche */
+.stato-salvato { font-size: .85rem; font-weight: 600; color: var(--muschio); min-height: 1.2em; }
+label.check.consenso { align-items: flex-start; font-size: .88rem; }
+label.check.consenso input { margin-top: .2rem; }
+textarea:disabled { background: var(--crema); cursor: not-allowed; }

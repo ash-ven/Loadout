@@ -27,6 +27,11 @@ const CAMPI_DATI = ["livello_esperienza", "sensibilita_freddo", "emergenza_nome"
 for (const nome of CAMPI_DATI) {
   formDati.elements[nome].value = utente[nome] ?? "";
 }
+// C9: le note mediche si possono scrivere solo con il consenso (spuntato già se le avevi salvate prima)
+const consensoSalute = document.querySelector("#consenso-salute");
+const campoNote = formDati.elements.note_mediche;
+consensoSalute.checked = Boolean(utente.note_mediche);
+campoNote.disabled = !consensoSalute.checked;
 
 // =====================================================================
 //  FOTO (C1)
@@ -83,22 +88,56 @@ async function riduciFoto(file, lato = 256) {
 // =====================================================================
 //  DATI PERSONALI (C1)
 // =====================================================================
-formDati.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// C9 (revisione UX 2): niente pulsante. Ogni campo si salva quando lo cambi (evento "change": per le tendine
+// appena scegli, per i campi di testo quando esci dal campo) e accanto al titolo compare «Salvato».
+const statoDati = document.querySelector("#dati-stato");
+const statoPeso = document.querySelector("#peso-stato");
+const timerStato = new Map();
+
+// Il piccolo stato accanto al titolo: «Salvataggio…», poi «Salvato» che sparisce dopo 3 secondi
+function mostraStato(el, testo, sparisce = false) {
+  el.textContent = testo;
+  clearTimeout(timerStato.get(el));
+  if (sparisce) timerStato.set(el, setTimeout(() => { el.textContent = ""; }, 3000));
+}
+
+async function salvaDati() {
   infoDati.hidden = true;
   erroreDati.hidden = true;
-  // Mando tutti i campi: quelli vuoti ("") il server li svuota
+  // Mando tutti i campi: quelli vuoti ("") il server li svuota. Senza consenso le note mediche vanno sempre vuote.
   const dati = {};
   for (const nome of CAMPI_DATI) {
     dati[nome] = formDati.elements[nome].value.trim();
   }
+  if (!consensoSalute.checked) dati.note_mediche = "";
+  mostraStato(statoDati, "Salvataggio…");
   try {
     utente = await api("/api/auth/me", { method: "PATCH", body: dati });
-    infoDati.textContent = "Dati salvati.";
-    infoDati.hidden = false;
+    mostraStato(statoDati, "✓ Salvato", true);
   } catch (err) {
+    mostraStato(statoDati, "");
     erroreDati.textContent = err.message; // es. "Numero di telefono non valido"
     erroreDati.hidden = false;
+  }
+}
+
+formDati.addEventListener("change", (e) => {
+  if (e.target === consensoSalute) return; // la casella ha il suo gestore qui sotto
+  salvaDati();
+});
+// Invio in un campo di testo: niente ricarica della pagina, si salva e basta
+formDati.addEventListener("submit", (e) => { e.preventDefault(); salvaDati(); });
+
+// Togliendo il consenso, le note mediche spariscono subito anche dal server
+consensoSalute.addEventListener("change", () => {
+  campoNote.disabled = !consensoSalute.checked;
+  if (consensoSalute.checked) {
+    campoNote.focus();
+  } else if (campoNote.value.trim() !== "") {
+    campoNote.value = "";
+    salvaDati();
+    infoDati.textContent = "Note mediche cancellate.";
+    infoDati.hidden = false;
   }
 });
 
@@ -109,9 +148,8 @@ formDati.addEventListener("submit", async (e) => {
 // Pulsante "Esci dall'account": stessa funzione del link nel menu
 document.querySelector("#bottone-esci").addEventListener("click", esci);
 
-// Salvataggio del peso corporeo
-formProfilo.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// Salvataggio del peso corporeo. C9: appena cambi il valore (uscendo dal campo), senza pulsante
+async function salvaPeso() {
   errore.hidden = true;
 
   // Validazione lato client: stesso intervallo che controlla il server (20–300)
@@ -122,14 +160,19 @@ formProfilo.addEventListener("submit", async (e) => {
     return;
   }
 
+  mostraStato(statoPeso, "Salvataggio…");
   try {
     const aggiornato = await api("/api/auth/me", { method: "PATCH", body: { peso_corporeo_kg: peso } });
-    mostraSoglia(aggiornato.peso_corporeo_kg, true);
+    mostraSoglia(aggiornato.peso_corporeo_kg);
+    mostraStato(statoPeso, "✓ Salvato", true);
   } catch (err) {
+    mostraStato(statoPeso, "");
     errore.textContent = err.message;
     errore.hidden = false;
   }
-});
+}
+campoPeso.addEventListener("change", salvaPeso);
+formProfilo.addEventListener("submit", (e) => { e.preventDefault(); salvaPeso(); });
 
 // Mostra le due soglie (B4): 10% in giornata, 20% con pernotto, in formato italiano (es. "5,7")
 function mostraSoglia(peso, appenaSalvato = false) {

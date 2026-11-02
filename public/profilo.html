@@ -55,8 +55,12 @@
 
     <!-- C1: dati personali utili in montagna (tutti facoltativi) -->
     <section class="card">
-      <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Dati personali</h2>
-      <p class="muto">Tutti facoltativi, li vedi solo tu. Contatto, note mediche e tessera compaiono nel riquadro Emergenza di ogni viaggio; la sensibilità al freddo adatta i consigli sul vestiario.</p>
+      <!-- C9 (revisione UX 2): niente pulsante "Salva": ogni campo si salva quando lo cambi, e qui accanto compare «Salvato» -->
+      <div class="intestazione-sezione">
+        <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Dati personali</h2>
+        <span class="stato-salvato" id="dati-stato" role="status" aria-live="polite"></span>
+      </div>
+      <p class="muto">Tutti facoltativi, li vedi solo tu e si salvano da soli. Contatto, note mediche e tessera compaiono nel riquadro Emergenza di ogni viaggio; la sensibilità al freddo adatta i consigli sul vestiario.</p>
       <form id="form-dati" novalidate>
         <label>Esperienza in montagna
           <select name="livello_esperienza">
@@ -82,27 +86,31 @@
             <input name="emergenza_telefono" type="tel" maxlength="30" placeholder="+39 333 1234567" autocomplete="off">
           </label>
         </div>
+        <!-- C9: le note mediche sono dati sulla salute (GDPR, art. 9): servono un consenso esplicito e una casella spuntata da te -->
+        <label class="check consenso"><input type="checkbox" id="consenso-salute">
+          <span>Le note mediche sono dati sulla salute: le salviamo solo se spunti questa casella e le mostriamo solo nel riquadro Emergenza dei tuoi viaggi.</span></label>
         <label>Note mediche per chi ti soccorre
-          <textarea name="note_mediche" maxlength="300" rows="2" placeholder="es. allergia alle punture d'api, asma (inalatore nella tasca alta), gruppo sanguigno 0+"></textarea>
+          <textarea name="note_mediche" disabled maxlength="300" rows="2" placeholder="es. allergia alle punture d'api, asma (inalatore nella tasca alta), gruppo sanguigno 0+"></textarea>
         </label>
         <label>Tessera CAI o assicurazione per il soccorso
           <input name="tessera_soccorso" type="text" maxlength="80" placeholder="es. CAI 1234567 · Sezione di Bologna" autocomplete="off">
         </label>
         <p class="avviso" id="dati-info" hidden></p>
         <p class="errore" id="dati-errore" hidden></p>
-        <div class="azioni"><button type="submit">Salva i dati</button></div>
       </form>
     </section>
 
     <!-- Peso corporeo e soglia dello zaino (stretch 5) -->
     <section class="card">
-      <h2><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24">Peso corporeo</h2>
+      <div class="intestazione-sezione">
+        <h2><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24">Peso corporeo</h2>
+        <span class="stato-salvato" id="peso-stato" role="status" aria-live="polite"></span>
+      </div>
       <p class="muto">Lo zaino, senza acqua e cibo, non dovrebbe superare il 10% del tuo peso nei viaggi in giornata e il 20% quando dormi fuori. Con il peso impostato, Loadout ti avvisa nella scheda di ogni viaggio.</p>
       <form id="form-profilo" class="aggiungi" novalidate>
         <label>Peso corporeo (kg)
           <input name="peso_corporeo_kg" type="number" min="20" max="300" step="0.1">
         </label>
-        <button type="submit">Salva</button>
       </form>
       <p class="avviso" id="profilo-info" hidden></p>
       <p class="errore" id="profilo-errore" hidden></p>

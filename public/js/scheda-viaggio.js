@@ -4,6 +4,12 @@ import { ATTIVITA } from "./categorie.js";
 import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 
+// C10 (revisione UX 2): un piccolo «?» accanto alle parole difficili, porta alla spiegazione nel glossario dei Consigli
+const aiuto = (id, cosa) =>
+  `<a class="aiuto" href="/consigli.html#g-${id}" aria-label="Cosa vuol dire ${cosa}?" title="Cosa vuol dire ${cosa}?">?</a>`;
+// Quale voce del glossario spiega ogni avviso della vetta
+const AIUTO_AVVISO = { vento: ["raffiche", "raffiche"], zero_termico: ["zero-termico", "zero termico"] };
+
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
 
@@ -146,7 +152,7 @@ function renderConsigli() {
       ? `<span><strong>Attenzione:</strong> con ${ore(c.ore_cammino_giorno)} di cammino non c'è abbastanza luce
          (alba ${esc(c.sole.alba)}, tramonto ${esc(c.sole.tramonto)}). Valuta di accorciare il percorso o di dividerlo in più giorni.</span>`
       : `<span>Parti <strong>entro le ${esc(limite.ora)}</strong> per arrivare almeno un'ora prima del tramonto
-         (${ore(c.ore_cammino_giorno)} di cammino, soste comprese nel margine).${limite.in_ritardo
+         (${ore(c.ore_cammino_giorno)} di cammino, soste comprese nel margine) ${aiuto("ora-limite", "ora limite")}.${limite.in_ritardo
            ? ` <strong>Hai segnato la partenza alle ${esc(limite.ora_partenza)}: è più tardi del limite.</strong>` : ""}</span>`;
   }
 
@@ -180,11 +186,14 @@ function renderConsigli() {
     htmlMeteo = `${vt ? `<p class="muto">Meteo calcolato sul punto più alto che raggiungerai${metri(vt.quota_m)}</p>` : ""}
       <table class="tabella-meteo">
         <thead><tr><td></td>${colonne.map((col) => `<th scope="col">${col.titolo}</th>`).join("")}</tr></thead>
-        <tbody>${riga("Temperatura", "temperatura")}${riga("Percepita", "percepita")}${riga("Raffiche", "raffiche")}${riga("Pioggia", "pioggia")}</tbody>
+        <tbody>${riga("Temperatura", "temperatura")}${riga(`Percepita ${aiuto("percepita", "temperatura percepita")}`, "percepita")}${riga(`Raffiche ${aiuto("raffiche", "raffiche")}`, "raffiche")}${riga("Pioggia", "pioggia")}</tbody>
       </table>
       <ul>${m.vestiario.map((consiglio) => `<li>${esc(consiglio)}</li>`).join("")}</ul>`;
     // gli avvisi della vetta (vento, zero termico, temporali) nel riquadro ocra, come gli altri avvisi
-    for (const a of m.avvisi ?? []) htmlMeteo += `<p class="avviso"><span>${esc(a.testo)}</span></p>`;
+    for (const a of m.avvisi ?? []) {
+      const voce = AIUTO_AVVISO[a.tipo];
+      htmlMeteo += `<p class="avviso"><span>${esc(a.testo)}${voce ? ` ${aiuto(...voce)}` : ""}</span></p>`;
+    }
   } else {
     htmlMeteo = `<p>Non disponibile: ${esc(c.meteo.motivo)}.</p>`;
   }
@@ -194,7 +203,7 @@ function renderConsigli() {
       Valuta ramponcini o ramponi e informati sulle condizioni (rifugi, guide alpine).</span></p>`;
   }
   if (c.bollettino_valanghe) {
-    htmlMeteo += `<p>Prima di partire controlla il <a href="https://www.aineva.it/bollettino/" target="_blank" rel="noopener">bollettino valanghe (AINEVA)</a>.</p>`;
+    htmlMeteo += `<p>Prima di partire controlla il <a href="https://www.aineva.it/bollettino/" target="_blank" rel="noopener">bollettino valanghe (AINEVA)</a> ${aiuto("valanghe", "bollettino valanghe")}.</p>`;
   }
   elMeteo.innerHTML = htmlMeteo;
 
