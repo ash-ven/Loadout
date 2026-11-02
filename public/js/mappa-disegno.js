@@ -41,15 +41,20 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       suTessereSbagliate: () => scriviStato(stato, "Le tessere della mappa non arrivano: controlla la chiave MapTiler nel file .env.", "errore"),
     });
     livelloPercorso = L.layerGroup().addTo(mappa);
-    // A8: il selettore degli sfondi è chiuso; sul telefono, aperto, si richiude toccando la mappa.
-    // Quel tocco serve solo a richiuderlo: ricordiamo (all'inizio del tocco) se era aperto, e in quel caso niente tappa.
-    let selettoreAperto = false;
-    contenitore.addEventListener("pointerdown", () => {
-      selettoreAperto = Boolean(contenitore.querySelector(".leaflet-control-layers-expanded"));
-    }, true);
+    // A8: il selettore degli sfondi è chiuso; aperto, si richiude toccando la mappa (o uscendo col mouse).
+    // Quel tocco serve solo a richiuderlo, non deve mettere una tappa. Controllo finale: Leaflet a volte lo chiude
+    // un attimo PRIMA che arrivi il tocco, quindi non basta guardare se è aperto: ricordiamo QUANDO si è chiuso
+    // (un MutationObserver guarda la sua classe) e ignoriamo i tocchi arrivati entro mezzo secondo.
+    const selettore = contenitore.querySelector(".leaflet-control-layers");
+    let apertoFinoA = 0; // l'ultimo momento in cui il selettore era aperto (millisecondi)
+    const segnaSeAperto = () => {
+      if (selettore.classList.contains("leaflet-control-layers-expanded")) apertoFinoA = Infinity;
+      else if (apertoFinoA === Infinity) apertoFinoA = Date.now(); // si è appena chiuso
+    };
+    new MutationObserver(segnaSeAperto).observe(selettore, { attributes: true, attributeFilter: ["class"] });
     // Toccare la mappa aggiunge un punto (toccare una puntina no: Leaflet non lo passa alla mappa)
     mappa.on("click", (e) => {
-      if (selettoreAperto) { selettoreAperto = false; return; }
+      if (Date.now() - apertoFinoA < 500) return; // tocco per chiudere il selettore: niente tappa
       punti.push(nuovaPuntina(e.latlng));
       ridisegna();
     });

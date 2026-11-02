@@ -290,11 +290,19 @@ function messaggioLasciaDetto(nomeContatto) {
     ultimo = new Date(inizio);
     ultimo.setDate(ultimo.getDate() + v.n_giorni - 1);
   }
-  const quandoRientro = piuGiorni && ultimo ? `${giorno(ultimo)} ` : "";
-  const rientro = c.ore_cammino_giorno != null ? partenza + Math.round(c.ore_cammino_giorno * 60) : null;
-  if (rientro != null) frasi.push(`Rientro previsto ${quandoRientro}verso le ${orarioBreve(rientro)}.`);
-  else if (piuGiorni && ultimo) frasi.push(`Rientro previsto ${giorno(ultimo)}.`);
+  // Più giorni (controllo finale della revisione UX 2): l'ora in cui lasci il rifugio l'ultimo giorno non la sappiamo,
+  // quindi niente ore inventate (un allarme troppo presto farebbe chiamare il 112 per niente):
+  // solo il giorno del rientro, e "entro la tarda serata" di quel giorno (scelta di Asiha).
+  if (piuGiorni && ultimo) {
+    frasi.push(`Rientro previsto ${giorno(ultimo)}.`);
+    frasi.push(v.n_persone === 1 ? "Non viene nessuno con me." : `Siamo in ${v.n_persone}.`);
+    frasi.push(`Se entro la tarda serata di ${giorno(ultimo)} non ti ho scritto, chiama il 112 e leggigli questo messaggio.`);
+    return frasi.join(" ");
+  }
 
+  // In giornata: rientro = ora di partenza + ore di cammino
+  const rientro = c.ore_cammino_giorno != null ? partenza + Math.round(c.ore_cammino_giorno * 60) : null;
+  if (rientro != null) frasi.push(`Rientro previsto verso le ${orarioBreve(rientro)}.`);
   frasi.push(v.n_persone === 1 ? "Non viene nessuno con me." : `Siamo in ${v.n_persone}.`);
 
   // Ora entro cui preoccuparsi: il rientro + 2 ore, ma mai dopo un'ora dal tramonto
@@ -302,7 +310,7 @@ function messaggioLasciaDetto(nomeContatto) {
   const candidati = [rientro != null ? rientro + 120 : null, tramontoPiuUno].filter((n) => n != null);
   if (candidati.length) {
     const allarme = Math.min(...candidati, 23 * 60 + 59);
-    frasi.push(`Se ${quandoRientro}alle ${orarioBreve(allarme)} non ti ho scritto, chiama il 112 e leggigli questo messaggio.`);
+    frasi.push(`Se alle ${orarioBreve(allarme)} non ti ho scritto, chiama il 112 e leggigli questo messaggio.`);
   } else {
     frasi.push("Se entro sera non ti ho scritto, chiama il 112 e leggigli questo messaggio.");
   }
