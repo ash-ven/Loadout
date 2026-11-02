@@ -563,3 +563,9 @@ input[readonly] { background: var(--crema); color: var(--terra); border-style: d
 input[readonly]:focus { box-shadow: none; border-color: var(--bordo); }
 .nota-mappa { margin: 0; font-size: .85rem; }
 details > .nota-mappa { margin-top: .75rem; }
+
+/* --- A2 (revisione UX 2): "La mappa calcola … · Usa questo" sotto i valori scritti a mano, nella pagina della mappa --- */
+.calcolo-mappa { font-size: .82rem; }
+button.usa-mappa { display: inline; padding: 0; border: 0; background: none; color: var(--muschio); font: inherit; font-weight: 700;
+                   text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+button.usa-mappa:hover, button.usa-mappa:focus-visible { background: none; color: var(--muschio-scuro); }

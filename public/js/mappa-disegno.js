@@ -13,7 +13,10 @@ import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, e
 const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 
 // suModifica: chiamata ogni volta che il percorso cambia (la pagina la usa per "modifiche non salvate")
-export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate, suModifica = () => {} }) {
+// suCalcolo(dati): chiamata con i valori calcolati dalla mappa ({ distanza_km, dislivello_m, quota_min_m, quota_max_m })
+//                  oppure con null quando non c'è un percorso (A2: la pagina li mostra sotto i valori scritti a mano)
+export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate,
+                                     suModifica = () => {}, suCalcolo = () => {} }) {
   let mappa = null;            // nasce con apri()
   let livelloPercorso = null;  // le linee: si svuota e si ridisegna
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
@@ -165,12 +168,14 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     } catch (err) {
       if (numero !== ultimaRichiesta) return;
       // 404: un punto lontano dai sentieri; 502: BRouter non risponde. Il messaggio in italiano arriva dal server
+      suCalcolo(null); // niente percorso calcolato: niente confronto con i tuoi valori
       scriviStato(stato, `${err.message}. Resta la linea provvisoria: puoi scrivere i dati a mano.`, "errore");
     }
   }
 
   // I quattro valori del percorso nei campi veri del form, con il post-it "mappa"
   function compilaDati(dati) {
+    suCalcolo(dati);
     proponi(campi.km, dati ? dati.distanza_km : null, "mappa");
     proponi(campi.dislivello, dati ? dati.dislivello_m : null, "mappa");
     proponi(campi.quotaMax, dati?.quota_max_m ?? null, "mappa");

@@ -26,7 +26,46 @@ const disegno = attivaDisegnoMappa({
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },
+  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); },
 });
+
+// =====================================================================
+//  A2 (revisione UX 2): sotto un valore scritto a mano, quanto calcola la mappa (se è diverso) e "Usa questo"
+// =====================================================================
+let calcolati = null; // l'ultimo percorso calcolato: { distanza_km, dislivello_m, quota_min_m, quota_max_m } o null
+const QUATTRO = ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m"];
+const formatta = (nome, n) => nome === "distanza_km"
+  ? `${n.toLocaleString("it-IT", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
+  : `${Math.round(n).toLocaleString("it-IT", { useGrouping: "always" })} m`;
+// "Diversi" = almeno 0,1 km per la lunghezza, almeno 1 m per dislivello e quote
+const diversi = (nome, a, b) => nome === "distanza_km" ? Math.round(a * 10) !== Math.round(b * 10) : Math.round(a) !== Math.round(b);
+
+function mostraCalcoli() {
+  for (const nome of QUATTRO) {
+    const riga = document.querySelector(`.calcolo-mappa[data-per="${nome}"]`);
+    const campo = campi[nome];
+    const dellaMappa = calcolati?.[nome];
+    const tuo = campo.value !== "" && campo.dataset.auto === undefined; // scritto da te (niente post-it)
+    const mostra = dellaMappa != null && tuo && diversi(nome, Number(campo.value), dellaMappa);
+    riga.hidden = !mostra;
+    if (mostra) {
+      // createElement + textContent: niente innerHTML
+      const bottone = document.createElement("button");
+      bottone.type = "button";
+      bottone.className = "usa-mappa";
+      bottone.textContent = "Usa questo";
+      bottone.addEventListener("click", () => {
+        campo.value = nome === "distanza_km" ? dellaMappa : Math.round(dellaMappa);
+        campo.dataset.auto = "mappa"; // torna "dalla mappa": la mappa lo aggiornerà di nuovo
+        daSalvare = true;
+        mostraCalcoli();
+      });
+      riga.replaceChildren(`La mappa calcola ${formatta(nome, dellaMappa)} · `, bottone);
+    }
+  }
+}
+// Se scrivi in un campo, il confronto si aggiorna subito
+QUATTRO.forEach((nome) => campi[nome].addEventListener("input", mostraCalcoli));
 
 // Scrivendo a mano il post-it si stacca (e la pagina ha modifiche da salvare)
 staccaPostItScrivendo(CAMPI.map((nome) => campi[nome]));
