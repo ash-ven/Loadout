@@ -41,8 +41,15 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       suTessereSbagliate: () => scriviStato(stato, "Le tessere della mappa non arrivano: controlla la chiave MapTiler nel file .env.", "errore"),
     });
     livelloPercorso = L.layerGroup().addTo(mappa);
+    // A8: il selettore degli sfondi è chiuso; sul telefono, aperto, si richiude toccando la mappa.
+    // Quel tocco serve solo a richiuderlo: ricordiamo (all'inizio del tocco) se era aperto, e in quel caso niente tappa.
+    let selettoreAperto = false;
+    contenitore.addEventListener("pointerdown", () => {
+      selettoreAperto = Boolean(contenitore.querySelector(".leaflet-control-layers-expanded"));
+    }, true);
     // Toccare la mappa aggiunge un punto (toccare una puntina no: Leaflet non lo passa alla mappa)
     mappa.on("click", (e) => {
+      if (selettoreAperto) { selettoreAperto = false; return; }
       punti.push(nuovaPuntina(e.latlng));
       ridisegna();
     });
@@ -191,8 +198,17 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     linea = traccia.linea;
     disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
     aggiornaConteggio();
-    mappa.fitBounds(L.latLngBounds(linea.map(([lat, lon]) => [lat, lon])), { padding: [30, 30] });
+    inquadraTutto();
     scriviStato(stato, "");
+  }
+
+  // A8 (revisione UX 2): alla riapertura si vede SEMPRE tutto il percorso. Lo rifacciamo anche dopo che la mappa
+  // ha preso la sua misura definitiva (invalidateSize): prima la misura può essere sbagliata e l'inquadratura pure.
+  function inquadraTutto() {
+    if (!linea?.length) return;
+    const confini = L.latLngBounds(linea.map(([lat, lon]) => [lat, lon]));
+    mappa.fitBounds(confini, { padding: [30, 30] });
+    requestAnimationFrame(() => { mappa.invalidateSize(); mappa.fitBounds(confini, { padding: [30, 30] }); });
   }
 
   // --- Pulsanti ---

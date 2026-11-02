@@ -31,9 +31,9 @@ export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom 
   };
   const mappa = L.map(elemento).setView(centro, zoom);
   sfondi["Outdoor"].addTo(mappa);
-  // Sul telefono il selettore resta chiuso (si apre con un tocco), sul computer è sempre aperto
-  const sulTelefono = window.matchMedia("(max-width: 600px)").matches;
-  L.control.layers(sfondi, null, { collapsed: sulTelefono }).addTo(mappa);
+  // A8 (revisione UX 2, scelta di Asiha): il selettore degli sfondi parte SEMPRE chiuso (icona a strati),
+  // su qualsiasi schermo: aperto copriva un pezzo di mappa e la puntina di partenza. Si apre con un tocco.
+  L.control.layers(sfondi, null, { collapsed: true }).addTo(mappa);
   return mappa;
 }
 
