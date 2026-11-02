@@ -10,22 +10,25 @@
 <body>
   <header class="topbar">
     <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="38" height="38"><span>Load<span class="out">out</span></span></a>
-    <!-- Menu: sul telefono è la barra fissa in basso, sul computer sta qui in alto (vedi style.css) -->
+    <!-- Menu: telefono = barra in basso (Viaggi al centro, la scarpa senape); computer = nella barra in alto.
+         Consigli: sul computer è l'ultima voce del menu, sul telefono è l'icona accanto a "Esci". -->
     <nav class="menu" aria-label="Navigazione principale">
       <a href="/armadio.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.2 5.2A1.8 1.8 0 1 1 12 7v1.5"/><path d="M12 8.5 3.6 15a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8Z"/><path d="M8 16.8v2.7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.7"/></svg></span>Armadio</a>
-      <a href="/viaggi.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h6l.6 5.6 4.9 2.2C19 12 21 13.6 21 16v1H3V5a2 2 0 0 1 2-2Z"/><path d="M3 17v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2"/><path d="M7.5 6.5h3.6M8 10h4.6"/></svg></span>Viaggi</a>
-      <a href="/" class="menu-centrale" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 5a1.5 1.5 0 0 1 3 0"/><path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/><path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/><path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/><path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/><rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#fbf6ec" stroke="none"/></svg></a>
-      <a href="/consigli.html" aria-current="page"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5l2.1-4.9Z"/><path d="M14.6 9.4 13 13 11 11Z" fill="#c8962b" stroke="none"/></svg></span>Consigli</a>
+      <a href="/zaini.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 5a1.5 1.5 0 0 1 3 0"/><path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/><path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/><path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/><path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/><rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Zaino</a>
+      <a href="/viaggi.html" class="menu-centrale" aria-label="Viaggi" title="Viaggi"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h6l.6 5.6 4.9 2.2C19 12 21 13.6 21 16v1H3V5a2 2 0 0 1 2-2Z"/><path d="M3 17v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2"/><path d="M7.5 6.5h3.6M8 10h4.6"/></svg><span class="etichetta-centrale" aria-hidden="true">Viaggi</span></a>
+      <a href="/mappe.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5l2.1-4.9Z"/><path d="M14.6 9.4 13 13 11 11Z" fill="#c8962b" stroke="none"/></svg></span>Mappe</a>
       <a href="/profilo.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20.5c0-3.9 3.1-7 7-7s7 3.1 7 7"/><rect x="11" y="15.5" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Profilo</a>
+      <a href="/consigli.html" class="solo-computer" aria-current="page"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.8C10.2 5.3 7.6 4.6 3.5 4.6v13.2c4.1 0 6.7.7 8.5 2.2 1.8-1.5 4.4-2.2 8.5-2.2V4.6c-4.1 0-6.7.7-8.5 2.2Z"/><path d="M12 6.8V20"/><path d="M15 5.4v4.4l1.3-1 1.3 1V5" fill="#c8962b" stroke="none"/></svg></span>Consigli</a>
     </nav>
-    <a href="#" id="esci" class="esci" aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
+    <a href="/consigli.html" class="icona-alto consigli-alto" aria-current="page" aria-label="Consigli" title="Consigli"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.8C10.2 5.3 7.6 4.6 3.5 4.6v13.2c4.1 0 6.7.7 8.5 2.2 1.8-1.5 4.4-2.2 8.5-2.2V4.6c-4.1 0-6.7.7-8.5 2.2Z"/><path d="M12 6.8V20"/><path d="M15 5.4v4.4l1.3-1 1.3 1V5" fill="#c8962b" stroke="none"/></svg></a>
+    <a href="#" id="esci" class="icona-alto esci" aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
   </header>
 
   <!-- Testata della pagina -->
   <section class="testata">
     <div class="testata-dentro">
       <h1>Consigli</h1>
-      <p>Le regole di base per preparare lo zaino e partire tranquilli.</p>
+      <p>Le regole di base per preparare lo zaino e partire tranquilli. Più in basso, <a href="#glossario">le parole della scheda</a>.</p>
     </div>
   </section>
 
@@ -37,7 +40,7 @@
           <span class="cerchio-icona"><img src="/img/icone/zaino.svg" alt="" width="22" height="22"></span>
           <h2>Il peso dello zaino</h2>
         </div>
-        <p>Una regola diffusa: lo zaino non dovrebbe superare il 10% del tuo peso corporeo nelle uscite in giornata e il 20% quando dormi fuori. Loadout ti avvisa quando li superi.</p>
+        <p>Una regola diffusa: lo zaino non dovrebbe superare il 10% del tuo peso corporeo nei viaggi in giornata e il 20% quando dormi fuori. Loadout ti avvisa quando li superi.</p>
         <ul>
           <li>Gli oggetti più pesanti vanno vicino alla schiena, all'altezza delle scapole.</li>
           <li>Quello che usi spesso (acqua, snack, mappa) sta nelle tasche esterne.</li>
@@ -48,7 +51,7 @@
           <span class="cerchio-icona"><img src="/img/icone/avviso-peso.svg" alt="" width="22" height="22"></span>
           <h2>Peso base e acqua</h2>
         </div>
-        <p>Il <strong>peso base</strong> è lo zaino senza acqua, cibo e combustibile: è la parte che decidi tu con l'attrezzatura. Loadout conta solo quello, perché acqua e cibo cambiano a ogni uscita e calano mentre cammini.</p>
+        <p>Il <strong>peso base</strong> è lo zaino senza acqua, cibo e combustibile: è la parte che decidi tu con l'attrezzatura. Loadout conta solo quello, perché acqua e cibo cambiano a ogni viaggio e calano mentre cammini.</p>
         <ul>
           <li>L'acqua pesa 1 kg al litro: 2,5 litri sono 2,5 kg in più sulle spalle.</li>
           <li>Rifornisciti a fontane e rifugi invece di portare tutto da casa: è il modo più semplice per alleggerire.</li>
@@ -87,7 +90,7 @@
         <ul>
           <li>Parti presto, soprattutto d'estate, quando nel pomeriggio arrivano spesso i temporali.</li>
           <li>Calcola i tempi per rientrare prima del tramonto: nella scheda di ogni viaggio trovi l'orario.</li>
-          <li>La frontale va sempre nello zaino, anche per le uscite brevi.</li>
+          <li>La frontale va sempre nello zaino, anche per i viaggi brevi.</li>
         </ul>
       </section>
       <section class="card consiglio-generale">
@@ -113,7 +116,37 @@
         </ul>
       </section>
     </div>
-    <p class="muto nota-consigli">Questi sono consigli generali. Nella scheda di ogni viaggio trovi quelli calcolati sulla tua uscita: acqua, alba e tramonto, meteo e percorso.</p>
+    <!-- C10 (revisione UX 2): il glossario. Ogni termine ha un id (g-…): dalla scheda del viaggio i «?» portano qui -->
+    <section class="card glossario" id="glossario">
+      <div class="scorciatoia-testa">
+        <span class="cerchio-icona"><img src="/img/icone/consigli.svg" alt="" width="22" height="22"></span>
+        <h2>Le parole della scheda</h2>
+      </div>
+      <dl>
+        <dt id="g-dislivello">Dislivello positivo e negativo (D+ e D−)</dt>
+        <dd>Quanti metri sali (D+) e quanti scendi (D−) in tutto, sommando ogni salita e ogni discesa del percorso. «D+ 650 m» vuol dire 650 metri di salita, anche se la vetta è solo 400 m più in alto della partenza. In un giro ad anello D+ e D− sono uguali; le discese lunghe stancano le ginocchia: i bastoncini aiutano.</dd>
+        <dt id="g-quota">Quota massima</dt>
+        <dd>Il punto più alto che raggiungi. Loadout lo usa per il meteo in vetta e per avvisarti di neve e ghiaccio.</dd>
+        <dt id="g-peso-base">Peso base</dt>
+        <dd>Il peso dello zaino senza acqua, cibo e combustibile: la parte che decidi tu con l'attrezzatura.</dd>
+        <dt id="g-percepita">Temperatura percepita</dt>
+        <dd>Il freddo (o il caldo) che senti davvero: con vento e umidità può essere molto diversa dal termometro. Con 2 °C e vento forte puoi percepire −5 °C.</dd>
+        <dt id="g-raffiche">Raffiche</dt>
+        <dd>Le folate più forti del vento, non la sua velocità media. Da 40 km/h serve uno strato antivento; da 60 km/h sulle creste si fatica e si può perdere l'equilibrio; oltre 90 km/h creste e tratti esposti sono sconsigliati.</dd>
+        <dt id="g-zero-termico">Zero termico</dt>
+        <dd>La quota sopra cui la temperatura scende sotto zero e l'acqua gela. Se è più bassa della vetta, in alto puoi trovare ghiaccio.</dd>
+        <dt id="g-ora-limite">Ora limite di partenza</dt>
+        <dd>L'ora entro cui partire per arrivare almeno un'ora prima del tramonto, con le ore di cammino che hai indicato. Le soste sono comprese in quell'ora di margine.</dd>
+        <dt id="g-anello">Giro ad anello</dt>
+        <dd>Un percorso che finisce dove è iniziato, senza rifare la stessa strada.</dd>
+        <dt id="g-valanghe">Bollettino valanghe</dt>
+        <dd>Il pericolo di valanghe zona per zona, da 1 (debole) a 5 (molto forte), pubblicato dai servizi regionali e raccolto da AINEVA. Si controlla prima di ogni viaggio su neve.</dd>
+        <dt id="g-artva">ARTVA, pala e sonda</dt>
+        <dd>Il kit di autosoccorso in valanga: l'ARTVA trasmette e cerca il segnale di chi è sepolto, la sonda lo trova, la pala lo libera. Servono tutti e tre, e bisogna saperli usare.</dd>
+      </dl>
+    </section>
+
+    <p class="muto nota-consigli">Questi sono consigli generali. Nella scheda di ogni viaggio trovi quelli calcolati sul tuo viaggio: acqua, alba e tramonto, meteo e percorso.</p>
   </main>
 
   <script type="module" src="/js/menu.js"></script>

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31503f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M10.5 5a1.5 1.5 0 0 1 3 0"/>
-  <path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/>
-  <path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/>
-  <path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/>
-  <path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/>
-  <rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/>
+  <!-- Attrezzatura: una tenda (scelta di Asiha). Lo zaino resta l'icona della categoria Zaini -->
+  <path d="M12 4 3 19.5h18Z"/>
+  <path d="M12 4v15.5"/>
+  <path d="M12 19.5 9.3 14.6 12 10.5"/>
+  <path d="M2 19.5h20"/>
+  <rect x="11" y="6.2" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/>
 </svg>

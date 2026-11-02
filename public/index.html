@@ -5,56 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout</title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <!-- C8 (revisione UX 2): la Home è la mappa di tutti i tuoi viaggi. Leaflet: prima il suo CSS, poi il nostro (integrity: vedi mappa.html) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="topbar">
     <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="38" height="38"><span>Load<span class="out">out</span></span></a>
-    <!-- Menu: sul telefono è la barra fissa in basso, sul computer sta qui in alto (vedi style.css) -->
+    <!-- Menu: telefono = barra in basso (Viaggi al centro, la scarpa senape); computer = nella barra in alto.
+         Consigli: sul computer è l'ultima voce del menu, sul telefono è l'icona accanto a "Esci". -->
     <nav class="menu" aria-label="Navigazione principale">
       <a href="/armadio.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.2 5.2A1.8 1.8 0 1 1 12 7v1.5"/><path d="M12 8.5 3.6 15a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8Z"/><path d="M8 16.8v2.7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.7"/></svg></span>Armadio</a>
-      <a href="/viaggi.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h6l.6 5.6 4.9 2.2C19 12 21 13.6 21 16v1H3V5a2 2 0 0 1 2-2Z"/><path d="M3 17v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2"/><path d="M7.5 6.5h3.6M8 10h4.6"/></svg></span>Viaggi</a>
-      <a href="/" class="menu-centrale" aria-current="page" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 5a1.5 1.5 0 0 1 3 0"/><path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/><path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/><path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/><path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/><rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#fbf6ec" stroke="none"/></svg></a>
-      <a href="/consigli.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5l2.1-4.9Z"/><path d="M14.6 9.4 13 13 11 11Z" fill="#c8962b" stroke="none"/></svg></span>Consigli</a>
+      <a href="/zaini.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 5a1.5 1.5 0 0 1 3 0"/><path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/><path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/><path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/><path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/><rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Zaino</a>
+      <a href="/viaggi.html" class="menu-centrale" aria-label="Viaggi" title="Viaggi"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h6l.6 5.6 4.9 2.2C19 12 21 13.6 21 16v1H3V5a2 2 0 0 1 2-2Z"/><path d="M3 17v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2"/><path d="M7.5 6.5h3.6M8 10h4.6"/></svg><span class="etichetta-centrale" aria-hidden="true">Viaggi</span></a>
+      <a href="/mappe.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5l2.1-4.9Z"/><path d="M14.6 9.4 13 13 11 11Z" fill="#c8962b" stroke="none"/></svg></span>Mappe</a>
       <a href="/profilo.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20.5c0-3.9 3.1-7 7-7s7 3.1 7 7"/><rect x="11" y="15.5" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Profilo</a>
+      <a href="/consigli.html" class="solo-computer"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.8C10.2 5.3 7.6 4.6 3.5 4.6v13.2c4.1 0 6.7.7 8.5 2.2 1.8-1.5 4.4-2.2 8.5-2.2V4.6c-4.1 0-6.7.7-8.5 2.2Z"/><path d="M12 6.8V20"/><path d="M15 5.4v4.4l1.3-1 1.3 1V5" fill="#c8962b" stroke="none"/></svg></span>Consigli</a>
     </nav>
-    <a href="#" id="esci" class="esci" aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
+    <a href="/consigli.html" class="icona-alto consigli-alto" aria-label="Consigli" title="Consigli"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.8C10.2 5.3 7.6 4.6 3.5 4.6v13.2c4.1 0 6.7.7 8.5 2.2 1.8-1.5 4.4-2.2 8.5-2.2V4.6c-4.1 0-6.7.7-8.5 2.2Z"/><path d="M12 6.8V20"/><path d="M15 5.4v4.4l1.3-1 1.3 1V5" fill="#c8962b" stroke="none"/></svg></a>
+    <a href="#" id="esci" class="icona-alto esci" aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
   </header>
 
   <!-- Testata: saluto, frase e zaino animato appoggiato sulla cresta -->
   <section class="testata testata-home">
     <div class="testata-dentro">
       <h1 id="saluto">Ciao!</h1>
-      <p id="frase">Prepara lo zaino giusto per la tua prossima uscita: niente dimenticato, <em>niente di troppo.</em></p>
+      <p id="frase">Prepara lo zaino giusto per il tuo prossimo viaggio: niente dimenticato, <em>niente di troppo.</em></p>
       <img class="hero-zaino" src="/img/zaino-animato.svg" alt="" width="150" height="150">
     </div>
   </section>
 
   <main class="container">
-    <!-- Le due sezioni principali, affiancate sugli schermi larghi -->
-    <div class="scorciatoie">
-      <section class="card scorciatoia">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/armadio.svg" alt="" width="22" height="22"></span>
-          <h2>Il mio armadio</h2>
-          <span class="conteggio" id="conta-oggetti"></span>
+    <!-- C8 (revisione UX 2, scelte di Asiha): la cartina dei viaggi FATTI, un segnaposto sulla partenza di ognuno.
+         Si apre sul Satellite e si sposta e ingrandisce come le altre mappe; si toccano solo i segnaposto.
+         La riempie index.js con i dati di GET /api/viaggi. -->
+    <section class="mappa-home" aria-labelledby="titolo-mappa-home">
+      <div class="mappa-home-testa">
+        <h2 id="titolo-mappa-home">La tua mappa</h2>
+        <ul class="legenda-home">
+          <li><svg width="12" height="16" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Tutti i viaggi che hai fatto</li>
+        </ul>
+      </div>
+      <div class="mappa-cornice">
+        <div class="mappa sola-lettura" id="mappa-home" role="region" aria-label="Mappa dei tuoi viaggi"></div>
+        <!-- Senza viaggi da mostrare (o senza mappe disponibili): un messaggio sopra la mappa -->
+        <div class="mappa-vuota" id="mappa-vuota" hidden>
+          <p id="testo-mappa-vuota">La tua mappa si riempie con i viaggi che fai: dopo ogni viaggio, qui compare un segnaposto.</p>
+          <a class="btn" href="/viaggi.html?nuovo=1">Nuovo viaggio</a>
         </div>
-        <p>Tutta la tua attrezzatura, con peso, categoria, indispensabili e preferiti.</p>
-        <a class="btn" href="/armadio.html">Apri l'armadio <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-      </section>
-
-      <section class="card scorciatoia">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/viaggi.svg" alt="" width="22" height="22"></span>
-          <h2>I miei viaggi</h2>
-          <span class="conteggio" id="conta-viaggi"></span>
-        </div>
-        <p>Descrivi l'uscita, genera lo zaino e spunta la checklist prima di partire.</p>
-        <a class="btn" href="/viaggi.html">Vai ai viaggi <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-      </section>
-    </div>
+      </div>
+      <p class="totali-home" id="totali" hidden></p>
+    </section>
   </main>
 
+  <!-- Leaflet come script "classico" (crea la variabile globale L), prima del modulo della pagina -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script type="module" src="/js/index.js"></script>
 </body>
 </html>

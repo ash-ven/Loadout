@@ -50,8 +50,13 @@ h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
                 letter-spacing: -.02em; color: #f6efdf; font-variation-settings: "opsz" 72; }
 .topbar .logo img { display: block; }
 .topbar .logo .out { color: var(--salvia-chiaro); }
-.esci { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: #f6efdf; flex-shrink: 0; }
-.esci:hover, .esci:focus-visible { background: rgba(246, 239, 223, .12); }
+/* Icone a destra nella barra in alto: "Esci" e, sul telefono, "Consigli" */
+.icona-alto { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: #f6efdf; flex-shrink: 0; }
+.icona-alto:hover, .icona-alto:focus-visible { background: rgba(246, 239, 223, .12); }
+.icona-alto[aria-current="page"] { background: rgba(246, 239, 223, .16); }
+/* sul telefono il menu è in basso (fuori dalla barra): Consigli va a destra, attaccata a Esci */
+.consigli-alto { margin-left: auto; margin-right: -.75rem; }
+.menu a.solo-computer { display: none; }
 
 /* --- Menu principale ---
    Telefono (di base): barra fissa in basso con 5 voci e il pulsante zaino al centro.
@@ -69,10 +74,15 @@ h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
 /* Voce della pagina in cui sei (aria-current="page" è scritto nell'HTML di ogni pagina) */
 .menu a[aria-current="page"] { color: var(--muschio-scuro); font-weight: 700; }
 .menu a[aria-current="page"] .menu-icona { background: var(--salvia-chiaro); }
-/* Il pulsante centrale: cerchio senape che "esce" dalla barra, porta alla home */
+/* Il pulsante centrale: cerchio senape che "esce" dalla barra, porta ai Viaggi (la scritta si vede solo sul computer) */
 .menu a.menu-centrale { justify-self: center; display: grid; place-items: center; width: 62px; height: 62px; margin-top: -30px;
                         border-radius: 50%; background: var(--senape); border: 4px solid var(--crema); color: var(--su-senape); }
 .menu a.menu-centrale:hover { background: var(--senape-scuro); }
+/* B9 (revisione UX 2): anche sul telefono la scarpa ha il suo nome, sotto il cerchio, come le altre voci */
+.menu a.menu-centrale { position: relative; }
+.menu a.menu-centrale .etichetta-centrale { position: absolute; left: 50%; top: calc(100% - 5px); transform: translateX(-50%);   /* alla stessa altezza delle altre scritte */
+                                            font-size: .72rem; font-weight: 600; color: var(--muschio); white-space: nowrap; }
+.menu a.menu-centrale[aria-current="page"] .etichetta-centrale { color: var(--muschio-scuro); font-weight: 700; }
 /* Spazio in fondo alla pagina, così la barra fissa non copre l'ultimo contenuto */
 body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 
@@ -85,7 +95,16 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   .menu-icona { width: auto; height: auto; background: none !important; }
   .menu a:hover, .menu a:focus-visible { background: rgba(246, 239, 223, .12); color: #fff; }
   .menu a[aria-current="page"] { background: rgba(246, 239, 223, .16); color: #fff; }
-  .menu a.menu-centrale { display: none; }   /* sul computer alla home si torna dal logo */
+  /* Viaggi (il pulsante centrale del telefono) sul computer è una voce come le altre; alla home si torna dal logo */
+  .menu a.menu-centrale { justify-self: auto; display: flex; width: auto; height: auto; margin-top: 0;
+                          border: 0; border-radius: 999px; background: none; color: #e3e9da; }
+  .menu a.menu-centrale svg { width: 24px; height: 24px; }
+  .menu a.menu-centrale .etichetta-centrale { display: inline; position: static; transform: none; font-size: inherit; color: inherit; }
+  .menu a.menu-centrale[aria-current="page"] .etichetta-centrale { color: inherit; font-weight: inherit; }
+  .menu a.menu-centrale:hover, .menu a.menu-centrale:focus-visible { background: rgba(246, 239, 223, .12); color: #fff; }
+  .menu a.menu-centrale[aria-current="page"] { background: rgba(246, 239, 223, .16); color: #fff; }
+  .menu a.solo-computer { display: flex; }
+  .consigli-alto { display: none; }        /* sul computer Consigli è nel menu */
 }
 
 /* --- Contenitore e schede --- */
@@ -284,7 +303,7 @@ button.chiudi:hover { background: var(--salvia-chiaro); }
 
 /* Pulsanti nella testata (Aggiungi, Scansiona etichetta) */
 .testata-azioni { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.1rem; }
-.testata-azioni button { min-height: 44px; }
+.testata-azioni button, .testata-azioni .btn { min-height: 44px; }
 /* Pulsante "a contorno" pensato per stare sul muschio della testata */
 button.su-scuro { background: transparent; color: #f6efdf; border: 1.5px solid var(--salvia-chiaro); font-weight: 600; }
 button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
@@ -328,7 +347,9 @@ button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
 .riga-testo { flex: 1; min-width: 0; display: grid; gap: .25rem; }
 .riga-nome { font-size: .98rem; font-weight: 600; color: var(--testo); }
 .riga-dettagli { display: flex; align-items: center; flex-wrap: wrap; gap: .35rem; }
-.riga-nota { max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .8rem; color: var(--terra); }
+/* B4 (revisione UX 2): la nota va a capo (al massimo 2 righe) invece di tagliare proprio i numeri con i puntini */
+.riga-nota { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+             font-size: .8rem; color: var(--terra); }
 .riga-valore { white-space: nowrap; font-size: .92rem; font-weight: 700; color: var(--muschio); }
 .vuoto { padding: 2rem 1rem; text-align: center; color: var(--terra); }
 
@@ -420,7 +441,7 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 .campo-luogo { display: grid; gap: .3rem; }
 .suggerimenti { list-style: none; margin: 0; padding: .3rem; display: grid; gap: .15rem;
                 background: var(--lana-chiara); border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); }
-.suggerimento { display: flex; justify-content: space-between; gap: .75rem; width: 100%; padding: .55rem .7rem; text-align: left;
+.suggerimento { display: flex; flex-direction: column; align-items: flex-start; gap: .1rem;   /* A5: nome sopra, tipo e quota sotto */ width: 100%; padding: .55rem .7rem; text-align: left;
                 background: transparent; color: var(--testo); font-weight: 500; border-radius: 8px; }
 .suggerimento:hover, .suggerimento:focus-visible { background: var(--salvia-chiaro); }
 .suggerimento .muto { flex-shrink: 0; font-size: .8rem; }
@@ -444,3 +465,345 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 /* B7: le tre parti di "Account e privacy", separate da una riga */
 #account-privacy h3 { margin: 1.5rem 0 .5rem; padding-top: 1.25rem; border-top: 1px solid var(--bordo); font-size: 1.05rem; }
 #account-privacy h2 + h3 { margin-top: .75rem; padding-top: 0; border-top: 0; }
+
+/* =====================================================================
+   MAPPE (fase 5) – copiato dalla pagina di prova approvata (prova-mappe-maptiler.html).
+   Il CSS di Leaflet arriva da unpkg PRIMA di questo file: alcune regole qui sotto
+   hanno !important perché il suo è più specifico.
+   ===================================================================== */
+.testa-mappa { display: flex; justify-content: flex-end; margin: .75rem 0 .5rem; }
+.mappa-cornice { position: relative; overflow: hidden; border-radius: var(--raggio-medio); border: 1px solid var(--bordo); }
+/* z-index: 0 tiene i livelli di Leaflet (fino a 1000) dentro la mappa: senza, coprirebbero il menu in basso sul telefono */
+.mappa { position: relative; z-index: 0; height: 480px; cursor: crosshair; background: var(--crema); --filtro: .7; }
+.mappa.sola-lettura { cursor: grab; }
+.mappa.senza-filtro { --filtro: 0; } /* Home sul Satellite: le foto senza il filtro caldo (scelta di Asiha) */
+@media (max-width: 600px) { .mappa { height: max(340px, 60vh); } }
+
+/* Il filtro "Loadout" SOLO sulle tessere: linee e puntine stanno in altri livelli ("pane") e restano vive.
+   sepia = tono caldo verso il crema · saturate < 1 = colori più quieti · brightness/contrast = più morbido.
+   --filtro = 0,7 (provvisorio: l'intensità la sta ancora regolando Asiha) */
+.mappa .leaflet-tile-pane {
+  filter: sepia(calc(.25 * var(--filtro))) saturate(calc(1 - .35 * var(--filtro)))
+          brightness(calc(1 + .04 * var(--filtro))) contrast(calc(1 - .06 * var(--filtro)));
+}
+.leaflet-container { font-family: var(--font); font-size: .85rem; background: var(--crema); }
+
+/* --- I controlli di Leaflet, vestiti da Loadout --- */
+.leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 14px !important; overflow: hidden;
+                                             box-shadow: 0 1px 2px rgba(35, 58, 45, .12), 0 6px 18px rgba(35, 58, 45, .16) !important; }
+.leaflet-touch .leaflet-bar a, .leaflet-bar a { width: 40px !important; height: 40px !important; line-height: 40px !important;
+                                                background: var(--lana); color: var(--muschio); font-size: 1.35rem; font-weight: 600;
+                                                border-bottom: 1px solid var(--bordo) !important; transition: background .15s; }
+.leaflet-bar a:last-child { border-bottom: 0 !important; }
+.leaflet-bar a:hover, .leaflet-bar a:focus-visible { background: var(--salvia-chiaro); color: var(--muschio-scuro); }
+.leaflet-bar a.leaflet-disabled { background: var(--lana); color: #c2b9a4; }
+
+/* Il selettore degli sfondi: un gruppo di "pillole" come i segmenti dell'app */
+.leaflet-touch .leaflet-control-layers, .leaflet-control-layers {
+  border: 1px solid var(--bordo) !important; border-radius: 18px !important; background: var(--lana);
+  box-shadow: 0 1px 2px rgba(35, 58, 45, .12), 0 6px 18px rgba(35, 58, 45, .16) !important; color: var(--testo); }
+.leaflet-control-layers-expanded { padding: 5px !important; }
+.leaflet-control-layers-base { display: grid; gap: 2px; }
+.leaflet-control-layers-base label { display: block; margin: 0; padding: .38rem .9rem; border-radius: 999px; cursor: pointer;
+                                     font-size: .84rem; font-weight: 600; color: var(--muschio); transition: background .15s; }
+.leaflet-control-layers-base label:hover { background: var(--salvia-chiaro); }
+.leaflet-control-layers-base label:has(input:checked) { background: var(--muschio); color: #f6efdf; }
+.leaflet-control-layers-base label:has(input:focus-visible) { outline: 3px solid var(--salvia); outline-offset: 1px; }
+/* Il pallino del radio non serve (si vede la pillola scura): nascosto ma usabile da tastiera */
+.leaflet-control-layers-base input { position: absolute; opacity: 0; pointer-events: none; }
+/* Selettore chiuso (telefono): icona "livelli" a linee nel muschio dell'app al posto dell'immagine di Leaflet */
+.leaflet-touch .leaflet-control-layers-toggle, .leaflet-control-layers-toggle {
+  width: 40px !important; height: 40px !important; border-radius: 14px; background-color: var(--lana);
+  background-size: 22px 22px !important; background-position: center !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2331503f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 2.5 8 12 13l9.5-5Z'/%3E%3Cpath d='m2.5 12.5 9.5 5 9.5-5'/%3E%3Cpath d='m2.5 17 9.5 5 9.5-5' stroke='%23c8962b'/%3E%3C/svg%3E") !important; }
+
+/* Le fonti in basso: piccole, nel colore terra, su un velo di lana */
+.leaflet-container .leaflet-control-attribution { background: rgba(246, 239, 223, .9); color: var(--terra);
+                                                  font-size: .68rem; padding: 2px 8px; border-radius: 10px 0 0 0; }
+.leaflet-control-attribution a { color: var(--muschio); }
+
+/* --- Le puntine (SVG dentro un divIcon): drop-shadow segue la forma della goccia --- */
+.puntina { background: none; border: 0; }
+.puntina svg { display: block; filter: drop-shadow(0 2px 3px rgba(35, 58, 45, .35)); transform-origin: 50% 100%; transition: transform .15s; }
+.puntina:hover svg { transform: translateY(-2px) scale(1.06); }
+.leaflet-dragging .puntina svg { transform: scale(1.1); }
+
+/* --- Sotto la mappa: legenda, anello e pulsanti --- */
+.legenda { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: .7rem 0 0; padding: 0; list-style: none; font-size: .8rem; color: var(--terra); }
+.legenda li { display: inline-flex; align-items: center; gap: .35rem; }
+.legenda svg { flex-shrink: 0; }
+.strumenti { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; margin-top: .9rem; }
+
+/* Riga di stato: discreta mentre cerca (pallino senape che pulsa), riquadro ocra se c'è un problema */
+.stato { display: flex; align-items: center; gap: .55rem; margin: .9rem 0 0; font-size: .9rem; color: var(--terra); }
+.stato.attesa::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--senape); flex-shrink: 0;
+                        animation: pulsa 1s ease-in-out infinite; }
+@keyframes pulsa { 50% { opacity: .25; transform: scale(.7); } }
+.stato.errore { padding: .6rem .8rem; background: var(--ocra-chiaro); border-left: 4px solid var(--senape); color: var(--testo); }
+@media (prefers-reduced-motion: reduce) { .stato.attesa::before { animation: none; } .puntina svg { transition: none; } }
+
+/* --- Il "post-it" sui campi normali del form (post-it.js): sfondo salvia e "dalla mappa" / "dal luogo" ---
+   :has() = "l'etichetta che CONTIENE un campo con il post-it": niente JavaScript per il colore */
+.nome-campo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 .4rem; }
+.origine { display: none; font-size: .68rem; font-weight: 700; letter-spacing: .03em; color: var(--salvia); white-space: nowrap; }
+label:has(input[data-auto]) .origine { display: inline; }
+label:has(input[data-auto="mappa"]) .origine::after { content: "dalla mappa"; }
+label:has(input[data-auto="luogo"]) .origine::after { content: "dal luogo"; }
+label:has(input[data-auto]) input { background: var(--salvia-chiaro); border-color: transparent; }
+.form-percorso { margin-top: 1.1rem; }   /* i campi sotto la mappa, nella pagina della mappa */
+
+/* --- Scheda dell'uscita: zaino e mappa come due tessere sotto la testata (scelta di Asiha, disposizione A) ---
+   Sul telefono una sotto l'altra, sul computer affiancate (auto-fit: tante colonne quante ne stanno da 14rem) */
+.tessere { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.tessera { display: grid; gap: .35rem; align-content: start; color: var(--testo); text-decoration: none;
+           transition: border-color .15s, box-shadow .15s; }
+.tessera h2 { margin: 0; font-size: 1.35rem; }
+.tessera p { margin: 0; }
+.tessera:hover, .tessera:focus-visible { border-color: var(--salvia); box-shadow: 0 0 0 3px rgba(95, 132, 99, .2), var(--ombra); }
+/* In testata: Modifica a contorno ed Elimina come scritta discreta (rosa chiaro: il rosso scuro sul muschio non si leggerebbe) */
+.azioni-secondarie { align-items: center; }
+button.elimina-discreto { background: transparent; border: 0; padding: .55rem .4rem; color: #f1b9b0; font-weight: 600;
+                          text-decoration: underline; text-underline-offset: 3px; }
+button.elimina-discreto:hover, button.elimina-discreto:focus-visible { background: transparent; color: #fff; }
+
+/* --- Revisione UX 2: con la mappa, nel form i dati del percorso si vedono ma non si scrivono (si cambiano nella pagina della mappa) --- */
+input[readonly] { background: var(--crema); color: var(--terra); border-style: dashed; cursor: not-allowed; }
+input[readonly]:focus { box-shadow: none; border-color: var(--bordo); }
+.nota-mappa { margin: 0; font-size: .85rem; }
+details > .nota-mappa { margin-top: .75rem; }
+
+/* --- A2 (revisione UX 2): "La mappa calcola … · Usa questo" sotto i valori scritti a mano, nella pagina della mappa --- */
+.calcolo-mappa { font-size: .82rem; }
+button.usa-mappa, button.link-bottone { display: inline; padding: 0; border: 0; background: none; color: var(--muschio); font: inherit; font-weight: 700;
+                   text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+button.usa-mappa:hover, button.usa-mappa:focus-visible, button.link-bottone:hover, button.link-bottone:focus-visible { background: none; color: var(--muschio-scuro); }
+
+/* --- A6 (revisione UX 2): "Per questa uscita" in fondo alla pagina dello zaino, chiuso, con il riassunto nel titolo --- */
+details.kit-dettagli { border: 1px solid var(--bordo); background: var(--lana); padding: 1.25rem; }
+details.kit-dettagli > summary { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem;
+                                 list-style: none; cursor: pointer; color: var(--testo); font-weight: 500; }
+details.kit-dettagli > summary::-webkit-details-marker { display: none; }
+details.kit-dettagli > summary h2 { margin: 0; }
+details.kit-dettagli > summary h2::after { content: "›"; display: inline-block; margin-left: .5rem; color: var(--terra); transition: transform .15s; }
+details.kit-dettagli[open] > summary h2::after { transform: rotate(90deg); }
+details.kit-dettagli[open] > summary { margin-bottom: .75rem; }
+details.kit-gia { margin-top: .75rem; border: 0; padding: 0; background: none; }
+details.kit-gia > summary { font-weight: 600; color: var(--muschio); font-size: .9rem; }
+@media (max-width: 600px) { details.kit-dettagli { padding: .9rem; } }
+
+/* --- A7 (revisione UX 2): righe dello zaino più facili da toccare --- */
+/* Casella + icona + nome + peso = un'unica zona che spunta (il <label>), allargata fino al bordo sinistro della riga */
+.riga-spunta { flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: .8rem;
+               margin: -.6rem 0 -.6rem -.9rem; padding: .6rem 0 .6rem .9rem;
+               font-size: inherit; color: inherit; font-weight: inherit; cursor: pointer; }
+.riga-zaino .spunta { width: 1.5rem; height: 1.5rem; }                       /* 24 px */
+/* "Lo indosso" e "Togli" a 44 px (la misura minima consigliata per il dito), "Togli" un po' staccato dalla quantità */
+button.togli, button.indosso, .indosso-vuoto { width: 44px; height: 44px; }
+button.togli { margin-left: .2rem; }
+.riga-zaino { gap: .5rem; }
+/* "Annulla" dopo aver tolto un oggetto: in basso, sopra il menu del telefono */
+.annulla { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 30;
+           display: flex; align-items: center; gap: .75rem; width: max-content; max-width: calc(100% - 2rem);
+           padding: .35rem .5rem .35rem 1rem; border-radius: 14px; background: var(--muschio-scuro); color: #f6efdf;
+           box-shadow: 0 6px 24px rgba(35, 58, 45, .25); font-size: .92rem; }
+.annulla button { min-height: 44px; padding: .3rem .7rem; background: none; border: 0; color: var(--ocra-chiaro); font-weight: 700;
+                  text-decoration: underline; text-underline-offset: 3px; }
+.annulla button:hover, .annulla button:focus-visible { background: rgba(246, 239, 223, .12); }
+@media (min-width: 761px) { .annulla { bottom: 1.5rem; } }
+
+/* --- A9 (revisione UX 2): la scritta "Usa Ctrl + rotella…" / "Usa due dita…" al centro della mappa --- */
+.avviso-gesti { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1000; max-width: 80%;
+                padding: .6rem 1rem; border-radius: 12px; background: rgba(35, 58, 45, .85); color: #f6efdf;
+                font-weight: 600; text-align: center; pointer-events: none; }
+/* Le puntine si trascinano con un dito anche se la mappa (sul telefono) lascia scorrere la pagina */
+.leaflet-marker-draggable { touch-action: none; }
+
+/* --- B1 (revisione UX 2): il messaggio d'errore sotto il campo sbagliato, e il campo con il bordo rosso --- */
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--rosso); }
+input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus, textarea[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgba(163, 49, 42, .2); }
+.errore-campo { color: var(--rosso); font-size: .82rem; font-weight: 600; }
+/* nello zaino: sotto la riga dell'oggetto */
+.errore-riga { margin: 0; padding: .35rem .9rem .6rem 3.2rem; color: var(--rosso); font-size: .85rem; font-weight: 600;
+               border-bottom: 1px solid var(--bordo); }
+.errore-riga a { color: var(--muschio); }
+
+/* --- B2 (revisione UX 2): "1 di 23 oggetti" sopra la lista mentre cerchi --- */
+.conteggio-ricerca { margin: 0; font-weight: 600; }
+.vuoto .btn-piccolo { margin: .35rem .2rem 0; }
+
+/* --- B8 (revisione UX 2): il meteo in una tabellina Partenza / Vetta --- */
+.tabella-meteo { margin: .5rem 0 .75rem; font-variant-numeric: tabular-nums; }
+.tabella-meteo th, .tabella-meteo td { padding: .45rem .5rem; vertical-align: top; }
+.tabella-meteo thead th { color: var(--muschio); font-size: .82rem; }
+.tabella-meteo tbody th { color: var(--terra); font-weight: 600; font-size: .85rem; white-space: nowrap; }
+.tabella-meteo .muto { font-size: .78rem; }
+@media (max-width: 600px) { .tabella-meteo th, .tabella-meteo td { padding: .4rem .3rem; font-size: .85rem; } }
+
+/* --- B10 (revisione UX 2): testata dell'uscita più corta sul telefono, tessere che si capisce che si toccano --- */
+button.etichetta-piu { cursor: pointer; font: inherit; font-weight: 600; background: rgba(246, 239, 223, .1); color: #f6efdf; }
+@media (max-width: 600px) {
+  .etichette:not(.aperte) .etichetta-extra { display: none; }   /* le altre etichette dietro "+N dettagli" */
+}
+.etichette.aperte .etichetta-piu { display: none; }
+@media (min-width: 601px) { .etichetta-piu { display: none; } } /* sul computer si vedono già tutte */
+/* la freccia › a destra di ogni tessera */
+.tessera { position: relative; padding-right: 2.6rem; }
+.tessera::after { content: "›"; position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%);
+                  font-size: 1.8rem; line-height: 1; color: var(--terra); transition: transform .15s, color .15s; }
+.tessera:hover::after, .tessera:focus-visible::after { color: var(--muschio); transform: translate(3px, -50%); }
+/* la barra sottile sulla tessera dello zaino */
+.barra.barra-tessera { height: 6px; margin-top: .35rem; }
+
+/* --- B11 (revisione UX 2): la nota sotto la mappa per l'anello con una sola tappa --- */
+.nota-anello { margin: .6rem 0 0; font-size: .85rem; }
+
+/* C6 (revisione UX 2): "Togli tutte le spunte" in fondo alla checklist, discreto ma comodo da toccare */
+.riga-svuota { margin: .25rem 0 1rem; text-align: center; }
+.riga-svuota button.link-bottone { min-height: 44px; padding: 0 .5rem; }
+
+/* C11 (revisione UX 2): la riga dell'oggetto appena salvato si illumina e poi torna normale */
+@keyframes appena-salvato { from { background: var(--ocra-chiaro); } to { background: transparent; } }
+.riga.appena-salvato { animation: appena-salvato 2s ease-out; }
+#avviso-salvato { padding: .7rem 1rem; }
+
+/* C2 (revisione UX 2): accesso. Una riga sotto il titolo e l'occhio per vedere la password */
+.sottotitolo-accesso { margin: -.25rem 0 1rem; text-align: center; }
+.campo-password { position: relative; display: block; }
+.campo-password input { width: 100%; padding-right: 3rem; }
+button.occhio { position: absolute; top: 0; right: 0; bottom: 0; width: 44px; padding: 0; border: 0; border-radius: 0 var(--raggio-piccolo) var(--raggio-piccolo) 0;
+                background: none; color: var(--terra); }
+button.occhio:hover, button.occhio:focus-visible { background: none; color: var(--muschio); }
+
+/* C7 (revisione UX 2): pagina Zaino, riquadro "Da preparare" */
+.da-preparare { margin-bottom: 1.5rem; }
+.da-preparare h2 { margin-top: 0; }
+.da-preparare h2 .muto { font-family: var(--font); font-size: .85rem; font-weight: 500; }
+.preparare-voce { padding: .9rem 0; border-top: 1px solid var(--bordo); }
+.preparare-voce:first-of-type { border-top: 0; padding-top: .25rem; }
+.preparare-testa { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .2rem .8rem; margin-bottom: .5rem; }
+.preparare-nome { font-weight: 700; color: var(--testo); }
+.barra-grande { height: 18px; }
+.preparare-stato { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin: .45rem 0 0; }
+.riga-genera { color: var(--muschio); font-weight: 700; }
+
+/* C10 (revisione UX 2): glossario nei Consigli e «?» nella scheda del viaggio */
+.glossario { margin-top: 1.5rem; scroll-margin-top: 5rem; }
+.glossario dl { margin: .5rem 0 0; }
+.glossario dt { margin-top: .9rem; font-weight: 700; color: var(--testo); scroll-margin-top: 5rem; }
+.glossario dd { margin: .2rem 0 0; }
+.glossario dt:target, .glossario dt:target + dd { background: var(--ocra-chiaro); }   /* la voce arrivando da un «?» */
+.glossario dt:target { padding: .3rem .5rem 0; border-radius: var(--raggio-piccolo) var(--raggio-piccolo) 0 0; }
+.glossario dt:target + dd { padding: .2rem .5rem .4rem; border-radius: 0 0 var(--raggio-piccolo) var(--raggio-piccolo); }
+a.aiuto { position: relative; display: inline-grid; place-items: center; width: 1.2rem; height: 1.2rem; vertical-align: .1em;
+          border: 1.5px solid currentColor; border-radius: 50%; color: var(--muschio); font-size: .72rem; font-weight: 700;
+          line-height: 1; text-decoration: none; }
+a.aiuto::after { content: ""; position: absolute; inset: -.7rem; }  /* zona da toccare più grande del cerchietto */
+a.aiuto:hover, a.aiuto:focus-visible { background: var(--salvia-chiaro); }
+
+/* C9 (revisione UX 2): profilo che si salva da solo; consenso per le note mediche */
+.stato-salvato { font-size: .85rem; font-weight: 600; color: var(--muschio); min-height: 1.2em; }
+label.check.consenso { align-items: flex-start; font-size: .88rem; }
+label.check.consenso input { margin-top: .2rem; }
+textarea:disabled { background: var(--crema); cursor: not-allowed; }
+
+/* C8 (revisione UX 2): Home = la mappa di tutti i viaggi */
+/* La testa della mappa lascia spazio a destra allo zaino animato, che scende dalla testata */
+.mappa-home-testa { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem 1.2rem; margin: .5rem 0 .75rem; padding-right: 165px; }
+.mappa-home-testa h2 { margin: 0; }
+.legenda-home { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: 0; padding: 0; list-style: none; font-size: .88rem; color: var(--terra); }
+.legenda-home li { display: inline-flex; align-items: center; gap: .4rem; }
+.segno-linea { width: 22px; height: 5px; border-radius: 3px; box-shadow: 0 0 0 2px #f6efdf; }
+.segno-linea.fatti { background: #31503f; }
+.segno-linea.futuri { background: #c8962b; }
+.segno-pallino { width: 12px; height: 12px; border-radius: 50%; background: var(--terra); box-shadow: 0 0 0 2px #f6efdf; }
+.mappa-home .mappa { height: min(70vh, 620px); }
+.mappa-vuota { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: .75rem;
+               padding: 1rem; text-align: center; background: rgba(246, 239, 223, .82); }
+.mappa-vuota p { margin: 0; max-width: 22rem; font-weight: 600; color: var(--testo); }
+.totali-home { margin: .75rem 0 0; text-align: center; color: var(--terra); }
+.leaflet-popup-content { font: inherit; font-size: .92rem; line-height: 1.45; }
+.leaflet-popup-content a { font-weight: 700; color: var(--muschio); }
+@media (max-width: 860px) { .mappa-home-testa { padding-right: 100px; } }
+@media (max-width: 600px) { .mappa-home .mappa { height: max(360px, 62vh); } }
+
+/* Armadio: il + per aggiungere, fisso in basso a destra (position: fixed = resta fermo sullo schermo mentre la pagina scorre).
+   Sul telefono sta sopra il menu in basso (alto 80px). */
+button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 25;
+                        width: 56px; height: 56px; padding: 0; border-radius: 50%; box-shadow: 0 6px 20px rgba(35, 58, 45, .3); }
+@media (min-width: 761px) { button.pulsante-fisso { right: 2rem; bottom: 2rem; } }
+/* spazio in fondo, così il + non copre l'ultimo oggetto; e il riquadro «… aggiunto all'armadio» sale sopra il + */
+.con-pulsante-fisso main { padding-bottom: 6rem; }
+.con-pulsante-fisso .annulla { bottom: calc(164px + env(safe-area-inset-bottom)); }
+@media (min-width: 761px) { .con-pulsante-fisso .annulla { bottom: 6rem; } }
+
+/* Mappa: «Sentieri / Più breve» (due segmenti invece dei tre dei filtri) e la riga del dislivello negativo */
+.segmenti.scelta-profilo { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 15rem; max-width: 18rem; }
+.riga3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+@media (max-width: 600px) { .riga3 { grid-template-columns: 1fr 1fr; } .riga3 > :first-child { grid-column: 1 / -1; } }
+/* D−: si legge come il D+ ma non si scrive (readonly): niente bordo tratteggiato né cursore "vietato" */
+#campo-discesa { border-style: solid; cursor: default; }
+#campo-discesa:not([data-auto]) { background: var(--crema); }
+
+/* Frecce del verso di percorrenza sulla linea (divIcon di Leaflet: tolgo il riquadro bianco di serie) */
+.freccia-verso { background: none; border: 0; }
+.freccia-verso svg { display: block; filter: drop-shadow(0 1px 1.5px rgba(35, 58, 45, .4)); }
+.nota-gpx { margin: .6rem 0 0; font-size: .86rem; }
+
+/* Navigazione con il GPS: pannello sotto la mappa, mappa più alta; il resto della pagina si nasconde */
+.intestazione-sezione #naviga { margin-left: auto; }
+.pannello-navigazione { margin-top: .8rem; }
+.numeri-navigazione { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin: 0; }
+.numeri-navigazione div { padding: .55rem .6rem; border-radius: var(--raggio-piccolo); background: var(--crema); text-align: center; }
+.numeri-navigazione dt { font-size: .75rem; color: var(--terra); }
+.numeri-navigazione dd { margin: .1rem 0 0; font-size: 1.15rem; font-weight: 700; color: var(--testo); }
+.stato-navigazione { margin: .5rem 0; font-size: .86rem; }
+.stato-navigazione[data-tipo="errore"] { color: var(--rosso); font-weight: 600; }
+.nota-navigazione { margin: .5rem 0 0; font-size: .8rem; }
+.posizione-gps { background: none; border: 0; }
+.in-navigazione .mappa { height: min(72vh, 680px); }
+.in-navigazione .legenda, .in-navigazione .strumenti, .in-navigazione #nota-anello, .in-navigazione #form-percorso,
+.in-navigazione .testata { display: none; }
+@media (max-width: 600px) {
+  .numeri-navigazione { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .in-navigazione .mappa { height: 58vh; }
+}
+
+/* Profilo altimetrico sotto la mappa: solo i colori dell'app (variabili qui sopra) */
+.profilo-altimetrico { margin-top: 1rem; }
+.profilo-altimetrico h3 { margin: 0 0 .4rem; font-size: 1rem; }
+.profilo-grafico { position: relative; width: 100%; touch-action: pan-y; cursor: crosshair; } /* il dito in orizzontale guarda il profilo, in verticale scorre la pagina */
+.profilo-grafico svg { display: block; }
+.profilo-colore-alto { stop-color: var(--muschio); stop-opacity: .9; }   /* scelta di Asiha: verdi scuri */
+.profilo-colore-basso { stop-color: var(--salvia); stop-opacity: .55; }
+.profilo-griglia { stroke: var(--bordo); stroke-width: 1; stroke-dasharray: 3 4; }
+.profilo-linea { fill: none; stroke: var(--muschio-scuro); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.profilo-tappa { fill: var(--lana); stroke: var(--muschio); stroke-width: 2.5; }      /* come le puntine delle tappe sulla mappa */
+.profilo-vetta { fill: var(--senape); stroke: var(--lana); stroke-width: 1.5; }
+.profilo-testo { font-size: 12px; font-weight: 700; fill: var(--testo); paint-order: stroke; stroke: var(--lana); stroke-width: 3px; }
+.profilo-km { font-size: 13px; }
+.profilo-cursore-linea { stroke: var(--muschio); stroke-width: 1; stroke-dasharray: 2 3; }
+.profilo-cursore-punto { fill: var(--senape); stroke: var(--su-senape); stroke-width: 2; }
+.profilo-io-punto { fill: var(--senape); stroke: var(--lana); stroke-width: 3; } /* "sei qui": come il pallino GPS sulla mappa */
+.profilo-riepilogo { margin: .45rem 0 0; font-size: .86rem; }
+
+/* Tappa da coordinate (sotto gli strumenti della mappa) */
+.tappa-coordinate { margin-top: .8rem; }
+.tappa-coordinate summary { cursor: pointer; font-weight: 600; color: var(--muschio); }
+.riga-tappa { display: grid; grid-template-columns: 1fr 1fr auto; gap: .5rem; align-items: end; margin-top: .6rem; }
+.tappa-coordinate .muto { margin: .4rem 0 0; font-size: .84rem; }
+@media (max-width: 600px) { .riga-tappa { grid-template-columns: 1fr 1fr; } .riga-tappa button { grid-column: 1 / -1; } }
+.in-navigazione .tappa-coordinate { display: none; }
+
+/* Ordine dei punti sotto la mappa: nome, coordinate, ↑ ↓ ✕ */
+.elenco-tappe { list-style: none; margin: .8rem 0 0; padding: 0; border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); overflow: hidden; }
+.elenco-tappe li { display: flex; align-items: center; gap: .5rem; padding: .3rem .4rem .3rem .8rem; border-top: 1px solid var(--bordo); background: var(--lana-chiara); }
+.elenco-tappe li:first-child { border-top: 0; }
+.tappa-nome { font-weight: 600; color: var(--testo); min-width: 7.5rem; }
+.tappa-coordinate-testo { flex: 1; min-width: 0; font-size: .82rem; overflow-wrap: anywhere; }
+button.tappa-bottone { width: 44px; height: 44px; padding: 0; border-radius: 50%; background: none; color: var(--muschio); font-size: 1.1rem; }
+button.tappa-bottone:hover { background: var(--salvia-chiaro); }
+button.tappa-bottone:disabled { opacity: .3; cursor: default; background: none; }
+button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
+.in-navigazione .elenco-tappe { display: none; }
+@media (max-width: 600px) { .tappa-nome { min-width: 0; } .tappa-coordinate-testo { display: none; } }
+.data-consenso { margin: -.3rem 0 .2rem 1.9rem; font-size: .82rem; }

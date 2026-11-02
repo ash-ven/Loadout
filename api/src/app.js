@@ -14,6 +14,8 @@ import { router as oggettiRouter } from "./routes/oggetti.js";
 import { router as viaggiRouter } from "./routes/viaggi.js";
 import { router as prodottiRouter } from "./routes/prodotti.js";
 import { router as luoghiRouter } from "./routes/luoghi.js";
+import { router as percorsiRouter } from "./routes/percorsi.js";
+import { router as mappeRouter } from "./routes/mappe.js";
 
 // Cartella di questo file (api/src) e cartella del frontend (loadout/public)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -35,10 +37,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       "default-src": ["'self'"],                                   // di base: solo dal nostro sito
-      "script-src": ["'self'", "https://unpkg.com"],               // + la libreria del lettore di codici a barre
-      "style-src": ["'self'", "https://fonts.googleapis.com"],     // + il CSS di Google Fonts
+      "script-src": ["'self'", "https://unpkg.com"],               // + le librerie da unpkg (lettore di codici a barre, Leaflet per le mappe)
+      "style-src": ["'self'", "https://fonts.googleapis.com", "https://unpkg.com"], // + il CSS di Google Fonts e quello di Leaflet
       "font-src": ["'self'", "https://fonts.gstatic.com"],         // + i file dei font di Google
-      "img-src": ["'self'", "data:"],                              // + le immagini "data:" (la foto ridotta nel browser)
+      "img-src": ["'self'", "data:", "https://api.maptiler.com"],  // + "data:" (la foto ridotta nel browser) + le tessere della mappa
       "connect-src": ["'self'"],                                   // fetch() solo verso la nostra API
       "object-src": ["'none'"],                                    // niente plugin (Flash e simili)
       "frame-ancestors": ["'none'"],                               // nessun sito può mettere Loadout dentro un suo riquadro
@@ -64,6 +66,14 @@ app.use("/api", cors({
 app.use(express.json({ limit: "300kb" })); // body JSON → req.body (300 kB: basta per la foto del profilo, già ridotta dal browser)
 app.use(cookieParser());                  // header Cookie → req.cookies
 app.use(logger);                          // stampa ogni richiesta nel terminale
+// Il service worker (public/sw.js, la mappa senza rete) scarica e salva le tessere di MapTiler e Leaflet da unpkg:
+// i fetch() del service worker seguono la CSP del SUO file, quindi solo per lui allarghiamo connect-src a quei due.
+// Le pagine restano con connect-src 'self'. "no-cache" = il browser controlla sempre se c'è una versione nuova.
+app.get("/sw.js", (req, res, next) => {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' https://api.maptiler.com https://unpkg.com");
+  res.setHeader("Cache-Control", "no-cache");
+  next();
+});
 app.use(express.static(cartellaPublic));  // file del frontend (HTML, CSS, JS)
 
 // === 3. ROTTE ===
@@ -76,6 +86,8 @@ app.use("/api/oggetti", requireAuth, oggettiRouter);     // protetta
 app.use("/api/viaggi", requireAuth, viaggiRouter);       // protetta
 app.use("/api/luoghi", requireAuth, luoghiRouter);       // protetta (B1: cerca un luogo per nome)
 app.use("/api/prodotti", requireAuth, prodottiRouter);   // protetta (stretch 2: cerca il prodotto dal codice a barre)
+app.use("/api/percorso", requireAuth, percorsiRouter);   // protetta (mappe: percorso sui sentieri con BRouter)
+app.use("/api/mappe", requireAuth, mappeRouter);         // protetta (mappe: la chiave di MapTiler per le tessere)
 
 // === 4. CHIUSURA (dopo tutte le rotte) ===
 app.use(notFound);       // nessuna rotta ha risposto → 404

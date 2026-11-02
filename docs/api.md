@@ -20,14 +20,15 @@ Il browser lo rimanda da solo: tutte le rotte di Armadio, Viaggi e Zaino lo rich
 | POST | /api/auth/register | `{ email*, password*, nome* }` – email valida (max 255), password ≥ 8 caratteri, nome max 100 | `{ id, email, nome }` (mai la password né l'hash) | 201, 400 (`BAD_EMAIL`, `WEAK_PASSWORD`, `VALIDATION_ERROR`), 409 (email già usata) |
 | POST | /api/auth/login | `{ email*, password* }` | `{ id, nome }` + cookie `token` | 200, 400, 401 ("Email o password errati", stesso messaggio per email inesistente e password sbagliata) |
 | POST | /api/auth/logout | — | nessun corpo, cookie cancellato | 204 |
-| GET | /api/auth/me | — | il profilo, letto dal database: `{ id, email, nome, peso_corporeo_kg, livello_esperienza, emergenza_nome, emergenza_telefono, note_mediche, tessera_soccorso, sensibilita_freddo, ha_foto }` (la foto ha un indirizzo suo, sotto) | 200, 401 |
-| PATCH | /api/auth/me | uno o più tra `{ peso_corporeo_kg, livello_esperienza, emergenza_nome, emergenza_telefono, note_mediche, tessera_soccorso, sensibilita_freddo, foto }` – modifica **parziale**: cambia solo i campi inviati; `""` o `null` svuota il campo. Regole sotto | il profilo aggiornato (come GET) | 200, 400 (`VALIDATION_ERROR`, `BAD_TELEFONO`, `BAD_FOTO`), 401 |
+| GET | /api/auth/me | — | il profilo, letto dal database: `{ id, email, nome, peso_corporeo_kg, emergenza_nome, emergenza_telefono, note_mediche, consenso_salute_il, tessera_soccorso, sensibilita_freddo, ha_foto }` (la foto ha un indirizzo suo, sotto) | 200, 401 |
+| PATCH | /api/auth/me | uno o più tra `{ peso_corporeo_kg, emergenza_nome, emergenza_telefono, note_mediche, consenso_salute, tessera_soccorso, sensibilita_freddo, foto }` – modifica **parziale**: cambia solo i campi inviati; `""` o `null` svuota il campo. Regole sotto | il profilo aggiornato (come GET) | 200, 400 (`VALIDATION_ERROR`, `BAD_TELEFONO`, `BAD_FOTO`, `CONSENSO_MANCANTE`), 401 |
 | GET | /api/auth/me/foto | — | l'immagine (byte veri, `Content-Type: image/jpeg` o png/webp), da usare in `<img src>` | 200, 401, 404 (nessuna foto) |
 
 Regole dei campi del profilo:
-- `peso_corporeo_kg` tra 20 e 300; `livello_esperienza` tra principiante, intermedio, esperto
+- `peso_corporeo_kg` tra 20 e 300 (il livello di esperienza è stato tolto: nessuna funzione lo usava)
 - `emergenza_nome` max 100; `emergenza_telefono` max 30, solo cifre, spazi e un `+` iniziale
 - `note_mediche` max 300 (dati sulla salute: li inserisce solo l'utente e li vede solo lui); `tessera_soccorso` max 80
+- `consenso_salute` booleano (GDPR art. 9): `true` registra la data del consenso in `consenso_salute_il` (solo la prima volta); `false` lo ritira e cancella le note mediche; senza consenso le note mediche non si salvano (400 `CONSENSO_MANCANTE`)
 - `sensibilita_freddo` tra `alta` (soffro il freddo), `normale`, `bassa` (sento poco il freddo): sposta di 4 °C le soglie dei consigli di vestiario del meteo
 - `foto`: data URL `data:image/(jpeg|png|webp);base64,...`, max 200.000 caratteri (il frontend la riduce a 256×256 prima di mandarla). Body JSON massimo 300 kB
 
@@ -46,7 +47,7 @@ Cambio password ed eliminazione hanno lo stesso limite di tentativi del login.
 | --- | --- | --- | --- | --- |
 | GET | /api/oggetti?q=&categoria=&limit=&offset= | — | array dei miei oggetti, ordinati per categoria e nome; `q` cerca nel nome; `categoria` tra quelle ammesse; limit 1–200 (default 50), offset ≥ 0 | 200, 400, 401 |
 | GET | /api/oggetti/:id | — | un oggetto | 200, 400, 401, 404 |
-| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
+| POST | /api/oggetti | `{ nome*, categoria*, peso_g*, is_indispensabile, is_preferito, codice_etichetta, note, marchio, caratteristiche, quantita_posseduta, litri }` – vedi regole sotto | l'oggetto creato | 201, 400, 401, 409 (nome già nel mio armadio) |
 | PUT | /api/oggetti/:id | come POST (si manda l'oggetto intero: i campi facoltativi non inviati tornano al valore di default) | l'oggetto aggiornato. Se `quantita_posseduta` scende sotto la quantità messa in qualche zaino, in quegli zaini la quantità scende allo stesso valore (stessa query, atomica) | 200, 400, 401, 404, 409 |
 | DELETE | /api/oggetti/:id | — | nessun corpo (sparisce anche dagli zaini: ON DELETE CASCADE) | 204, 400, 401, 404 |
 
@@ -58,11 +59,12 @@ Regole dei campi dell'oggetto (* = obbligatorio):
 - `codice_etichetta` max 64; `note` max 1000
 - `marchio` max 80; `caratteristiche` max 500 (caratteristiche tecniche, testo libero)
 - `quantita_posseduta` intero 1–99 (default 1): quanti pezzi ne possiedo
+- `categoria` comprende `zaini`; `litri` intero 1–150 o null: la capienza, salvata solo per gli zaini (per le altre categorie resta null)
 
 ## Viaggi
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/viaggi?pianificato= | — | array dei miei viaggi, ordinati per data di partenza (senza data in fondo); `pianificato=true` solo i percorsi da fare in futuro, `false` solo gli altri | 200, 400, 401 |
+| GET | /api/viaggi?pianificato= | — | array dei miei viaggi, ordinati per data di partenza (senza data in fondo); `pianificato=true` solo i percorsi da fare in futuro, `false` solo gli altri. Ogni viaggio ha in più il riepilogo dello zaino `n_oggetti`, `n_inseriti`, `peso_totale_kg` (per la pagina Zaino) e `ha_mappa` (per la pagina Mappe) | 200, 400, 401 |
 | GET | /api/viaggi/:id?ore_cammino= | — | il viaggio + `peso` (vedi Zaino) + `consigli` (vedi sotto); `ore_cammino` facoltativo, 0.5–16 | 200, 400, 401, 404 |
 | POST | /api/viaggi?genera= | `{ nome*, attivita*, n_persone, n_giorni, pernotto, serve_cucina, data_partenza, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo, dislivello_m, distanza_km, note, pianificato }` – vedi regole sotto | il viaggio creato; con `genera=true` lo zaino viene generato subito, nella stessa transazione, e la risposta contiene anche `aggiunti` | 201, 400, 401 |
 | PUT | /api/viaggi/:id | come POST (viaggio intero) | il viaggio aggiornato | 200, 400, 401, 404 |
@@ -74,9 +76,15 @@ Regole dei campi del viaggio (* = obbligatorio):
 - `pernotto` tra nessuno, rifugio, tenda, bivacco (default nessuno); `serve_cucina` booleano (default false)
 - `data_partenza` data `AAAA-MM-GG` valida
 - `lat_*` tra −90 e 90; `lon_*` tra −180 e 180
-- `dislivello_m` intero 0–9000 (salita di **tutto** il percorso); `distanza_km` 0.1–999 (lunghezza del sentiero, inserita dall'utente)
+- `dislivello_m` intero 0–9000 (dislivello positivo di **tutto** il percorso: la somma delle salite); `distanza_km` 0.1–999 (lunghezza del sentiero, inserita dall'utente)
 - `note` max 1000; `pianificato` booleano (default false) – percorsi da fare in futuro
 - `luogo_partenza`, `luogo_arrivo` testo max 200 (B1); `quota_max_m` intero 0–9000 (B3, il punto più alto del percorso)
+- Mappe, fase 1: `quota_min_m` intero −500–9000 (non più alta di `quota_max_m`, altrimenti 400 "La quota minima non può superare la quota massima");
+  `ora_partenza` testo `HH:MM` (es. `"08:30"`; se manca, per i calcoli vale 08:00);
+  `traccia` oggetto `{ tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (2–5000), origini?: { campo: "mappa" | "luogo" }, profilo?: "sentieri" | "breve", discesa_m?: 0–9000 }` (profilo = come è stato calcolato, discesa_m = dislivello negativo dalla mappa)
+  = il percorso disegnato sulla mappa; `origini` dice quali valori (km, dislivello, quote, coordinate) sono stati compilati in automatico:
+  quelli non elencati li ha scritti l'utente e la mappa non li sovrascrive
+  (con valori fuori dai limiti → 400 "Traccia non valida")
 
 Blocco `consigli` del dettaglio:
 - `ore_cammino_giorno`: da `?ore_cammino=` se presente (`fonte_ore: "utente"`), altrimenti stimate dal percorso
@@ -87,16 +95,24 @@ Blocco `consigli` del dettaglio:
 - `acqua_litri`: totale del viaggio per tutto il gruppo, da `fn_acqua_consigliata(n_giorni, n_persone, ore, temperatura_max, dislivello_giorno, cucina)`
   = litri a persona al giorno × giorni × persone
 - `acqua_con_temperatura`, `acqua_con_dislivello`, `acqua_con_cucina`: quali fattori sono entrati nel calcolo (il frontend li elenca)
-- `distanza_linea_aria_km`: tra partenza e arrivo (formula di haversine); `null` se mancano le coordinate
 - `sole`: `{ disponibile: true, alba, tramonto }` in ora italiana, chiesti dal server a sunrise-sunset.org;
   `{ disponibile: false, motivo }` se mancano coordinate/data o se il servizio esterno non risponde entro 3 secondi
 - `meteo`: `{ disponibile: true, temp_max, temp_min, prob_pioggia, vestiario: [...] }` da Open-Meteo per la data e le coordinate di partenza;
   `{ disponibile: false, motivo }` se mancano coordinate/data, se la partenza è passata o oltre 16 giorni, o se il servizio non risponde
   I consigli di `vestiario` tengono conto della `sensibilita_freddo` del profilo (temperatura percepita ±4 °C).
-  In più (B3): `quota_partenza_m` (da Open-Meteo), `cima` = `{ quota_m, temp_min, temp_max }` stimata con −6 °C ogni 1000 m se il viaggio
-  ha `quota_max_m` (altrimenti `null`), `vento_kmh` e `raffiche_kmh`; il vestiario si decide sulla minima in cima.
-- `ora_limite_partenza` (B2): `{ ora: "09:25", prima_dell_alba, margine_ore: 1 }` = tramonto − ore di cammino − 1 h; `null` senza alba/tramonto o ore
-- `neve_ghiaccio` (B3): `true` se `quota_max_m` ≥ 2000 e la data è tra ottobre e maggio (o senza data, o con minima in cima ≤ 0 °C)
+  In più: `quota_partenza_m` (da Open-Meteo), `vento_kmh` e `raffiche_kmh` in partenza.
+  `vetta` (se il viaggio ha `quota_max_m`, altrimenti `null`): una seconda richiesta a Open-Meteo, fatta insieme alla prima, con
+  `elevation = quota_max_m` sulle coordinate del punto più alto della `traccia` (`fonte: "traccia"`) o, senza traccia, su quelle di partenza
+  (`fonte: "quota_scritta"`); la traccia vale solo se il suo punto più alto è entro 100 m da `quota_max_m`, altrimenti si usa la partenza
+  e l'ora di arrivo stimata (metà delle ore del giorno). Contiene `quota_m`, `ora_arrivo_stimata` (`ora_partenza` + ore fino alla vetta: con la traccia km/4 + salita/400
+  fino al punto più alto, senza traccia metà delle ore del giorno, senza ore 4 ore), i valori all'ora di arrivo `temp`, `percepita`, `raffiche_kmh`,
+  quelli della giornata `temp_min`, `temp_max`, `percepita_min`, `raffiche_max_kmh`, lo `zero_termico_m` più basso tra le 7 e le 18 e `temporali`
+  (codici meteo 95–99). Se la seconda richiesta fallisce resta la stima con −6 °C ogni 1000 m (`fonte: "stima"`, solo `temp_min`/`temp_max`).
+  `avvisi`: `[{ tipo, livello, testo }]` per vento (raffiche massime in vetta: da 40, 62 e 88 km/h), zero termico sotto la vetta, temporali.
+  Il vestiario si decide sulla percepita minima in vetta (o sulla minima, se manca).
+- `ora_limite_partenza` (B2): `{ ora: "09:25", prima_dell_alba, margine_ore: 1, ora_partenza, in_ritardo }` = tramonto − ore di cammino − 1 h, arrotondato al quarto d'ora prima;
+  `in_ritardo: true` se l'`ora_partenza` del viaggio è dopo il limite; `null` senza alba/tramonto o ore
+- `neve_ghiaccio` (B3): `true` se `quota_max_m` ≥ 2000 e la data è tra ottobre e maggio (o senza data, o con minima in vetta ≤ 0 °C)
 - `bollettino_valanghe` (B3): `true` con neve possibile oppure attività ciaspolata/alpinismo
 - `avviso_peso`: `{ disponibile: true, peso_corporeo_kg, soglia_percento, soglia_kg, troppo_pesante }` – soglia = **10%** del peso corporeo in giornata
   (`pernotto` nessuno), **20%** con pernotto; confrontata con il **peso base** (zaino senza acqua e cibo, senza gli oggetti indossati); `{ disponibile: false, motivo }` se il peso corporeo non è impostato
@@ -106,7 +122,7 @@ Le liste del kit (voci, parole chiave, quando servono) sono in `api/src/services
 
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| POST | /api/viaggi/:id/genera | — | `{ aggiunti, base, dal_kit, esclusi }` – **zaino intelligente** (B5), in una transazione: indispensabili + preferiti con `fn_genera_zaino` (cucina solo se `serve_cucina`) = `base`; in giornata toglie tra i nuovi quello che serve solo per dormire fuori (`esclusi`); aggiunge dall'armadio l'attrezzatura del kit dell'uscita (`dal_kit`); generare di nuovo non duplica | 200, 400, 401, 404 |
+| POST | /api/viaggi/:id/genera | — | `{ aggiunti, base, dal_kit, esclusi, esclusi_rifugio, doppioni, zaino }` – **zaino intelligente** (B5), in una transazione: indispensabili + preferiti con `fn_genera_zaino` (cucina solo se `serve_cucina`) = `base`; in giornata toglie tra i nuovi quello che serve solo per dormire fuori (`esclusi`); in rifugio toglie il sacco a pelo se la minima prevista non scende sotto 10 °C (`esclusi_rifugio`); tra i nuovi tiene un solo oggetto per tipo, prima l'indispensabile, poi il preferito, poi il più leggero (`doppioni`); aggiunge dall'armadio l'attrezzatura del kit dell'uscita (`dal_kit`); se nello zaino non c'è già uno zaino, sceglie tra gli zaini dell'armadio il più piccolo che basta per i litri consigliati (in giornata 20–30, con ciaspole/alpinismo/ferrata 30–40, in rifugio 30–45, tenda/bivacco o più di 3 giorni 50–70), altrimenti il più grande con un avviso (`zaino: { id, nome, litri, avviso }` o null); generare di nuovo non duplica | 200, 400, 401, 404 |
 | GET | /api/viaggi/:id/kit | — | `[ { voce, perche, categoria, stato, oggetto } ]` – l'attrezzatura che serve per l'uscita (attività, pernotto, cucina, freddo, neve): `stato` = `nello_zaino` / `nell_armadio` (con `oggetto: { id, nome }`) / `manca` | 200, 400, 401, 404 |
 | GET | /api/viaggi/:id/zaino | — | `{ peso, oggetti }` – vedi sotto | 200, 400, 401, 404 |
 | POST | /api/viaggi/:id/zaino | `{ oggetto_id*, quantita }` – quantita intero 1–99 (default 1) e non oltre i pezzi posseduti; l'oggetto deve essere mio | la riga dello zaino | 201, 400 (`QUANTITA_OLTRE_POSSEDUTI`), 401, 404, 409 (già nello zaino) |
@@ -115,18 +131,33 @@ Le liste del kit (voci, parole chiave, quando servono) sono in `api/src/services
 | POST | /api/viaggi/:id/zaino/svuota | — | `{ svuotati: n }` – tutti gli oggetti tornano "non inseriti" | 200, 400, 401, 404 |
 
 Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_dettaglio` per `oggetti`):
-- `peso`: `{ n_oggetti, peso_totale_g, peso_inserito_g, peso_totale_kg, peso_inserito_kg, peso_addosso_g, peso_addosso_kg }`.
+- `peso`: `{ n_oggetti, n_inseriti, peso_totale_g, peso_inserito_g, peso_totale_kg, peso_inserito_kg, peso_addosso_g, peso_addosso_kg }` (`n_inseriti` = quanti oggetti hanno la spunta).
   Gli oggetti **indossati** non contano in `peso_totale` e `peso_inserito`: il loro peso è in `peso_addosso`
 - `oggetti`: `[ { oggetto_id, nome, categoria, peso_g, quantita, peso_riga_g, inserito, is_indispensabile, is_preferito, indossato, quantita_posseduta, marchio } ]`
 
 ## Luoghi (B1)
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/luoghi?q=malga prato | — | fino a 6 luoghi: `[ { etichetta, tipo, lat, lon } ]` (es. `"Rifugio Vajolet (Pozza di Fassa, TN)"`, `"rifugio"`) | 200, 400 (`BAD_QUERY`: 3–100 caratteri), 401, 502 (`LUOGHI_NON_DISPONIBILI`) |
+| GET | /api/luoghi?q=malga prato | — | fino a 8 luoghi: `[ { etichetta, tipo, lat, lon, quota_m } ]` (`quota_m` da Open-Meteo, `null` se non risponde) (es. `"Rifugio Vajolet (Pozza di Fassa, TN)"`, `"rifugio"`) | 200, 400 (`BAD_QUERY`: 3–100 caratteri), 401, 502 (`LUOGHI_NON_DISPONIBILI`) |
 
 - Il server interroga Nominatim (OpenStreetMap), al massimo una richiesta al secondo, e tiene i risultati in memoria.
 - Nel viaggio si salvano `luogo_partenza` e `luogo_arrivo` (testo, max 200) insieme alle coordinate. Nel form "Da dove parti" è
   obbligatorio; l'API lo accetta facoltativo (viaggi creati prima, richieste di prova). Le coordinate restano facoltative e modificabili a mano.
+
+## Mappe e percorso sui sentieri
+| Metodo | URL | Body | Risposta | Status |
+| --- | --- | --- | --- | --- |
+| GET | /api/percorso?punti=44.21,10.64;44.22,10.62&profilo= | — | `{ distanza_km, dislivello_m, discesa_m, quota_min_m, quota_max_m, punto_piu_alto: [lat, lon], traccia: [[lat, lon, quota], …] }`; `profilo=sentieri` (predefinito, BRouter hiking-mountain) oppure `breve` (shortest); `attivita=ferrata|alpinismo` (facoltativo) = sui sentieri accetta i passaggi fino a T6 della scala SAC (di serie solo fino a T3); `discesa_m` = dislivello negativo | 200, 400 (`BAD_QUERY`: 2–30 coppie lat,lon, profilo sconosciuto), 401, 404 (`NESSUN_PERCORSO`: un punto lontano dai sentieri), 502 (`SERVIZIO_PERCORSI`: BRouter non risponde) |
+| PUT | /api/viaggi/:id/percorso | `{ traccia, distanza_km, dislivello_m, quota_min_m, quota_max_m, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo }` (tutti facoltativi, `null` = vuoto) | il viaggio aggiornato. Salva SOLO il percorso (pagina della mappa): il resto dell'uscita non cambia; i campi non mandati diventano `null` | 200, 400 (stesse regole del viaggio, quota minima ≤ massima, traccia valida), 401, 404 |
+| GET | /api/mappe/config | — | `{ chiave }` – la chiave di MapTiler per le tessere della mappa | 200, 401, 503 (`MAPPE_NON_CONFIGURATE`: manca `MAPTILER_KEY` nel `.env`) |
+
+- Il percorso lo calcola il server con BRouter (OpenStreetMap, profilo `hiking-mountain`), con 10 secondi di tempo massimo.
+  Per l'anello il browser ripete la partenza in fondo ai punti. BRouter vuole prima la longitudine: il server gira le coordinate.
+- `dislivello_m` è il dislivello positivo (`filtered ascend` di BRouter); le quote vengono dal terzo valore di ogni punto.
+- La traccia è semplificata (un punto ogni ~20 m) ma tiene sempre il punto più alto, che serve al meteo in vetta.
+- La chiave di MapTiler sta nel `.env` del server, non nel repository. Arriva comunque al browser, perché le tessere le scarica lui
+  da `api.maptiler.com` (le condizioni di MapTiler non permettono di farle passare dal nostro server): per questo la CSP permette
+  `https://api.maptiler.com` in `img-src`, e conviene limitare la chiave agli indirizzi dell'app nel pannello di MapTiler.
 
 ## Prodotti (dal codice a barre, stretch 2)
 | Metodo | URL | Body | Risposta | Status |
@@ -141,7 +172,8 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 - I risultati restano in memoria (max 500 codici) finché il server è acceso.
 
 ## Note sugli status code
-- **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico o troppo grande, JSON malformato) oppure una regola dell'app non rispettata; il `message` spiega cosa correggere.
+- **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico o troppo grande, JSON malformato) oppure una regola dell'app non rispettata; il `message` spiega cosa correggere, con il nome leggibile del campo
+  (es. `"La latitudine di partenza va da -90 a 90 (in Italia circa 36–47, es. 44,19)"`, `"Manca il nome del viaggio"`), mai il nome della colonna.
   Codici: `VALIDATION_ERROR`, `BAD_ID`, `BAD_QUERY`, `BAD_JSON`, `BAD_INPUT`, `WEAK_PASSWORD`, `BAD_EMAIL`, `BAD_TELEFONO`, `BAD_FOTO`, `QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`.
 - **401**: non autenticato (manca il cookie, token scaduto o manomesso) oppure credenziali errate al login.
 - **404**: la risorsa non esiste **oppure non è mia**: non riveliamo che esiste (niente 403).

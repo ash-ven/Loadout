@@ -16,6 +16,8 @@
     <section class="card centrato">
       <img class="benvenuto" src="/img/zaino-pieno-chiaro.svg" alt="" width="96" height="96">
       <h1>Accedi</h1>
+      <!-- C2 (revisione UX 2): una riga per dire cos'è Loadout a chi arriva qui la prima volta -->
+      <p class="muto sottotitolo-accesso">Prepara lo zaino giusto per ogni viaggio in montagna</p>
       <form id="form-login" novalidate>
         <label>Email
           <input name="email" type="email" autocomplete="email" required>
@@ -27,10 +29,13 @@
         <p class="errore" id="errore" hidden></p>
         <button type="submit">Entra</button>
       </form>
+      <!-- C2: finché l'app non invia email, il recupero della password passa da un indirizzo (d'esempio: da cambiare con quello vero) -->
+      <p class="muto">Password dimenticata? Scrivi a <a href="mailto:assistenza@loadout.example">assistenza@loadout.example</a></p>
       <p class="muto">Non hai un account? <a href="/register.html">Registrati</a></p>
     </section>
   </main>
 
+  <script type="module" src="/js/mostra-password.js"></script>
   <script type="module" src="/js/login.js"></script>
 </body>
 </html>

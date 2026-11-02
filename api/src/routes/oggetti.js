@@ -4,19 +4,20 @@ import { validate } from "../middleware/validate.js";
 
 export const router = Router();
 
-const CATEGORIE = ["abbigliamento", "attrezzatura", "cucina", "sicurezza", "igiene", "elettronica", "cibo", "altro"];
+const CATEGORIE = ["abbigliamento", "attrezzatura", "cucina", "sicurezza", "igiene", "elettronica", "cibo", "zaini", "altro"]; // zaini: con i litri
 
 const schemaOggetto = {
-  nome:              { type: "string", required: true, maxLength: 120 },
-  categoria:         { type: "string", required: true, enum: CATEGORIE },
-  peso_g:            { type: "number", required: true, min: 1, integer: true },
-  is_indispensabile: { type: "boolean" },
-  is_preferito:      { type: "boolean" },
-  codice_etichetta:  { type: "string", maxLength: 64 },
-  note:              { type: "string", maxLength: 1000 },
-  marchio:           { type: "string", maxLength: 80 },                         // B1
-  caratteristiche:   { type: "string", maxLength: 500 },                        // B1
-  quantita_posseduta:{ type: "number", integer: true, min: 1, max: 99 },        // B2
+  nome:              { etichetta: "il nome", type: "string", required: true, maxLength: 120 },
+  categoria:         { etichetta: "la categoria", type: "string", required: true, enum: CATEGORIE },
+  peso_g:            { etichetta: "il peso", type: "number", required: true, min: 1, integer: true },
+  is_indispensabile: { etichetta: "«indispensabile»", type: "boolean" },
+  is_preferito:      { etichetta: "«preferito»", type: "boolean" },
+  codice_etichetta:  { etichetta: "il codice a barre", type: "string", maxLength: 64 },
+  note:              { etichetta: "le note", type: "string", maxLength: 1000 },
+  marchio:           { etichetta: "il marchio", type: "string", maxLength: 80 },                         // B1
+  caratteristiche:   { etichetta: "le caratteristiche", type: "string", maxLength: 500 },                        // B1
+  quantita_posseduta:{ etichetta: "i pezzi posseduti", type: "number", integer: true, min: 1, max: 99 },        // B2
+  litri:             { etichetta: "la capienza", type: "number", integer: true, min: 1, max: 150, nullable: true }, // solo per gli zaini
 };
 
 // === GET /api/oggetti?q=&categoria=&limit=&offset= (lista) ===

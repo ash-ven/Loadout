@@ -11,25 +11,66 @@ const ATTIVITA = ["escursione", "alpinismo", "ciaspolata", "ferrata"]; // escurs
 const PERNOTTO = ["nessuno", "rifugio", "tenda", "bivacco"];
 
 const schemaViaggio = {
-  nome:          { type: "string", required: true, maxLength: 150 },
-  attivita:      { type: "string", required: true, enum: ATTIVITA },
-  n_persone:     { type: "number", integer: true, min: 1, max: 50 },
-  n_giorni:      { type: "number", integer: true, min: 1, max: 60 },
-  pernotto:      { type: "string", enum: PERNOTTO },
-  serve_cucina:  { type: "boolean" },
-  data_partenza: { type: "date" },
-  lat_partenza:  { type: "number", min: -90,  max: 90 },
-  lon_partenza:  { type: "number", min: -180, max: 180 },
-  lat_arrivo:    { type: "number", min: -90,  max: 90 },
-  lon_arrivo:    { type: "number", min: -180, max: 180 },
-  dislivello_m:  { type: "number", integer: true, min: 0, max: 9000 },
-  distanza_km:   { type: "number", min: 0.1, max: 999 },
-  note:          { type: "string", maxLength: 1000 },
-  pianificato:   { type: "boolean" },
-  luogo_partenza:{ type: "string", maxLength: 200 },   // B1: obbligatorio nel form; qui facoltativo (viaggi vecchi, richieste di prova)
-  luogo_arrivo:  { type: "string", maxLength: 200 },
-  quota_max_m:   { type: "number", integer: true, min: 0, max: 9000 }, // B3
+  nome:          { etichetta: "il nome del viaggio", type: "string", required: true, maxLength: 150 },
+  attivita:      { etichetta: "l'attività", type: "string", required: true, enum: ATTIVITA },
+  n_persone:     { etichetta: "il numero di persone", type: "number", integer: true, min: 1, max: 50 },
+  n_giorni:      { etichetta: "il numero di giorni", type: "number", integer: true, min: 1, max: 60 },
+  pernotto:      { etichetta: "il pernotto", type: "string", enum: PERNOTTO },
+  serve_cucina:  { etichetta: "«serve la cucina»", type: "boolean" },
+  data_partenza: { etichetta: "la data di partenza", type: "date" },
+  lat_partenza:  { etichetta: "la latitudine di partenza", aiuto: "in Italia circa 36–47, es. 44,19", type: "number", min: -90,  max: 90 },
+  lon_partenza:  { etichetta: "la longitudine di partenza", aiuto: "in Italia circa 6–19, es. 10,70", type: "number", min: -180, max: 180 },
+  lat_arrivo:    { etichetta: "la latitudine di arrivo", aiuto: "in Italia circa 36–47, es. 44,19", type: "number", min: -90,  max: 90 },
+  lon_arrivo:    { etichetta: "la longitudine di arrivo", aiuto: "in Italia circa 6–19, es. 10,70", type: "number", min: -180, max: 180 },
+  dislivello_m:  { etichetta: "il dislivello positivo", type: "number", integer: true, min: 0, max: 9000 },
+  distanza_km:   { etichetta: "la lunghezza", type: "number", min: 0.1, max: 999 },
+  note:          { etichetta: "le note", type: "string", maxLength: 1000 },
+  pianificato:   { etichetta: "«da fare in futuro»", type: "boolean" },
+  luogo_partenza:{ etichetta: "il luogo di partenza", type: "string", maxLength: 200 },   // B1: obbligatorio nel form; qui facoltativo (viaggi vecchi, richieste di prova)
+  luogo_arrivo:  { etichetta: "il luogo di arrivo", type: "string", maxLength: 200 },
+  quota_max_m:   { etichetta: "la quota massima", type: "number", integer: true, min: 0, max: 9000 }, // B3
+  quota_min_m:   { etichetta: "la quota minima", type: "number", integer: true, min: -500, max: 9000 },     // mappe
+  ora_partenza:  { etichetta: "l'ora di partenza", type: "string", pattern: /^([01]\d|2[0-3]):[0-5]\d$/, formato: "HH:MM, es. 08:30" },
+  traccia:       { etichetta: "la traccia della mappa", type: "object" },                                          // mappe: controllata da tracciaValida()
 };
+
+// Il percorso di un'uscita (pagina della mappa): la traccia e i valori che la mappa compila.
+// Stesse regole del viaggio, ma tutti "nullable": null = campo vuoto (il percorso si sostituisce per intero)
+const CAMPI_PERCORSO = ["traccia", "distanza_km", "dislivello_m", "quota_min_m", "quota_max_m",
+                        "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
+const schemaPercorso = Object.fromEntries(CAMPI_PERCORSO.map((campo) => [campo, { ...schemaViaggio[campo], nullable: true }]));
+
+// Controlli che il validatore generico non sa fare: tra due campi, e la forma della traccia
+function controlliPercorso(req, res, next) {
+  const d = req.validated;
+  if (d.quota_min_m != null && d.quota_max_m != null && d.quota_min_m > d.quota_max_m) {
+    return res.status(400).json({ error: "VALIDATION_ERROR", message: "La quota minima non può superare la quota massima" });
+  }
+  if (d.traccia != null && !tracciaValida(d.traccia)) {
+    return res.status(400).json({ error: "VALIDATION_ERROR", message: "Traccia non valida" });
+  }
+  next();
+}
+
+// La traccia: { tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (al massimo 5000 punti),
+//               origini: { campo: "mappa" | "luogo" } (facoltativo, A1: quali valori sono stati compilati in automatico;
+//                         i campi non elencati li ha scritti l'utente),
+//               profilo: "sentieri" | "breve" (facoltativo: come è stato calcolato il percorso),
+//               discesa_m: intero 0–9000 (facoltativo: il dislivello negativo calcolato dalla mappa) }
+// Profilo e D− stanno nella traccia perché esistono solo quando c'è una mappa: niente colonne nuove nel database.
+const CAMPI_CON_ORIGINE = ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m",
+                           "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
+export function tracciaValida(t) {
+  const latLon = (p) => Array.isArray(p) && p.length >= 2 && p.length <= 3 && p.every((n) => typeof n === "number" && Number.isFinite(n))
+    && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180;
+  const originiValide = t.origini === undefined || (typeof t.origini === "object" && t.origini !== null && !Array.isArray(t.origini)
+    && Object.entries(t.origini).every(([campo, da]) => CAMPI_CON_ORIGINE.includes(campo) && ["mappa", "luogo"].includes(da)));
+  return Array.isArray(t.tappe) && t.tappe.length >= 2 && t.tappe.length <= 30 && t.tappe.every(latLon)
+    && Array.isArray(t.linea) && t.linea.length >= 2 && t.linea.length <= 5000 && t.linea.every(latLon)
+    && originiValide
+    && (t.profilo === undefined || ["sentieri", "breve"].includes(t.profilo))
+    && (t.discesa_m === undefined || t.discesa_m === null || (Number.isInteger(t.discesa_m) && t.discesa_m >= 0 && t.discesa_m <= 9000));
+}
 
 // === Middleware "guardiano": il viaggio :id esiste ed è mio? ===
 async function caricaViaggio(req, res, next) {
@@ -80,17 +121,17 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
 
     const peso = await zaino.peso(v.id);
     const sole = await consigli.sole(v);
-    const meteo = await consigli.meteo(v, await consigli.sensibilitaFreddo(req.user.sub));
+    // il meteo riceve anche le ore di cammino: servono a stimare l'ora di arrivo in vetta
+    const meteo = await consigli.meteo(v, await consigli.sensibilitaFreddo(req.user.sub), ore);
     const tempMax = meteo.disponibile ? meteo.temp_max : null;
     const neve = consigli.rischioNeve(v.quota_max_m, v.data_partenza,
-      meteo.disponibile ? (meteo.cima?.temp_min ?? meteo.temp_min) : null);
+      meteo.disponibile ? (meteo.vetta?.temp_min ?? meteo.temp_min) : null);
     const acqua = ore == null ? null : await consigli.acqua(v, ore, tempMax); // { persona_giorno, totale }
 
     res.json({
       ...v,
       peso,
       consigli: {
-        distanza_linea_aria_km: consigli.distanzaLineaAria(v),
         ore_cammino_giorno: ore,
         fonte_ore: fonteOre,
         acqua_litri: acqua?.totale ?? null,                    // tutto il viaggio, tutto il gruppo
@@ -100,7 +141,9 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
         acqua_con_cucina: v.serve_cucina,
         sole,
         // B2: "parti entro le 9:25" (tramonto − ore di cammino − 1 ora di margine)
-        ora_limite_partenza: sole.disponibile && ore != null ? consigli.oraLimitePartenza(sole.alba, sole.tramonto, ore) : null,
+        //     con in_ritardo = true se l'ora di partenza scritta nel form è più tardi del limite
+        ora_limite_partenza: sole.disponibile && ore != null
+          ? consigli.oraLimitePartenza(sole.alba, sole.tramonto, ore, 1, v.ora_partenza) : null,
         meteo,
         // B3: neve e ghiaccio possibili sopra i 2000 m; bollettino valanghe per ciaspole, alpinismo o neve
         neve_ghiaccio: neve,
@@ -112,7 +155,7 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
 });
 
 // === POST /api/viaggi?genera=true (crea; con genera=true riempie anche lo zaino, in una transazione) ===
-router.post("/", validate(schemaViaggio), async (req, res, next) => {
+router.post("/", validate(schemaViaggio), controlliPercorso, async (req, res, next) => {
   try {
     const genera = req.query.genera;
     if (genera !== undefined && genera !== "true" && genera !== "false") {
@@ -126,7 +169,7 @@ router.post("/", validate(schemaViaggio), async (req, res, next) => {
 });
 
 // === PUT /api/viaggi/:id (modifica) ===
-router.put("/:id", validate(schemaViaggio), async (req, res, next) => {
+router.put("/:id", validate(schemaViaggio), controlliPercorso, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
@@ -135,6 +178,13 @@ router.put("/:id", validate(schemaViaggio), async (req, res, next) => {
     const viaggio = await svc.update(req.user.sub, id, req.validated);
     if (!viaggio) return res.status(404).json({ error: "NOT_FOUND", message: `Viaggio ${id} non trovato` });
     res.json(viaggio);
+  } catch (err) { next(err); }
+});
+
+// === PUT /api/viaggi/:id/percorso (pagina della mappa: salva solo il percorso, senza toccare il resto dell'uscita) ===
+router.put("/:id/percorso", caricaViaggio, validate(schemaPercorso), controlliPercorso, async (req, res, next) => {
+  try {
+    res.json(await svc.aggiornaPercorso(req.user.sub, req.viaggio.id, req.validated));
   } catch (err) { next(err); }
 });
 
@@ -160,7 +210,7 @@ router.post("/:id/genera", caricaViaggio, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// === GET /api/viaggi/:id/kit (B5: "Per questa uscita": per ogni voce, nello zaino / nell'armadio / manca) ===
+// === GET /api/viaggi/:id/kit (B5: "Per questo viaggio": per ogni voce, nello zaino / nell'armadio / manca) ===
 router.get("/:id/kit", caricaViaggio, async (req, res, next) => {
   try {
     res.json(await kit.stato(req.user.sub, req.viaggio));
@@ -178,14 +228,14 @@ router.get("/:id/zaino", caricaViaggio, async (req, res, next) => {
 
 // --- Aggiungi / modifica / rimuovi ---
 const schemaAggiungi = {
-  oggetto_id: { type: "number", required: true, integer: true, min: 1 },
-  quantita:   { type: "number", integer: true, min: 1, max: 99 },
+  oggetto_id: { etichetta: "l'oggetto", type: "number", required: true, integer: true, min: 1 },
+  quantita:   { etichetta: "la quantità", type: "number", integer: true, min: 1, max: 99 },
 };
 
 const schemaModifica = {
-  inserito:  { type: "boolean" },
-  quantita:  { type: "number", integer: true, min: 1, max: 99 },
-  indossato: { type: "boolean" }, // B3: lo porto addosso, non pesa nello zaino
+  inserito:  { etichetta: "la spunta", type: "boolean" },
+  quantita:  { etichetta: "la quantità", type: "number", integer: true, min: 1, max: 99 },
+  indossato: { etichetta: "«lo indosso»", type: "boolean" }, // B3: lo porto addosso, non pesa nello zaino
 };
 
 // B2: la risposta quando chiedi più pezzi di quanti ne possiedi

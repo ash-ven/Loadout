@@ -37,9 +37,9 @@ const limiteRegistrazione = rateLimit({
 
 // === POST /api/auth/register ===
 const schemaRegister = {
-  email:    { type: "string", required: true, maxLength: 255 },
-  password: { type: "string", required: true },
-  nome:     { type: "string", required: true, maxLength: 100 },
+  email:    { etichetta: "l'email", type: "string", required: true, maxLength: 255 },
+  password: { etichetta: "la password", type: "string", required: true },
+  nome:     { etichetta: "il nome", type: "string", required: true, maxLength: 100 },
 };
 
 router.post("/register", limiteRegistrazione, validate(schemaRegister), async (req, res, next) => {
@@ -58,8 +58,8 @@ router.post("/register", limiteRegistrazione, validate(schemaRegister), async (r
 
 // === POST /api/auth/login ===
 const schemaLogin = {
-  email:    { type: "string", required: true },
-  password: { type: "string", required: true },
+  email:    { etichetta: "l'email", type: "string", required: true },
+  password: { etichetta: "la password", type: "string", required: true },
 };
 
 router.post("/login", limiteLogin, validate(schemaLogin), async (req, res, next) => {
@@ -84,8 +84,8 @@ router.post("/logout", (req, res) => {
 });
 
 // Le colonne del profilo che restituiamo (mai il password_hash; la foto ha un indirizzo suo)
-const CAMPI_PROFILO = `id, email, nome, peso_corporeo_kg, livello_esperienza,
-                       emergenza_nome, emergenza_telefono, note_mediche, tessera_soccorso,
+const CAMPI_PROFILO = `id, email, nome, peso_corporeo_kg,
+                       emergenza_nome, emergenza_telefono, note_mediche, consenso_salute_il, tessera_soccorso,
                        sensibilita_freddo, (foto IS NOT NULL) AS ha_foto`;
 
 // === GET /api/auth/me (dati aggiornati dal database) ===
@@ -100,21 +100,50 @@ router.get("/me", requireAuth, async (req, res, next) => {
 // === PATCH /api/auth/me (modifica parziale del profilo: solo i campi inviati) ===
 // "" o null su un campo nullable = svuotalo (es. togliere la foto o il contatto di emergenza)
 const schemaProfilo = {
-  peso_corporeo_kg:   { type: "number", min: 20, max: 300, nullable: true },     // stretch 5
-  livello_esperienza: { type: "string", enum: ["principiante", "intermedio", "esperto"], nullable: true }, // C1
-  emergenza_nome:     { type: "string", maxLength: 100, nullable: true },
-  emergenza_telefono: { type: "string", maxLength: 30, nullable: true },
-  note_mediche:       { type: "string", maxLength: 300, nullable: true },
-  tessera_soccorso:   { type: "string", maxLength: 80, nullable: true },
-  sensibilita_freddo: { type: "string", enum: ["alta", "normale", "bassa"], nullable: true },
-  foto:               { type: "string", maxLength: 200000, nullable: true },
+  peso_corporeo_kg:   { etichetta: "il peso corporeo", type: "number", min: 20, max: 300, nullable: true },     // stretch 5
+  consenso_salute:    { etichetta: "il consenso per le note mediche", type: "boolean" },                         // GDPR art. 9
+  emergenza_nome:     { etichetta: "il nome del contatto di emergenza", type: "string", maxLength: 100, nullable: true },
+  emergenza_telefono: { etichetta: "il telefono del contatto di emergenza", type: "string", maxLength: 30, nullable: true },
+  note_mediche:       { etichetta: "le note mediche", type: "string", maxLength: 300, nullable: true },
+  tessera_soccorso:   { etichetta: "la tessera", type: "string", maxLength: 80, nullable: true },
+  sensibilita_freddo: { etichetta: "la sensibilità al freddo", type: "string", enum: ["alta", "normale", "bassa"], nullable: true },
+  foto:               { etichetta: "la foto", type: "string", maxLength: 200000, nullable: true },
 };
+
+// Le regole del consenso (funzione "pura": la provano i test in test/consenso.test.js)
+//   consenso === true  → si registra la data (solo la prima volta), le note si possono salvare
+//   consenso === false → consenso ritirato: data cancellata E note mediche cancellate
+//   consenso non mandato → le note si salvano solo se il consenso c'era già
+// → { campi (quelli da salvare), setConsenso (pezzo di SQL fisso o null), errore (testo o null) }
+export function regoleConsenso(campi, consenso, consensoAttuale) {
+  if (consenso === false) {
+    return { campi: { ...campi, note_mediche: null }, setConsenso: "consenso_salute_il = NULL", errore: null };
+  }
+  if (consenso === true) {
+    return { campi, setConsenso: "consenso_salute_il = COALESCE(consenso_salute_il, now())", errore: null };
+  }
+  if (campi.note_mediche && !consensoAttuale) {
+    return { campi, setConsenso: null,
+             errore: "Per salvare le note mediche serve il tuo consenso: spunta la casella sopra il campo" };
+  }
+  return { campi, setConsenso: null, errore: null };
+}
 
 router.patch("/me", requireAuth, validate(schemaProfilo), async (req, res, next) => {
   try {
     const dati = req.validated;
-    const nomi = Object.keys(dati); // solo nomi presi dallo schema qui sopra: è sicuro metterli nella query
-    if (nomi.length === 0) throw new HttpError(400, "VALIDATION_ERROR", "Nessun campo da modificare");
+    // Consenso per le note mediche: non è una colonna, decide cosa fare di note_mediche e di consenso_salute_il
+    const { consenso_salute: consenso, ...campi } = dati;
+    let consensoAttuale = false;
+    if (consenso === undefined && campi.note_mediche) {
+      const { rows } = await query("SELECT consenso_salute_il IS NOT NULL AS dato FROM utente WHERE id = $1", [req.user.sub]);
+      consensoAttuale = rows[0]?.dato ?? false;
+    }
+    const regola = regoleConsenso(campi, consenso, consensoAttuale);
+    if (regola.errore) throw new HttpError(400, "CONSENSO_MANCANTE", regola.errore);
+    const nomi = Object.keys(regola.campi); // solo nomi presi dallo schema qui sopra: è sicuro metterli nella query
+    if (nomi.length === 0 && !regola.setConsenso) throw new HttpError(400, "VALIDATION_ERROR", "Nessun campo da modificare");
+    Object.assign(dati, regola.campi);
     if (dati.emergenza_telefono && !/^\+?[0-9 ]{6,20}$/.test(dati.emergenza_telefono)) {
       throw new HttpError(400, "BAD_TELEFONO", "Numero di telefono non valido (solo cifre, spazi e un + iniziale)");
     }
@@ -122,7 +151,9 @@ router.patch("/me", requireAuth, validate(schemaProfilo), async (req, res, next)
       throw new HttpError(400, "BAD_FOTO", "La foto deve essere un'immagine JPEG, PNG o WebP");
     }
     // SET peso_corporeo_kg = $1, note_mediche = $2, ...  (i VALORI restano parametri $n, mai dentro la stringa)
-    const set = nomi.map((nome, i) => `${nome} = $${i + 1}`).join(", ");
+    // + la data del consenso: COALESCE tiene quella di quando l'hai dato la PRIMA volta (non cambia a ogni salvataggio)
+    const set = [...nomi.map((nome, i) => `${nome} = $${i + 1}`),
+                 ...(regola.setConsenso ? [regola.setConsenso] : [])].join(", ");
     const { rows } = await query(
       `UPDATE utente SET ${set} WHERE id = $${nomi.length + 1} RETURNING ${CAMPI_PROFILO}`,
       [...nomi.map((nome) => dati[nome]), req.user.sub]
@@ -150,8 +181,8 @@ router.get("/me/foto", requireAuth, async (req, res, next) => {
 // === PUT /api/auth/me/password — cambia la password (serve quella attuale) ===
 // Stesso limite di tentativi del login: chi ha rubato il cookie non può provare mille password "attuali"
 const schemaPassword = {
-  attuale: { type: "string", required: true },
-  nuova:   { type: "string", required: true },
+  attuale: { etichetta: "la password attuale", type: "string", required: true },
+  nuova:   { etichetta: "la nuova password", type: "string", required: true },
 };
 router.put("/me/password", requireAuth, limiteLogin, validate(schemaPassword), async (req, res, next) => {
   try {
@@ -172,8 +203,8 @@ router.get("/me/dati", requireAuth, async (req, res, next) => {
   try {
     const id = req.user.sub;
     const profilo = (await query(
-      `SELECT email, nome, peso_corporeo_kg, livello_esperienza, emergenza_nome, emergenza_telefono,
-              note_mediche, tessera_soccorso, sensibilita_freddo, foto FROM utente WHERE id = $1`, [id])).rows[0];
+      `SELECT email, nome, peso_corporeo_kg, emergenza_nome, emergenza_telefono,
+              note_mediche, consenso_salute_il, tessera_soccorso, sensibilita_freddo, foto FROM utente WHERE id = $1`, [id])).rows[0];
     const oggetti = (await query("SELECT * FROM oggetto WHERE utente_id = $1 ORDER BY categoria, nome", [id])).rows;
     const viaggi = (await query("SELECT * FROM viaggio WHERE utente_id = $1 ORDER BY data_partenza NULLS LAST, id", [id])).rows;
     const zaini = (await query(
@@ -193,7 +224,7 @@ router.get("/me/dati", requireAuth, async (req, res, next) => {
 
 // === DELETE /api/auth/me — elimina l'account e TUTTI i suoi dati (serve la password) ===
 // Oggetti, viaggi e zaini spariscono da soli: nel database sono collegati con ON DELETE CASCADE
-const schemaElimina = { password: { type: "string", required: true } };
+const schemaElimina = { password: { etichetta: "la password", type: "string", required: true } };
 router.delete("/me", requireAuth, limiteLogin, validate(schemaElimina), async (req, res, next) => {
   try {
     const { rows } = await query("SELECT password_hash FROM utente WHERE id = $1", [req.user.sub]);

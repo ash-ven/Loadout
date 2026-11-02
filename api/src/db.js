@@ -4,6 +4,7 @@ import pg from "pg";
 pg.types.setTypeParser(1082, (v) => v);              // DATE    → testo "2026-11-08", senza fusi orari
 pg.types.setTypeParser(1700, (v) => parseFloat(v));  // NUMERIC → numero (coordinate, kg)
 pg.types.setTypeParser(20, (v) => parseInt(v, 10));  // BIGINT  → numero (COUNT, SUM)
+pg.types.setTypeParser(1083, (v) => v.slice(0, 5));  // TIME    → testo "08:30" (senza i secondi, come <input type="time">)
 
 export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,

@@ -1,5 +1,6 @@
 import { api, esc } from "./api.js";
 import "./menu.js";
+import { mostraErroriCampi, pulisciErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 import { CATEGORIE } from "./categorie.js";
 import { segno, iconaSegno } from "./segni.js";
 
@@ -16,7 +17,7 @@ const bottoneSalva = document.querySelector("#salva");
 const bottoneAnnulla = document.querySelector("#annulla");
 const bottoneElimina = document.querySelector("#elimina-oggetto"); // dentro la finestra, solo in modifica
 const finestra = document.querySelector("#finestra");              // il <dialog> con il form
-const bottoneNuovo = document.querySelector("#apri-nuovo");        // "Aggiungi" nella testata
+const bottoneNuovo = document.querySelector("#apri-nuovo");        // il + fisso in basso a destra
 const bottoneScansiona = document.querySelector("#scansiona");     // "Scansiona etichetta" nella testata
 const bottoneChiudi = document.querySelector("#chiudi");           // la X in alto nella finestra
 // La scheda di dettaglio (B1): un secondo <dialog>, in sola lettura
@@ -35,14 +36,22 @@ const bottoneCercaProdotto = document.querySelector("#cerca-prodotto");
 
 // --- Stato ---
 let oggetti = [];        // gli oggetti arrivati dall'API (già filtrati dalla ricerca)
+let tutti = [];          // B2: TUTTO l'armadio, per il totale della testata (che non cambia mentre cerchi)
 let filtro = "tutti";    // "tutti" | "indispensabili" | "preferiti"
 let inModifica = null;   // id dell'oggetto in modifica, oppure null se stiamo creando
 let aperto = null;       // l'oggetto mostrato nella scheda di dettaglio
+let perUscita = null;    // B6: id dell'uscita da cui sei arrivata con "Aggiungi all'armadio" (dopo il salvataggio si torna lì)
 
 // --- Caricamento dall'API: aggiorna lo stato e ridisegna ---
 async function carica() {
   const parametri = new URLSearchParams({ q: q.value, limit: 200 });
-  oggetti = await api(`/api/oggetti?${parametri}`);
+  // B2: mentre cerchi chiediamo anche l'armadio intero (in parallelo), per il totale; senza ricerca è la stessa lista
+  const [trovati, interi] = await Promise.all([
+    api(`/api/oggetti?${parametri}`),
+    q.value.trim() ? api("/api/oggetti?limit=200") : null,
+  ]);
+  oggetti = trovati;
+  tutti = interi ?? trovati;
   render();
 }
 
@@ -58,10 +67,14 @@ const pesoTuttiIPezzi = (o) => o.peso_g * (o.quantita_posseduta ?? 1);
 
 // --- Render: dallo stato all'HTML ---
 function render() {
-  // Riepilogo nella testata: "4 oggetti, 0,96 kg in tutto"
-  const pesoTotale = oggetti.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
+  // Riepilogo nella testata: "23 oggetti, 9,60 kg in tutto". B2: sempre l'armadio INTERO, anche mentre cerchi
+  const pesoTotale = tutti.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
   const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  riepilogo.innerHTML = `<strong>${oggetti.length} ${oggetti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
+  riepilogo.innerHTML = `<strong>${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
+  // B2: sopra la lista, solo mentre cerchi: "1 di 23 oggetti"
+  const conteggioRicerca = document.querySelector("#conteggio-ricerca");
+  conteggioRicerca.hidden = !q.value.trim();
+  conteggioRicerca.textContent = `${oggetti.length} di ${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}`;
   segmenti.querySelector('[data-filtro="tutti"]').textContent = `Tutti · ${oggetti.length}`;
 
   // Filtro dei segmenti: si applica qui, senza richiamare l'API (i dati li abbiamo già)
@@ -74,10 +87,11 @@ function render() {
     if (cercato && oggetti.length === 0) {
       // La ricerca non ha trovato niente: lo diciamo, e offriamo di cancellarla
       lista.innerHTML = `<p class="vuoto">Nessun oggetto contiene «${esc(cercato)}» nel nome, nel marchio o nelle note.
-        <button type="button" class="btn-piccolo secondario" id="cancella-ricerca">Cancella la ricerca</button></p>`;
+        <button type="button" class="btn-piccolo secondario" id="cancella-ricerca">Cancella la ricerca</button>
+        <button type="button" class="btn-piccolo" id="aggiungi-cercato">Aggiungi «${esc(cercato)}» all'armadio</button></p>`;
     } else {
       lista.innerHTML = `<p class="vuoto">${
-        oggetti.length === 0 ? "Nessun oggetto qui. Premi «Aggiungi» per inserire il primo." : "Nessun oggetto con questo filtro."
+        oggetti.length === 0 ? "Nessun oggetto qui. Premi + in basso a destra per inserire il primo." : "Nessun oggetto con questo filtro."
       }</p>`;
     }
     return;
@@ -115,12 +129,20 @@ function rigaOggetto(o) {
 
 // Sotto il nome: marchio e pezzi posseduti (B1, B2); se non ci sono, la nota
 function sottotitolo(o) {
-  const parti = [o.marchio, o.quantita_posseduta > 1 ? `${o.quantita_posseduta} pezzi` : null].filter(Boolean);
+  const parti = [o.litri ? `${o.litri} L` : null, o.marchio, o.quantita_posseduta > 1 ? `${o.quantita_posseduta} pezzi` : null].filter(Boolean);
   return parti.length ? parti.join(" · ") : o.note;
 }
 
 // --- Clic su un oggetto della lista (event delegation: UN solo listener per tutte le righe) ---
 lista.addEventListener("click", (e) => {
+  // B2: la ricerca non ha trovato niente → "Aggiungi «ramponi» all'armadio" apre il form con il nome già scritto
+  if (e.target.id === "aggiungi-cercato") {
+    const nome = q.value.trim();
+    svuotaForm();
+    campi.nome.value = nome;
+    apriFinestra(campi.categoria); // il nome c'è già: si parte dalla categoria
+    return;
+  }
   if (e.target.id === "cancella-ricerca") {
     q.value = "";
     carica();
@@ -149,9 +171,10 @@ function apriDettaglio(o, nota = "") {
   const voci = [
     ["Categoria", CATEGORIE[o.categoria]],
     ["Peso", `${o.peso_g.toLocaleString("it-IT", { useGrouping: "always" })} g`],
+    ["Capienza", o.litri ? `${o.litri} litri` : null],
     ["Pezzi", o.quantita_posseduta],
     ["Caratteristiche", o.caratteristiche],
-    ["Codice etichetta", o.codice_etichetta],
+    ["Codice a barre", o.codice_etichetta],
     ["Note", o.note],
   ].filter(([, valore]) => valore !== null && valore !== undefined && valore !== "");
   dettaglioDati.innerHTML = voci.map(([etichetta, valore]) => `<dt>${etichetta}</dt><dd>${esc(valore)}</dd>`).join("");
@@ -170,7 +193,7 @@ dettaglio.addEventListener("click", (e) => {
 });
 
 // --- Segmenti Tutti / Indispensabili / Preferiti ---
-// Le stesse icone della lista accanto ai nomi dei filtri: fanno anche da "legenda" (lucchetto = indispensabile, stella = preferito)
+// Le stesse icone della lista accanto ai nomi dei filtri: fanno anche da "legenda" (puntina = indispensabile, stella = preferito)
 segmenti.querySelector('[data-filtro="indispensabili"]').insertAdjacentHTML("afterbegin", iconaSegno("indispensabile"));
 segmenti.querySelector('[data-filtro="preferiti"]').insertAdjacentHTML("afterbegin", iconaSegno("preferito"));
 segmenti.addEventListener("click", (e) => {
@@ -203,6 +226,7 @@ function riempiForm(o) {
   campi.peso_g.value = o.peso_g;
   campi.marchio.value = o.marchio ?? "";
   campi.quantita_posseduta.value = o.quantita_posseduta ?? 1;
+  campi.litri.value = o.litri ?? "";
   campi.caratteristiche.value = o.caratteristiche ?? "";
   campi.is_indispensabile.checked = o.is_indispensabile;
   campi.is_preferito.checked = o.is_preferito;
@@ -221,13 +245,16 @@ function svuotaForm() {
   bottoneElimina.hidden = true;
   infoForm.hidden = true;
   delete campi.categoria.dataset.scelta; // nessuna categoria scelta a mano (vedi cercaProdotto)
+  perUscita = null; // B6
   nascondiErrore();
+  pulisciErroriCampi(form); // B1
 }
 
 // --- La finestra (dialog) con il form ---
 // showModal() la apre sopra la pagina (il resto non è cliccabile); close() la chiude.
 // Il browser la chiude da solo anche con il tasto Esc.
 function apriFinestra(campoIniziale = campi.nome) {
+  mostraCampoLitri(); // la categoria può essere già scelta (modifica, arrivo da uno zaino, scansione)
   finestra.showModal();
   campoIniziale.focus(); // il cursore va nel campo indicato (di solito il nome)
 }
@@ -332,7 +359,13 @@ campi.codice_etichetta.addEventListener("keydown", (e) => {
   cercaProdotto();
 });
 // Se scegli tu la categoria, la ricerca non la cambia più
-campi.categoria.addEventListener("change", () => { campi.categoria.dataset.scelta = "1"; });
+campi.categoria.addEventListener("change", () => { campi.categoria.dataset.scelta = "1"; mostraCampoLitri(); });
+
+// Zaini: il campo "Capienza (litri)" si vede solo per la categoria Zaini
+const campoLitri = document.querySelector("#campo-litri");
+function mostraCampoLitri() {
+  campoLitri.hidden = campi.categoria.value !== "zaini";
+}
 
 async function cercaProdotto() {
   const codice = campi.codice_etichetta.value.trim();
@@ -360,6 +393,7 @@ async function cercaProdotto() {
     if (riempiSeVuoto(campi.peso_g, p.peso_g)) riempiti.push("peso");
     if (p.categoria && !inModifica && !campi.categoria.dataset.scelta) {
       campi.categoria.value = p.categoria;
+      mostraCampoLitri();
       riempiti.push("categoria");
     }
     const mancano = ["nome", "peso"].filter((c) => !riempiti.includes(c) && !campi[c === "peso" ? "peso_g" : c].value);
@@ -422,16 +456,22 @@ function leggiForm() {
     is_preferito: campi.is_preferito.checked,
     codice_etichetta: campi.codice_etichetta.value.trim(),
     note: campi.note.value.trim(),
+    // i litri solo per gli zaini; vuoto = null ("svuota"), così si può anche togliere la capienza
+    litri: campi.categoria.value === "zaini" && campi.litri.value !== "" ? Number(campi.litri.value) : null,
   };
 }
 
+// B1 (revisione UX 2): ogni errore dice a quale campo si riferisce, e il messaggio compare sotto quel campo
 function validaLatoClient(dati) {
   const errori = [];
-  if (!dati.nome) errori.push("Il nome è obbligatorio");
-  if (!dati.categoria) errori.push("Scegli una categoria");
-  if (!Number.isInteger(dati.peso_g) || dati.peso_g < 1) errori.push("Il peso deve essere un numero intero di almeno 1 grammo");
+  if (!dati.nome) errori.push({ campo: "nome", testo: "Scrivi il nome dell'oggetto" });
+  if (!dati.categoria) errori.push({ campo: "categoria", testo: "Scegli una categoria" });
+  if (!Number.isInteger(dati.peso_g) || dati.peso_g < 1) errori.push({ campo: "peso_g", testo: "Il peso va scritto in grammi: un numero intero, almeno 1" });
   if (!Number.isInteger(dati.quantita_posseduta) || dati.quantita_posseduta < 1 || dati.quantita_posseduta > 99) {
-    errori.push("I pezzi posseduti devono essere tra 1 e 99");
+    errori.push({ campo: "quantita_posseduta", testo: "I pezzi posseduti vanno da 1 a 99" });
+  }
+  if (dati.litri != null && (!Number.isInteger(dati.litri) || dati.litri < 1 || dati.litri > 150)) {
+    errori.push({ campo: "litri", testo: "La capienza va da 1 a 150 litri (numero intero, es. 30)" });
   }
   return errori;
 }
@@ -443,23 +483,56 @@ form.addEventListener("submit", async (e) => {
 
   const dati = leggiForm();
   const errori = validaLatoClient(dati);
-  if (errori.length) return mostraErrore(errori.join("; "));
+  if (mostraErroriCampi(form, errori)) return; // B1: sotto i campi sbagliati, e il cursore va al primo
 
   bottoneSalva.disabled = true;
+  const eraNuovo = !inModifica; // dopo close() inModifica si azzera: ce lo segniamo prima
+  let salvato;
   try {
     if (inModifica) {
-      await api(`/api/oggetti/${inModifica}`, { method: "PUT", body: dati });
+      salvato = await api(`/api/oggetti/${inModifica}`, { method: "PUT", body: dati });
     } else {
-      await api("/api/oggetti", { method: "POST", body: dati });
+      const nuovo = await api("/api/oggetti", { method: "POST", body: dati });
+      salvato = nuovo;
+      // B6 (revisione UX 2): arrivata dallo zaino? l'oggetto entra anche nello zaino e si torna lì
+      if (perUscita) {
+        await api(`/api/viaggi/${perUscita}/zaino`, { method: "POST", body: { oggetto_id: nuovo.id, quantita: 1 } });
+        location.href = `/zaino.html?id=${perUscita}&aggiunto=${encodeURIComponent(nuovo.nome)}`;
+        return;
+      }
     }
     finestra.close(); // la chiusura svuota anche il form (evento "close")
     await carica();
+    mostraSalvato(salvato, eraNuovo); // C11
   } catch (err) {
     mostraErrore(err.message); // es. "Hai già un oggetto con questo nome nell'armadio" (409)
   } finally {
     bottoneSalva.disabled = false;
   }
 });
+
+// --- C11 (revisione UX 2): dopo "Salva" si vede COSA è successo ---
+// La lista scorre fino all'oggetto, la sua riga si illumina per un attimo e in basso compare la conferma.
+const avvisoSalvato = document.querySelector("#avviso-salvato");
+let timerSalvato = null;
+
+function mostraSalvato(oggetto, eraNuovo) {
+  const riga = lista.querySelector(`.riga[data-id="${oggetto.id}"]`);
+  let testo = eraNuovo ? `«${oggetto.nome}» aggiunto all'armadio` : `«${oggetto.nome}» salvato`;
+  if (riga) {
+    // chi ha chiesto meno animazioni nel sistema non vede lo scorrimento morbido
+    const morbido = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    riga.scrollIntoView({ block: "center", behavior: morbido ? "smooth" : "auto" });
+    riga.classList.add("appena-salvato"); // l'animazione è nel CSS
+    riga.addEventListener("animationend", () => riga.classList.remove("appena-salvato"), { once: true });
+  } else {
+    testo += " (con la ricerca o il filtro di adesso non si vede)";
+  }
+  avvisoSalvato.textContent = testo;
+  avvisoSalvato.hidden = false;
+  clearTimeout(timerSalvato);
+  timerSalvato = setTimeout(() => { avvisoSalvato.hidden = true; }, 4000);
+}
 
 function mostraErrore(testo) {
   erroreForm.textContent = testo;
@@ -473,9 +546,19 @@ function nascondiErrore() {
 // --- Ricerca: ogni volta che cambia il testo, si ricarica dall'API ---
 q.addEventListener("input", carica);
 
-carica(); // primo caricamento all'apertura della pagina
+pulisciScrivendo(form); // B1: correggendo un campo (o scegliendo la categoria), il suo messaggio d'errore sparisce
 
-// B5: arrivo dal riquadro "Per questa uscita" con ?nuovo=Casco&categoria=sicurezza:
+await carica(); // primo caricamento all'apertura della pagina
+
+// B1: arrivo dallo zaino con ?apri=ID ("Aggiorna i pezzi"): apro la scheda di quell'oggetto
+const daAprire = Number(new URLSearchParams(location.search).get("apri"));
+if (daAprire) {
+  history.replaceState(null, "", location.pathname);
+  const oggetto = oggetti.find((o) => o.id === daAprire);
+  if (oggetto) apriDettaglio(oggetto);
+}
+
+// B5: arrivo dal riquadro "Per questo viaggio" con ?nuovo=Casco&categoria=sicurezza:
 // apro il form del nuovo oggetto con nome e categoria già scritti (poi tolgo i parametri dall'indirizzo)
 const richiesta = new URLSearchParams(location.search);
 if (richiesta.has("nuovo")) {
@@ -483,7 +566,17 @@ if (richiesta.has("nuovo")) {
   svuotaForm();
   campi.nome.value = richiesta.get("nuovo");
   if (CATEGORIE[richiesta.get("categoria")]) campi.categoria.value = richiesta.get("categoria");
-  infoForm.textContent = "Dalla tua uscita: completa peso e dettagli, poi salva. Torna all'uscita e premi «Genera zaino».";
+  // B6 (revisione UX 2): salvando, l'oggetto entra anche nello zaino dell'uscita e si torna lì
+  perUscita = Number(richiesta.get("uscita")) || null;
+  if (perUscita) {
+    const torna = document.createElement("a");
+    torna.href = `/zaino.html?id=${perUscita}`;
+    torna.textContent = "← Torna allo zaino";
+    infoForm.replaceChildren(torna, document.createElement("br"),
+      "Completa peso e dettagli e salva: l'oggetto entra anche nello zaino del viaggio.");
+  } else {
+    infoForm.textContent = "Dal tuo viaggio: completa peso e dettagli, poi salva. Torna al viaggio e premi «Genera zaino».";
+  }
   infoForm.hidden = false;
   apriFinestra(campi.peso_g); // nome e categoria ci sono già: si parte dal peso
 }

@@ -13,7 +13,7 @@ Prerequisiti: Docker Desktop avviato. Node.js non serve.
 ```powershell
 git clone <indirizzo-del-repository> loadout
 cd loadout
-Copy-Item .env.example .env      # poi apri .env e metti un JWT_SECRET lungo e casuale
+Copy-Item .env.example .env      # poi apri .env e metti un JWT_SECRET lungo e casuale (e, per le mappe, la MAPTILER_KEY)
 docker compose up -d --build     # database + API + Caddy; la prima volta scarica le immagini e crea il database
 docker compose ps                # db e api devono risultare "healthy", caddy "Up"
 ```
@@ -75,7 +75,10 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_luoghi.sql` | il nome del luogo di partenza e di arrivo (cercato su OpenStreetMap) |
 | `loadout_stretch_quota.sql` | quota massima del percorso: freddo stimato in cima, avviso neve e ghiaccio |
 | `loadout_stretch_zaino_intelligente.sql` | zaino intelligente: tolto "Adatto a", `fn_genera_zaino` di nuovo senza filtro per attività |
+| `loadout_stretch_percorso.sql` | mappe, fase 1: quota minima, ora di partenza, traccia del percorso (per il meteo in vetta) |
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
+| `loadout_stretch_zaino_litri.sql` | zaini nell'armadio: categoria `zaini`, capienza `litri`; `fn_genera_zaino` non aggiunge più gli zaini (lo sceglie l'app in base ai litri) |
+| `loadout_stretch_profilo_consenso.sql` | profilo: data del consenso alle note mediche (`consenso_salute_il`, GDPR art. 9), tolto il livello di esperienza |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
 
@@ -86,9 +89,12 @@ docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_indossato.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_oggetto.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_luoghi.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_percorso.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_quota.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_intelligente.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_litri.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo_consenso.sql
 ```
 
 Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` in `/docker-entrypoint-initdb.d`.
@@ -112,16 +118,20 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | Pagina | JavaScript | Cosa fa |
 | --- | --- | --- |
 | `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (dopo la registrazione entra da sola) |
-| `index.html` | `index.js` | home: saluto, frase casuale (anche "viva" sul prossimo viaggio), conteggi di oggetti e viaggi in arrivo |
+| `index.html` | `index.js` | home (ci si arriva dal logo): saluto, frase casuale (anche "viva" sul prossimo viaggio), «La tua mappa»: cartina sul Satellite con un segnaposto sulla partenza di ogni viaggio fatto, il fumetto porta al viaggio; totali da sempre |
 | `armadio.html` | `armadio.js` | lista per categoria con ricerca e filtri Tutti/Indispensabili/Preferiti, scheda di dettaglio, aggiungi/modifica/elimina in una finestra |
-| `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino"; con `?modifica=ID` la stessa finestra modifica un viaggio |
-| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | zaino con checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, consigli (acqua, alba e tramonto, meteo, percorso, emergenza), modifica ed elimina viaggio |
+| `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" (da `form-uscita.js`, la stessa che nella scheda modifica l'uscita) |
+| `scheda-viaggio.html?id=` | `scheda-viaggio.js` | l'uscita: collegamenti allo zaino e alla mappa (o "Genera lo zaino" / "Disegna la mappa" se non ci sono ancora), consigli (acqua, alba e tramonto, ora limite, meteo in partenza e in vetta, percorso, emergenza), modifica ed elimina viaggio |
+| `zaini.html` | `zaini.js` | tutti gli zaini (uno per uscita), divisi in in arrivo / senza data / già fatti, con spuntati e peso |
+| `zaino.html?id=` | `zaino.js` | lo zaino di un'uscita: checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, "Per questo viaggio"; con `&genera=1` lo riempie appena si apre |
+| `mappe.html` | `mappe.js` | le uscite che hanno una mappa |
+| `mappa.html?id=` | `mappa.js` | la mappa di un'uscita, come la pagina dello zaino: si disegna il percorso (partenza, tappe, anello) e «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate (`PUT /api/viaggi/:id/percorso`); «Sentieri / Più breve», D−, frecce del verso di percorrenza, «Scarica GPX» (`gpx.js`, file creato nel browser per le app di mappe offline) e «Importa GPX» (B8, `gpx-lettura.js`: file letto nel browser, salite e discese con soglia di 5 m, al massimo 5.000 punti); tappa da coordinate ed elenco dei punti con ↑ ↓ ✕; **«Naviga»** col GPS (`navigazione.js` + calcoli puri in `navigazione-calcoli.js`: posizione, km fatti/mancanti, salita restante, arrivo, fuori percorso, schermo acceso; la posizione non lascia il browser); profilo altimetrico (`profilo-altimetrico.js`, SVG con tappe e cursore che accende il punto sulla mappa); **senza rete** con il service worker `public/sw.js` (pagina, dati del viaggio e tessere già guardate; CSP di `sw.js` allargata a MapTiler e unpkg solo per lui) |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
 | `profilo.html` | `profilo.js` | foto, dati personali (esperienza, sensibilità al freddo, contatto di emergenza, note mediche, tessera CAI), peso corporeo e soglia dello zaino, esci |
 
-Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie).
+Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/elenco-uscite.js` (gruppi per data per Zaino e Mappe), `js/post-it.js` (i campi compilati in automatico dalla mappa o dal luogo, che restano modificabili), `js/mappa-base.js` (sfondi MapTiler, puntine e tracciato, con Leaflet 1.9.4 da unpkg), `js/mappa-disegno.js` (il disegno del percorso nella pagina della mappa). `js/form-uscita.js` (la finestra per creare o modificare un'uscita), `js/errori-campi.js` (errori sotto i campi), `js/controlli.js` (controlli di coordinate e quote), `js/testi.js` (singolare e plurale).
 Stile: un solo foglio, `css/style.css`. Immagini: logo, icone e sfondi SVG in `img/`.
-Sul telefono il menu è una barra in basso; sul computer sta nella barra in alto.
+Menu: Armadio · Zaino · Viaggi · Mappe · Profilo. Sul telefono è una barra in basso, con Viaggi al centro (la scarpa senape) e Consigli come icona accanto a "Esci"; sul computer sta nella barra in alto, con Consigli come ultima voce. Alla home si torna dal logo.
 
 ## Stato
 
@@ -137,7 +147,7 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 - [x] Armadio: lista con ricerca, filtro per categoria e paginazione, dettaglio, crea, modifica, elimina; marchio, caratteristiche, pezzi posseduti
 - [x] Viaggi: lista ordinata per data (filtro pianificati), dettaglio, crea (anche con zaino generato nella stessa transazione), modifica, elimina
 - [x] Zaino: genera, checklist con peso, aggiungi/modifica/togli, svuota; oggetti indossati (solo abbigliamento) fuori dal peso; quantità non oltre i pezzi posseduti
-- [x] Consigli: ore di cammino stimate o inserite, acqua a persona al giorno, distanza in linea d'aria, alba e tramonto (sunrise-sunset.org), meteo e vestiario (Open-Meteo), avviso se lo zaino supera il 20% del peso corporeo
+- [x] Consigli: ore di cammino stimate o inserite, acqua a persona al giorno, alba e tramonto (sunrise-sunset.org), meteo e vestiario (Open-Meteo), avviso se lo zaino supera il 20% del peso corporeo
 - [x] Validazione dell'input con messaggi 400 chiari; gestione centralizzata degli errori
 
 ### Frontend – `public/`
@@ -154,8 +164,8 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 
 ### Oltre lo scope (giovedì e venerdì, dopo la revisione UX)
 - [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più)
-- [x] Zaino intelligente: per ogni uscita (attività, pernotto, cucina, freddo, neve, quota alta, caldo) l'app sa quale attrezzatura serve, la cerca nell'armadio e la aggiunge con «Genera zaino»; in giornata lascia fuori sacco a pelo, tenda e materassino; il riquadro «Per questa uscita» mostra cosa c'è, cosa aggiungere e cosa manca (con «Aggiungi all'armadio»); gli oggetti si riconoscono per parole chiave con sinonimi (es. imbrago/imbragatura/harness, casco/elmetto) in `api/src/services/kit.js`
-- [x] Uscite: luogo per nome (OpenStreetMap), ora limite di partenza, quota massima con meteo stimato in cima, vento, avviso neve e bollettino valanghe; peso base (senza acqua e cibo) con soglia 10% in giornata e 20% con pernotto; «Lascia detto»: messaggio già scritto per il contatto di emergenza (WhatsApp o SMS, lo invia l'utente)
+- [x] Zaino intelligente: per ogni uscita (attività, pernotto, cucina, freddo, neve, quota alta, caldo) l'app sa quale attrezzatura serve, la cerca nell'armadio e la aggiunge con «Genera zaino»; in giornata lascia fuori sacco a pelo, tenda e materassino; il riquadro «Per questo viaggio» mostra cosa c'è, cosa aggiungere e cosa manca (con «Aggiungi all'armadio»); gli oggetti si riconoscono per parole chiave con sinonimi (es. imbrago/imbragatura/harness, casco/elmetto) in `api/src/services/kit.js`
+- [x] Uscite: luogo per nome (OpenStreetMap), ora limite di partenza, quota massima e minima, ora di partenza, meteo in vetta all'ora di arrivo (Open-Meteo con la quota) con avvisi di vento, zero termico e temporali, avviso neve e bollettino valanghe; peso base (senza acqua e cibo) con soglia 10% in giornata e 20% con pernotto; «Lascia detto»: messaggio già scritto per il contatto di emergenza (WhatsApp o SMS, lo invia l'utente)
 - [x] Account e privacy (GDPR): cambio password, «Scarica i miei dati» (JSON con profilo, armadio, uscite e zaini), elimina l'account con conferma della password (tutto il resto si cancella da solo: ON DELETE CASCADE)
 - [x] Zaino: oggetti indossati (solo abbigliamento) fuori dal peso; acqua a persona al giorno con salita, caldo e cucina
 - [x] Profilo: foto (ridotta nel browser), esperienza, contatto di emergenza, note mediche e tessera CAI/assicurazione (mostrati nel riquadro Emergenza della scheda del viaggio), sensibilità al freddo (adatta i consigli di vestiario)
@@ -164,11 +174,13 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 ### Venerdì: sicurezza, Docker, qualità
 - [x] HTTPS con Caddy nel compose (certificato dell'autorità locale di Caddy), Dockerfile dell'API e compose completo (db + api + proxy), `.env.example` nella radice
 - [x] Sicurezza: helmet con CSP severa (solo il nostro sito + Google Fonts e unpkg; niente script inline), limite di tentativi su login (10 errori in 15 min per IP) e registrazione (10 all'ora), `trust proxy` per Caddy, cookie `HttpOnly` + `Secure` (in produzione) + `SameSite=Lax`, CORS chiuso di default (`CORS_ORIGINS` per ammettere altri siti)
-- [x] 39 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, soglia del peso, kit dello zaino intelligente)
+- [x] Mappe: nella pagina della mappa di ogni uscita (dalla scheda, «Disegna la mappa» / «La mappa») si toccano partenza e tappe e il percorso segue i sentieri (BRouter, chiamato dal server); anello con un interruttore; la mappa compila km, dislivello positivo, quote e coordinate con il "post-it" (vince l'ultimo automatico tra mappa e luogo, ma quello che scrivi a mano vince sempre); sfondi MapTiler (Outdoor, Topo, Inverno, Satellite) con il filtro Loadout; la traccia salvata dà il punto più alto per il meteo in vetta; pagina Mappe con l'elenco delle uscite che ne hanno una
+- [x] 59 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, meteo in vetta e vento, traccia della mappa, lettura della risposta di BRouter, CSP delle mappe, soglia del peso, kit dello zaino intelligente)
 - [x] `npm audit` (0 vulnerabilità), pulizia del codice (ESLint), `NOTE.md` con le riflessioni di fine settimana
 
 ### Cosa manca (prossimi passi)
-- **Mappe** (in preparazione): da integrare insieme all'**importazione della traccia GPX** (lunghezza, salita, quota massima, partenza e arrivo letti dal file, proposti all'utente che resta libero di correggerli)
+- **Importazione della traccia GPX** (B8): lunghezza, dislivello, quote, partenza e arrivo letti dal file, proposti con il post-it come fa la mappa
+- **Avvisi sul percorso** (pietraie, tratti esposti, catene) dai dati di OpenStreetMap che BRouter già restituisce, collegati al kit dello zaino
 - **Password dimenticata**: richiede l'invio di email (un servizio SMTP); oggi c'è il cambio password da loggati
 - **Attrezzatura di gruppo**: con più persone, tenda e fornello li porta uno solo (peso a persona realistico)
 - **Modelli di uscita** e "duplica uscita" ("Giornata invernale", "Rifugio 2 giorni")
@@ -214,7 +226,7 @@ Come escursionista voglio che l'app proponga lo zaino, per non dimenticare nulla
 - [x] CA2. Oggetti di categoria cucina entrano solo se serve_cucina è vero.
 - [x] CA3. Generare due volte non crea duplicati; la risposta dice quanti oggetti sono stati aggiunti.
 
-*Dove: `scheda-viaggio.html`; si può anche generare subito alla creazione del viaggio (`?genera=true`).*
+*Dove: `zaino.html` (dalla scheda: «Genera lo zaino»); si può anche generare subito alla creazione del viaggio (`?genera=true`).*
 
 ### US5 – Il tuo zaino
 Come escursionista voglio vedere lo zaino riempirsi e il suo peso, per decidere cosa togliere.
@@ -223,7 +235,7 @@ Come escursionista voglio vedere lo zaino riempirsi e il suo peso, per decidere 
 - [x] CA3. Posso aggiungere un oggetto dall'armadio che non è stato proposto, cambiare la quantità, rimuoverlo.
 - [x] CA4. La checklist si può "svuotare" (tutti non inseriti) con un pulsante.
 
-*Dove: `scheda-viaggio.html`. In più: oggetti indossati fuori dal peso, quantità non oltre i pezzi posseduti.*
+*Dove: `zaino.html`. In più: oggetti indossati fuori dal peso, quantità non oltre i pezzi posseduti.*
 
 ### US6 – Consigli
 Come escursionista voglio alba, tramonto e acqua consigliata, per scegliere l'ora di partenza.

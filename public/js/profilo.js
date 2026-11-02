@@ -23,9 +23,31 @@ campoPeso.value = utente.peso_corporeo_kg ?? "";
 mostraSoglia(utente.peso_corporeo_kg);
 mostraFoto();
 // I campi del form "Dati personali" (stessi nomi delle colonne del database)
-const CAMPI_DATI = ["livello_esperienza", "sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
+const CAMPI_DATI = ["sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
 for (const nome of CAMPI_DATI) {
   formDati.elements[nome].value = utente[nome] ?? "";
+}
+// C9: le note mediche si possono scrivere solo con il consenso. Il server registra QUANDO l'hai dato
+// (consenso_salute_il): la casella è spuntata solo se il consenso c'è davvero
+const consensoSalute = document.querySelector("#consenso-salute");
+const campoNote = formDati.elements.note_mediche;
+const dataConsenso = document.querySelector("#data-consenso");
+consensoSalute.checked = Boolean(utente.consenso_salute_il);
+campoNote.disabled = !consensoSalute.checked;
+mostraDataConsenso();
+// Note salvate prima che chiedessimo il consenso: restano visibili, ma per tenerle va spuntata la casella
+if (utente.note_mediche && !utente.consenso_salute_il) {
+  infoDati.textContent = "Le tue note mediche sono state salvate prima che chiedessimo il consenso: spunta la casella per tenerle. " +
+    "Se salvi senza spunta, vengono cancellate.";
+  infoDati.hidden = false;
+}
+
+function mostraDataConsenso() {
+  dataConsenso.hidden = !utente.consenso_salute_il;
+  if (utente.consenso_salute_il) {
+    dataConsenso.textContent = `Consenso dato il ${new Date(utente.consenso_salute_il).toLocaleDateString("it-IT")}. ` +
+      "Togliendo la spunta lo ritiri e le note vengono cancellate.";
+  }
 }
 
 // =====================================================================
@@ -83,22 +105,60 @@ async function riduciFoto(file, lato = 256) {
 // =====================================================================
 //  DATI PERSONALI (C1)
 // =====================================================================
-formDati.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// C9 (revisione UX 2): niente pulsante. Ogni campo si salva quando lo cambi (evento "change": per le tendine
+// appena scegli, per i campi di testo quando esci dal campo) e accanto al titolo compare «Salvato».
+const statoDati = document.querySelector("#dati-stato");
+const statoPeso = document.querySelector("#peso-stato");
+const timerStato = new Map();
+
+// Il piccolo stato accanto al titolo: «Salvataggio…», poi «Salvato» che sparisce dopo 3 secondi
+function mostraStato(el, testo, sparisce = false) {
+  el.textContent = testo;
+  clearTimeout(timerStato.get(el));
+  if (sparisce) timerStato.set(el, setTimeout(() => { el.textContent = ""; }, 3000));
+}
+
+async function salvaDati() {
   infoDati.hidden = true;
   erroreDati.hidden = true;
-  // Mando tutti i campi: quelli vuoti ("") il server li svuota
+  // Mando tutti i campi: quelli vuoti ("") il server li svuota. Senza consenso le note mediche vanno sempre vuote.
   const dati = {};
   for (const nome of CAMPI_DATI) {
     dati[nome] = formDati.elements[nome].value.trim();
   }
+  if (!consensoSalute.checked) dati.note_mediche = "";
+  dati.consenso_salute = consensoSalute.checked; // il server registra la data del consenso, o lo ritira
+  mostraStato(statoDati, "Salvataggio…");
   try {
     utente = await api("/api/auth/me", { method: "PATCH", body: dati });
-    infoDati.textContent = "Dati salvati.";
-    infoDati.hidden = false;
+    mostraStato(statoDati, "✓ Salvato", true);
+    mostraDataConsenso();
   } catch (err) {
+    mostraStato(statoDati, "");
     erroreDati.textContent = err.message; // es. "Numero di telefono non valido"
     erroreDati.hidden = false;
+  }
+}
+
+formDati.addEventListener("change", (e) => {
+  if (e.target === consensoSalute) return; // la casella ha il suo gestore qui sotto
+  salvaDati();
+});
+// Invio in un campo di testo: niente ricarica della pagina, si salva e basta
+formDati.addEventListener("submit", (e) => { e.preventDefault(); salvaDati(); });
+
+// Togliendo il consenso, le note mediche spariscono subito anche dal server
+// Spuntare = dare il consenso (si registra subito la data); togliere la spunta = ritirarlo (note cancellate)
+consensoSalute.addEventListener("change", async () => {
+  campoNote.disabled = !consensoSalute.checked;
+  const cherano = campoNote.value.trim() !== "";
+  if (!consensoSalute.checked) campoNote.value = "";
+  await salvaDati();
+  if (consensoSalute.checked) {
+    campoNote.focus();
+  } else {
+    infoDati.textContent = cherano ? "Consenso ritirato: note mediche cancellate." : "Consenso ritirato.";
+    infoDati.hidden = false;
   }
 });
 
@@ -109,9 +169,8 @@ formDati.addEventListener("submit", async (e) => {
 // Pulsante "Esci dall'account": stessa funzione del link nel menu
 document.querySelector("#bottone-esci").addEventListener("click", esci);
 
-// Salvataggio del peso corporeo
-formProfilo.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// Salvataggio del peso corporeo. C9: appena cambi il valore (uscendo dal campo), senza pulsante
+async function salvaPeso() {
   errore.hidden = true;
 
   // Validazione lato client: stesso intervallo che controlla il server (20–300)
@@ -122,14 +181,19 @@ formProfilo.addEventListener("submit", async (e) => {
     return;
   }
 
+  mostraStato(statoPeso, "Salvataggio…");
   try {
     const aggiornato = await api("/api/auth/me", { method: "PATCH", body: { peso_corporeo_kg: peso } });
-    mostraSoglia(aggiornato.peso_corporeo_kg, true);
+    mostraSoglia(aggiornato.peso_corporeo_kg);
+    mostraStato(statoPeso, "✓ Salvato", true);
   } catch (err) {
+    mostraStato(statoPeso, "");
     errore.textContent = err.message;
     errore.hidden = false;
   }
-});
+}
+campoPeso.addEventListener("change", salvaPeso);
+formProfilo.addEventListener("submit", (e) => { e.preventDefault(); salvaPeso(); });
 
 // Mostra le due soglie (B4): 10% in giornata, 20% con pernotto, in formato italiano (es. "5,7")
 function mostraSoglia(peso, appenaSalvato = false) {

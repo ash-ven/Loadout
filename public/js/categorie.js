@@ -9,13 +9,14 @@ export const CATEGORIE = {
   igiene: "Igiene",
   elettronica: "Elettronica",
   cibo: "Cibo",
+  zaini: "Zaini", // con la capienza in litri: "Genera zaino" sceglie quello giusto per il viaggio
   altro: "Altro",
 };
 
 // Le attività dei viaggi, con il nome da far vedere. "escursione" comprende anche il trekking:
 // in giornata o su più giorni lo dicono già i campi giorni e pernotto.
 export const ATTIVITA = {
-  escursione: "Escursione / trekking",
+  escursione: "Escursione e trekking",
   alpinismo: "Alpinismo",
   ciaspolata: "Ciaspolata",
   ferrata: "Ferrata",

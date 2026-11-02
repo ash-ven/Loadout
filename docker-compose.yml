@@ -40,6 +40,7 @@ services:
       # Obbligatoria: senza, il compose si ferma con questo messaggio
       JWT_SECRET: ${JWT_SECRET:?manca JWT_SECRET - copia .env.example in .env e inserisci una chiave lunga e casuale}
       CORS_ORIGINS: ${CORS_ORIGINS:-}   # facoltativa: altri siti ammessi (vuota = nessuno)
+      MAPTILER_KEY: ${MAPTILER_KEY:-}   # facoltativa: senza, l'app funziona ma non mostra le mappe
     depends_on:
       db:
         condition: service_healthy   # parte solo quando il database risponde
