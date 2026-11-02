@@ -9,6 +9,7 @@ export const CATEGORIE = {
   igiene: "Igiene",
   elettronica: "Elettronica",
   cibo: "Cibo",
+  zaini: "Zaini", // con la capienza in litri: "Genera zaino" sceglie quello giusto per il viaggio
   altro: "Altro",
 };
 

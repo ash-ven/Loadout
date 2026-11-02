@@ -129,7 +129,7 @@ function rigaOggetto(o) {
 
 // Sotto il nome: marchio e pezzi posseduti (B1, B2); se non ci sono, la nota
 function sottotitolo(o) {
-  const parti = [o.marchio, o.quantita_posseduta > 1 ? `${o.quantita_posseduta} pezzi` : null].filter(Boolean);
+  const parti = [o.litri ? `${o.litri} L` : null, o.marchio, o.quantita_posseduta > 1 ? `${o.quantita_posseduta} pezzi` : null].filter(Boolean);
   return parti.length ? parti.join(" · ") : o.note;
 }
 
@@ -171,6 +171,7 @@ function apriDettaglio(o, nota = "") {
   const voci = [
     ["Categoria", CATEGORIE[o.categoria]],
     ["Peso", `${o.peso_g.toLocaleString("it-IT", { useGrouping: "always" })} g`],
+    ["Capienza", o.litri ? `${o.litri} litri` : null],
     ["Pezzi", o.quantita_posseduta],
     ["Caratteristiche", o.caratteristiche],
     ["Codice a barre", o.codice_etichetta],
@@ -225,6 +226,7 @@ function riempiForm(o) {
   campi.peso_g.value = o.peso_g;
   campi.marchio.value = o.marchio ?? "";
   campi.quantita_posseduta.value = o.quantita_posseduta ?? 1;
+  campi.litri.value = o.litri ?? "";
   campi.caratteristiche.value = o.caratteristiche ?? "";
   campi.is_indispensabile.checked = o.is_indispensabile;
   campi.is_preferito.checked = o.is_preferito;
@@ -252,6 +254,7 @@ function svuotaForm() {
 // showModal() la apre sopra la pagina (il resto non è cliccabile); close() la chiude.
 // Il browser la chiude da solo anche con il tasto Esc.
 function apriFinestra(campoIniziale = campi.nome) {
+  mostraCampoLitri(); // la categoria può essere già scelta (modifica, arrivo da uno zaino, scansione)
   finestra.showModal();
   campoIniziale.focus(); // il cursore va nel campo indicato (di solito il nome)
 }
@@ -356,7 +359,13 @@ campi.codice_etichetta.addEventListener("keydown", (e) => {
   cercaProdotto();
 });
 // Se scegli tu la categoria, la ricerca non la cambia più
-campi.categoria.addEventListener("change", () => { campi.categoria.dataset.scelta = "1"; });
+campi.categoria.addEventListener("change", () => { campi.categoria.dataset.scelta = "1"; mostraCampoLitri(); });
+
+// Zaini: il campo "Capienza (litri)" si vede solo per la categoria Zaini
+const campoLitri = document.querySelector("#campo-litri");
+function mostraCampoLitri() {
+  campoLitri.hidden = campi.categoria.value !== "zaini";
+}
 
 async function cercaProdotto() {
   const codice = campi.codice_etichetta.value.trim();
@@ -384,6 +393,7 @@ async function cercaProdotto() {
     if (riempiSeVuoto(campi.peso_g, p.peso_g)) riempiti.push("peso");
     if (p.categoria && !inModifica && !campi.categoria.dataset.scelta) {
       campi.categoria.value = p.categoria;
+      mostraCampoLitri();
       riempiti.push("categoria");
     }
     const mancano = ["nome", "peso"].filter((c) => !riempiti.includes(c) && !campi[c === "peso" ? "peso_g" : c].value);
@@ -446,6 +456,8 @@ function leggiForm() {
     is_preferito: campi.is_preferito.checked,
     codice_etichetta: campi.codice_etichetta.value.trim(),
     note: campi.note.value.trim(),
+    // i litri solo per gli zaini; vuoto = null ("svuota"), così si può anche togliere la capienza
+    litri: campi.categoria.value === "zaini" && campi.litri.value !== "" ? Number(campi.litri.value) : null,
   };
 }
 
@@ -457,6 +469,9 @@ function validaLatoClient(dati) {
   if (!Number.isInteger(dati.peso_g) || dati.peso_g < 1) errori.push({ campo: "peso_g", testo: "Il peso va scritto in grammi: un numero intero, almeno 1" });
   if (!Number.isInteger(dati.quantita_posseduta) || dati.quantita_posseduta < 1 || dati.quantita_posseduta > 99) {
     errori.push({ campo: "quantita_posseduta", testo: "I pezzi posseduti vanno da 1 a 99" });
+  }
+  if (dati.litri != null && (!Number.isInteger(dati.litri) || dati.litri < 1 || dati.litri > 150)) {
+    errori.push({ campo: "litri", testo: "La capienza va da 1 a 150 litri (numero intero, es. 30)" });
   }
   return errori;
 }

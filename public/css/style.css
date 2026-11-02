@@ -738,3 +738,5 @@ button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(sa
 /* Mappa: «Sentieri / Più breve» (due segmenti invece dei tre dei filtri) e la riga del dislivello negativo */
 .segmenti.scelta-profilo { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 15rem; max-width: 18rem; }
 .riga-discesa { margin: -.25rem 0 .75rem; }
+/* Home: la cartina non si trascina, quindi niente manina "afferra" (sui segnaposto resta il puntatore di Leaflet) */
+.mappa-home .mappa { cursor: default; }

@@ -37,23 +37,21 @@
   </section>
 
   <main class="container">
-    <!-- C8 (revisione UX 2, scelta di Asiha: «La mia mappa»): tutti i viaggi su una mappa sola.
-         Fatti in verde muschio, in programma (o senza data) in senape; senza mappa disegnata, un pallino sulla partenza.
-         La riempie index.js con i dati di GET /api/viaggi (che contiene già le tracce). -->
+    <!-- C8 (revisione UX 2, scelte di Asiha): la cartina dei viaggi FATTI, un segnaposto sulla partenza di ognuno.
+         La cartina non si sposta (si può solo ingrandire e rimpicciolire): si toccano solo i segnaposto.
+         La riempie index.js con i dati di GET /api/viaggi. -->
     <section class="mappa-home" aria-labelledby="titolo-mappa-home">
       <div class="mappa-home-testa">
         <h2 id="titolo-mappa-home">La tua mappa</h2>
         <ul class="legenda-home">
-          <li><span class="segno-linea fatti" aria-hidden="true"></span>Fatti</li>
-          <li><span class="segno-linea futuri" aria-hidden="true"></span>In programma</li>
-          <li><span class="segno-pallino" aria-hidden="true"></span>Senza mappa</li>
+          <li><svg width="12" height="16" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>La partenza dei viaggi che hai fatto</li>
         </ul>
       </div>
       <div class="mappa-cornice">
         <div class="mappa sola-lettura" id="mappa-home" role="region" aria-label="Mappa dei tuoi viaggi"></div>
         <!-- Senza viaggi da mostrare (o senza mappe disponibili): un messaggio sopra la mappa -->
         <div class="mappa-vuota" id="mappa-vuota" hidden>
-          <p id="testo-mappa-vuota">La tua mappa si riempie con i viaggi che fai.</p>
+          <p id="testo-mappa-vuota">La tua mappa si riempie con i viaggi che fai: dopo ogni viaggio, qui compare un segnaposto.</p>
           <a class="btn" href="/viaggi.html?nuovo=1">Nuovo viaggio</a>
         </div>
       </div>

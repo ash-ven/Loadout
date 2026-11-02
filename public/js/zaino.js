@@ -90,7 +90,8 @@ document.querySelector("#vedi-kit").addEventListener("click", () => {
 });
 
 function rigaKit(v) {
-  const perche = `<span class="kit-perche">${esc(v.perche)}</span>`;
+  // Zaini: se lo zaino è troppo piccolo per il viaggio, l'avviso va sotto il perché
+  const perche = `<span class="kit-perche">${esc(v.perche)}${v.avviso ? `<br><strong>${esc(v.avviso)}</strong>` : ""}</span>`;
   if (v.stato === "nello_zaino") {
     return `<li class="kit-ok"><span class="kit-segno" aria-hidden="true">✓</span>
       <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nello zaino: ${esc(v.oggetto.nome)}${perche}</span></li>`;
@@ -221,7 +222,8 @@ bottoneGenera.addEventListener("click", async () => {
   nascondiErrore();
   bottoneGenera.disabled = true;
   try {
-    const { aggiunti, base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio, doppioni } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
+    const { aggiunti, base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio, doppioni, zaino: zainoScelto } =
+      await api(`/api/viaggi/${id}/genera`, { method: "POST" });
     await caricaZaino();
     // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
     // B5: cosa ha fatto "Genera", in parole
@@ -229,6 +231,7 @@ bottoneGenera.addEventListener("click", async () => {
     // B3: "Aggiunto 1 oggetto: 1 indispensabile o preferito." / "Aggiunti 5 oggetti: 3 indispensabili o preferiti e 2 …"
     if (base > 0) parti.push(plurale(base, "indispensabile o preferito", "indispensabili o preferiti"));
     if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questo viaggio`);
+    if (zainoScelto) parti.push(`lo zaino «${zainoScelto.nome}»${zainoScelto.litri ? ` (${zainoScelto.litri} L)` : ""}`);
     let messaggio = aggiunti > 0
       ? `${aggiunti === 1 ? "Aggiunto" : "Aggiunti"} ${plurale(aggiunti, "oggetto", "oggetti")}: ${parti.join(" e ")}.`
       : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
@@ -236,6 +239,7 @@ bottoneGenera.addEventListener("click", async () => {
     // B5 (revisione UX 2)
     if (esclusiRifugio > 0) messaggio += " In rifugio, con le temperature previste, ho lasciato fuori il sacco a pelo: basta il sacco lenzuolo.";
     if (doppioni > 0) messaggio += ` Ho lasciato fuori ${doppioni === 1 ? "un oggetto doppio" : `${doppioni} oggetti doppi`} (ne basta uno per tipo, es. una frontale).`;
+    if (zainoScelto?.avviso) messaggio += ` ${zainoScelto.avviso}.`; // zaino troppo piccolo per questo viaggio
     mostraInfo(messaggio);
   } catch (err) {
     mostraErrore(err.message);

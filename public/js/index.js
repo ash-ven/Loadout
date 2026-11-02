@@ -1,12 +1,12 @@
 import { api, esc, formattaData, oggiISO, giorniTra } from "./api.js";
 import "./menu.js";
-import { creaMappa } from "./mappa-base.js";
+import { creaMappa, icona } from "./mappa-base.js";
 
 // =====================================================================
 //  HOME
 //  Testata: saluto e frase a caso (come prima).
-//  C8 (revisione UX 2, scelta di Asiha: «La mia mappa»): sotto, una mappa con TUTTI i tuoi viaggi,
-//  la "traccia" di quello che hai fatto e di quello che farai, e i totali da sempre.
+//  C8 (revisione UX 2, scelta di Asiha: «La mia mappa»): sotto, la cartina con i segnaposto dei viaggi fatti
+//  (la "traccia" di quello che hai fatto) e i totali da sempre.
 // =====================================================================
 
 const saluto = document.querySelector("#saluto");
@@ -75,15 +75,15 @@ function frasiVive(v) {
 }
 
 // =====================================================================
-//  LA MAPPA DI TUTTI I VIAGGI (C8)
+//  LA CARTINA DEI VIAGGI FATTI (C8, scelte di Asiha)
+//  - solo i viaggi già fatti, con un segnaposto sulla PARTENZA (niente percorsi);
+//  - la cartina non si sposta: si può solo ingrandire e rimpicciolire (pulsanti + e −, Ctrl + rotella, due dita);
+//  - si toccano solo i segnaposto: si apre il fumetto con il link al viaggio.
 // =====================================================================
-const COLORE = { fatto: "#31503f", futuro: "#c8962b" }; // verde muschio e senape, come nel resto dell'app
-const ALONE = "#f6efdf";                                 // il bordo chiaro che stacca le linee da ogni sfondo
 const ITALIA = [42.5, 12.5];
-
 const num = (n, decimali = 0) => Number(n).toLocaleString("it-IT", { maximumFractionDigits: decimali, useGrouping: "always" });
 
-// Il fumetto che si apre toccando un percorso o un pallino: nome, data, km e D+, link al viaggio.
+// Il fumetto del segnaposto: nome, data, km e D+, link al viaggio.
 // Il nome lo ha scritto l'utente: passa da esc() prima di finire nell'HTML
 function fumetto(v) {
   const dettagli = [data(v) ? formattaData(data(v)) : "data da decidere"];
@@ -97,38 +97,28 @@ const elMappa = document.querySelector("#mappa-home");
 const elVuota = document.querySelector("#mappa-vuota");
 const elTotali = document.querySelector("#totali");
 
-// La traccia salvata è { tappe, linea, ... }: la linea è il sentiero vero (punti [lat, lon])
-const conTraccia = viaggi.filter((v) => v.traccia?.linea?.length >= 2);
-const soloPartenza = viaggi.filter((v) => !conTraccia.includes(v) && v.lat_partenza != null && v.lon_partenza != null);
+// La partenza: le coordinate del viaggio; se mancano ma c'è una mappa disegnata, la prima tappa
+const partenza = (v) => (v.lat_partenza != null && v.lon_partenza != null ? [v.lat_partenza, v.lon_partenza]
+  : v.traccia?.tappe?.[0] ? v.traccia.tappe[0].slice(0, 2) : null);
+const fattiSullaMappa = viaggi.filter((v) => eFatto(v) && partenza(v));
 
 try {
   const { chiave } = await api("/api/mappe/config"); // 503 se sul server manca la chiave MapTiler
-  const mappa = creaMappa(elMappa, chiave, { centro: ITALIA, zoom: 5 });
+  const mappa = creaMappa(elMappa, chiave, {
+    centro: ITALIA, zoom: 5,
+    // ferma: niente trascinamento (né col mouse né col dito), niente tastiera, niente "rettangolo" con Maiusc
+    opzioni: { dragging: false, keyboard: false, boxZoom: false },
+    toccoUnDito: "Usa due dita per ingrandire la mappa",
+  });
   const livello = L.featureGroup().addTo(mappa);
-
-  // Prima i fatti, poi quelli in programma: così i futuri restano sopra e si vedono meglio
-  const ordinati = [...conTraccia].sort((a, b) => Number(!eFatto(a)) - Number(!eFatto(b)));
-  for (const v of ordinati) {
-    const colore = eFatto(v) ? COLORE.fatto : COLORE.futuro;
-    const linea = v.traccia.linea.map(([lat, lon]) => [lat, lon]); // la linea può avere anche la quota: teniamo lat e lon
-    L.polyline(linea, { color: ALONE, weight: 8, opacity: .9, lineCap: "round", lineJoin: "round", interactive: false }).addTo(livello);
-    L.polyline(linea, { color: colore, weight: 4, lineCap: "round", lineJoin: "round", interactive: false }).addTo(livello);
-    // Una terza linea invisibile e larga sopra le altre: è lei che si tocca (una linea di 4 px col dito non si prende)
-    L.polyline(linea, { color: colore, weight: 22, opacity: 0 }).bindPopup(fumetto(v)).addTo(livello);
+  for (const v of fattiSullaMappa) {
+    L.marker(partenza(v), { icon: icona("partenza"), title: v.nome, alt: v.nome, riseOnHover: true })
+      .bindPopup(fumetto(v)).addTo(livello);
   }
-  for (const v of soloPartenza) {
-    L.circleMarker([v.lat_partenza, v.lon_partenza], {
-      radius: 7, color: ALONE, weight: 2.5, fillColor: eFatto(v) ? COLORE.fatto : COLORE.futuro, fillOpacity: 1,
-    }).bindPopup(fumetto(v)).addTo(livello);
-  }
-
-  // Inquadra tutti i viaggi (con un po' di margine). Un solo pallino: zoom fisso, se no Leaflet ingrandirebbe al massimo
-  if (livello.getLayers().length > 0) {
-    if (conTraccia.length === 0 && soloPartenza.length === 1) mappa.setView([soloPartenza[0].lat_partenza, soloPartenza[0].lon_partenza], 11);
-    else mappa.fitBounds(livello.getBounds(), { padding: [30, 30], maxZoom: 13 });
-  } else {
-    elVuota.hidden = false; // ancora nessun viaggio con un posto sulla mappa
-  }
+  // Inquadra tutti i segnaposto (con margine). Uno solo: zoom fisso, se no Leaflet ingrandirebbe al massimo
+  if (fattiSullaMappa.length === 1) mappa.setView(partenza(fattiSullaMappa[0]), 10);
+  else if (fattiSullaMappa.length > 1) mappa.fitBounds(livello.getBounds(), { padding: [40, 40], maxZoom: 12 });
+  else elVuota.hidden = false;
 } catch (err) {
   // Senza chiave o senza rete la Home resta usabile: lo diciamo sopra lo spazio della mappa
   document.querySelector("#testo-mappa-vuota").textContent =

@@ -77,6 +77,7 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_zaino_intelligente.sql` | zaino intelligente: tolto "Adatto a", `fn_genera_zaino` di nuovo senza filtro per attività |
 | `loadout_stretch_percorso.sql` | mappe, fase 1: quota minima, ora di partenza, traccia del percorso (per il meteo in vetta) |
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
+| `loadout_stretch_zaino_litri.sql` | zaini nell'armadio: categoria `zaini`, capienza `litri`; `fn_genera_zaino` non aggiunge più gli zaini (lo sceglie l'app in base ai litri) |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
 
@@ -91,6 +92,7 @@ docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_quota.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_intelligente.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_litri.sql
 ```
 
 Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` in `/docker-entrypoint-initdb.d`.
@@ -114,7 +116,7 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | Pagina | JavaScript | Cosa fa |
 | --- | --- | --- |
 | `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (dopo la registrazione entra da sola) |
-| `index.html` | `index.js` | home (ci si arriva dal logo): saluto, frase casuale (anche "viva" sul prossimo viaggio), «La tua mappa»: tutti i viaggi su una mappa (fatti in verde, in programma in senape, pallino sulla partenza per quelli senza mappa) e i totali da sempre |
+| `index.html` | `index.js` | home (ci si arriva dal logo): saluto, frase casuale (anche "viva" sul prossimo viaggio), «La tua mappa»: cartina ferma (solo zoom) con un segnaposto sulla partenza di ogni viaggio fatto, il fumetto porta al viaggio; totali da sempre |
 | `armadio.html` | `armadio.js` | lista per categoria con ricerca e filtri Tutti/Indispensabili/Preferiti, scheda di dettaglio, aggiungi/modifica/elimina in una finestra |
 | `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" (da `form-uscita.js`, la stessa che nella scheda modifica l'uscita) |
 | `scheda-viaggio.html?id=` | `scheda-viaggio.js` | l'uscita: collegamenti allo zaino e alla mappa (o "Genera lo zaino" / "Disegna la mappa" se non ci sono ancora), consigli (acqua, alba e tramonto, ora limite, meteo in partenza e in vetta, percorso, emergenza), modifica ed elimina viaggio |

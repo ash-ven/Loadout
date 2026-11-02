@@ -20,7 +20,10 @@ function sfondo(url, chiave, suErrore) {
 
 // La mappa con i quattro sfondi MapTiler e il selettore a "pillole".
 // suTessereSbagliate: chiamata una volta se le tessere non arrivano (di solito: chiave sbagliata)
-export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom = 14, suTessereSbagliate = () => {} } = {}) {
+// opzioni (facoltative): altre opzioni di Leaflet (es. la Home: dragging false = la mappa non si sposta, si ingrandisce soltanto);
+// toccoUnDito: il messaggio quando sul telefono scorri la mappa con un dito
+export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom = 14, suTessereSbagliate = () => {},
+                                              opzioni = {}, toccoUnDito = "Usa due dita per spostare la mappa" } = {}) {
   let errori = 0;
   const suErrore = () => { errori += 1; if (errori === 3) suTessereSbagliate(); };
   const sfondi = {
@@ -32,8 +35,8 @@ export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom 
   // A9 (revisione UX 2): sui dispositivi touch (telefono, tablet) un dito fa scorrere la PAGINA, non la mappa:
   // la mappa si sposta e si ingrandisce con due dita (il "pizzico" di Leaflet, touchZoom). Un tocco aggiunge ancora la tappa.
   const touch = window.matchMedia("(pointer: coarse)").matches;
-  const mappa = L.map(elemento, { dragging: !touch }).setView(centro, zoom);
-  gestiComodi(elemento);
+  const mappa = L.map(elemento, { dragging: !touch, ...opzioni }).setView(centro, zoom);
+  gestiComodi(elemento, toccoUnDito);
   sfondi["Outdoor"].addTo(mappa);
   // A8 (revisione UX 2, scelta di Asiha): il selettore degli sfondi parte SEMPRE chiuso (icona a strati),
   // su qualsiasi schermo: aperto copriva un pezzo di mappa e la puntina di partenza. Si apre con un tocco.
@@ -46,7 +49,7 @@ export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom 
 //   così la pagina scorre normalmente e compare la scritta. Con Ctrl (o ⌘ su Mac) passa a Leaflet, che ingrandisce.
 // - Un dito che scorre sulla mappa (non su una puntina): la pagina scorre e ricordiamo che servono due dita.
 // (Esiste un componente già fatto, GestureHandling, ma mostra l'avviso anche mentre trascini una puntina.)
-function gestiComodi(elemento) {
+function gestiComodi(elemento, toccoUnDito) {
   const avviso = document.createElement("div");
   avviso.className = "avviso-gesti";
   avviso.hidden = true;
@@ -65,7 +68,7 @@ function gestiComodi(elemento) {
     mostra(`Usa ${tasto} + rotella per ingrandire la mappa`);
   }, { capture: true });
   elemento.addEventListener("touchmove", (e) => {
-    if (e.touches.length === 1 && !e.target.closest(".leaflet-marker-icon")) mostra("Usa due dita per spostare la mappa");
+    if (e.touches.length === 1 && !e.target.closest(".leaflet-marker-icon")) mostra(toccoUnDito);
   }, { passive: true });
 }
 

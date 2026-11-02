@@ -125,8 +125,13 @@
             <option value="igiene">Igiene</option>
             <option value="elettronica">Elettronica</option>
             <option value="cibo">Cibo</option>
+            <option value="zaini">Zaini</option>
             <option value="altro">Altro</option>
           </select>
+        </label>
+        <!-- Solo per la categoria Zaini (lo mostra armadio.js): con i litri, "Genera zaino" sceglie lo zaino giusto per il viaggio -->
+        <label id="campo-litri" hidden>Capienza (litri)
+          <input name="litri" type="number" min="1" max="150" step="1" placeholder="es. 30">
         </label>
         <label>Marchio
           <input name="marchio" type="text" maxlength="80" placeholder="es. Salewa">
