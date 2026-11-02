@@ -219,7 +219,7 @@ bottoneGenera.addEventListener("click", async () => {
   nascondiErrore();
   bottoneGenera.disabled = true;
   try {
-    const { aggiunti, base, dal_kit: dalKit, esclusi } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
+    const { aggiunti, base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio, doppioni } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
     await caricaZaino();
     // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
     // B5: cosa ha fatto "Genera", in parole
@@ -231,6 +231,9 @@ bottoneGenera.addEventListener("click", async () => {
       ? `${aggiunti === 1 ? "Aggiunto" : "Aggiunti"} ${plurale(aggiunti, "oggetto", "oggetti")}: ${parti.join(" e ")}.`
       : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
     if (esclusi > 0) messaggio += ` In giornata ho lasciato fuori ${esclusi === 1 ? "un oggetto" : `${esclusi} oggetti`} che servono solo per dormire fuori.`;
+    // B5 (revisione UX 2)
+    if (esclusiRifugio > 0) messaggio += " In rifugio, con le temperature previste, ho lasciato fuori il sacco a pelo: basta il sacco lenzuolo.";
+    if (doppioni > 0) messaggio += ` Ho lasciato fuori ${doppioni === 1 ? "un oggetto doppio" : `${doppioni} oggetti doppi`} (ne basta uno per tipo, es. una frontale).`;
     mostraInfo(messaggio);
   } catch (err) {
     mostraErrore(err.message);

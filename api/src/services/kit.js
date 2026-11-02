@@ -63,6 +63,9 @@ const VOCI = [
     quando: (u) => u.pernotto === "rifugio", perche: "per il rifugio (obbligatorio nei rifugi CAI)" },
   { id: "sacco-a-pelo", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag"],
     quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },
+  // B5 (revisione UX 2, scelta di Asiha): in rifugio il sacco a pelo serve solo se la notte è fredda (sotto 10 °C)
+  { id: "sacco-a-pelo-rifugio", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag"],
+    quando: (u) => u.pernotto === "rifugio" && u.notte_fredda, perche: "per il rifugio: minima prevista sotto 10 °C" },
   { id: "materassino", nome: "Materassino", categoria: "attrezzatura",
     parole: ["materassino", "materasso", "stuoino", "tappetino", "sleeping pad"],
     quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },
@@ -142,10 +145,13 @@ export async function condizioni(viaggio) {
   const mese = viaggio.data_partenza ? Number(viaggio.data_partenza.slice(5, 7)) : null;
   const neve = consigli.rischioNeve(viaggio.quota_max_m, viaggio.data_partenza, minima);
   const freddo = neve || (minima != null ? minima < 5 : mese != null && (mese >= 11 || mese <= 3));
+  // B5 (soglia scelta da Asiha): notte fredda in rifugio = minima prevista (in vetta, se c'è la quota) sotto 10 °C;
+  // senza previsioni, da ottobre a maggio
+  const notteFredda = minima != null ? minima < 10 : mese != null && (mese >= 10 || mese <= 5);
   const quotaAlta = viaggio.quota_max_m != null && viaggio.quota_max_m >= 2000; // C1: occhiali e crema solare in quota
   const caldo = meteo.disponibile && meteo.temp_max > 25;                        // C1: cappello e crema con il caldo
   return { attivita: viaggio.attivita, pernotto: viaggio.pernotto, serve_cucina: viaggio.serve_cucina,
-           freddo, neve, quota_alta: quotaAlta, caldo };
+           freddo, notte_fredda: notteFredda, neve, quota_alta: quotaAlta, caldo };
 }
 
 async function armadio(db, utenteId) {
@@ -159,6 +165,24 @@ async function armadio(db, utenteId) {
 async function idNelloZaino(db, viaggioId) {
   const { rows } = await db.query("SELECT oggetto_id FROM viaggio_oggetto WHERE viaggio_id = $1", [viaggioId]);
   return new Set(rows.map((r) => r.oggetto_id));
+}
+
+// B5 (revisione UX 2): "Genera" non aggiunge due oggetti dello stesso tipo (es. due frontali).
+// Funzione "pura": tra gli oggetti APPENA aggiunti (nuovi), per ogni voce del kit ne tiene al massimo uno;
+// se nello zaino ce n'era già uno di quel tipo (giaPresenti), non ne aggiunge altri. Gli oggetti messi a mano non si toccano.
+// Restituisce gli id da togliere.
+export function doppioni(nuovi, giaPresenti, voci = VOCI) {
+  const daTogliere = new Set();
+  for (const voce of voci) {
+    const nuoviDelTipo = nuovi.filter((o) => !daTogliere.has(o.id) && corrisponde(o, voce));
+    if (nuoviDelTipo.length === 0) continue;
+    // si tiene prima l'indispensabile, poi il preferito, poi il più leggero
+    const ordinati = [...nuoviDelTipo].sort((a, b) => (b.is_indispensabile - a.is_indispensabile)
+      || (b.is_preferito - a.is_preferito) || (a.peso_g - b.peso_g));
+    const tenuto = giaPresenti.some((o) => corrisponde(o, voce)) ? null : ordinati[0];
+    nuoviDelTipo.filter((o) => o !== tenuto).forEach((o) => daTogliere.add(o.id));
+  }
+  return [...daTogliere];
 }
 
 // Il nuovo "Genera zaino". Va chiamato DENTRO una transazione (db = il client con BEGIN già fatto):
@@ -181,6 +205,26 @@ export async function generaIntelligente(db, utenteId, viaggio, uscita) {
     }
   }
 
+  // B5: in rifugio con la notte non fredda il sacco a pelo appena aggiunto esce (basta il sacco lenzuolo)
+  let esclusiRifugio = 0;
+  if (uscita.pernotto === "rifugio" && !uscita.notte_fredda) {
+    const sacco = VOCI.find((v) => v.id === "sacco-a-pelo");
+    const lenzuolo = VOCI.find((v) => v.id === "sacco-lenzuolo");
+    const nuovi = [...(await idNelloZaino(db, viaggio.id))].filter((id) => !prima.has(id));
+    const daTogliere = nuovi.filter((id) => corrisponde(perId.get(id), sacco) && !corrisponde(perId.get(id), lenzuolo));
+    if (daTogliere.length) {
+      await db.query("DELETE FROM viaggio_oggetto WHERE viaggio_id = $1 AND oggetto_id = ANY($2::int[])", [viaggio.id, daTogliere]);
+      esclusiRifugio = daTogliere.length;
+    }
+  }
+
+  // B5: un solo oggetto per tipo tra quelli appena aggiunti (es. due frontali → resta l'indispensabile, o il più leggero)
+  const doppi = doppioni(
+    [...(await idNelloZaino(db, viaggio.id))].filter((id) => !prima.has(id)).map((id) => perId.get(id)),
+    [...prima].map((id) => perId.get(id)).filter(Boolean)
+  );
+  if (doppi.length) await db.query("DELETE FROM viaggio_oggetto WHERE viaggio_id = $1 AND oggetto_id = ANY($2::int[])", [viaggio.id, doppi]);
+
   let dalKit = 0;
   const nelloZaino = await idNelloZaino(db, viaggio.id);
   for (const voce of vociPerUscita(uscita)) {
@@ -196,8 +240,8 @@ export async function generaIntelligente(db, utenteId, viaggio, uscita) {
     dalKit++;
   }
 
-  const base = rows[0].aggiunti - esclusi;
-  return { aggiunti: base + dalKit, base, dal_kit: dalKit, esclusi };
+  const base = rows[0].aggiunti - esclusi - esclusiRifugio - doppi.length;
+  return { aggiunti: base + dalKit, base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio, doppioni: doppi.length };
 }
 
 // Il riquadro "Per questa uscita": per ogni voce, se è nello zaino, nell'armadio o se manca

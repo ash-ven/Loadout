@@ -1,7 +1,7 @@
 // Test dello zaino intelligente: le liste del kit e il riconoscimento degli oggetti (niente database)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { corrisponde, vociPerUscita, migliorOggetto } from "../src/services/kit.js";
+import { corrisponde, vociPerUscita, migliorOggetto, doppioni } from "../src/services/kit.js";
 
 const uscita = (altro) => ({ attivita: "escursione", pernotto: "nessuno", serve_cucina: false, freddo: false, neve: false, ...altro });
 const ids = (voci) => voci.map((v) => v.id);
@@ -69,4 +69,21 @@ test("neve: vanno bene ramponcini o ramponi; se ci sono tutti e due, i più legg
     { id: 2, nome: "Ramponcini Kahtoola", peso_g: 340 },
   ]);
   assert.equal(scelto.id, 2);
+});
+
+// B5 (revisione UX 2)
+test("doppioni: di due frontali appena aggiunte resta l'indispensabile; se ce n'era già una, nessuna nuova", () => {
+  const lampada = { id: 1, nome: "Lampada frontale", peso_g: 120, is_indispensabile: true, is_preferito: false };
+  const piccola = { id: 2, nome: "Frontale Tikkina", peso_g: 80, is_indispensabile: false, is_preferito: true };
+  const borraccia = { id: 3, nome: "Borraccia 1 L", peso_g: 150, is_indispensabile: true, is_preferito: false };
+  assert.deepEqual(doppioni([lampada, piccola, borraccia], []), [2]);      // resta la Lampada (indispensabile), la borraccia non c'entra
+  assert.deepEqual(doppioni([piccola], [lampada]).sort(), [2]);            // la frontale c'era già (messa a mano): la nuova esce
+});
+
+test("sacco a pelo in rifugio solo se la notte è fredda (sotto 10 °C)", () => {
+  const base = { attivita: "escursione", pernotto: "rifugio", serve_cucina: false, freddo: false, neve: false, quota_alta: false, caldo: false };
+  const ids = (u) => vociPerUscita(u).map((v) => v.id);
+  assert.ok(ids({ ...base, notte_fredda: true }).includes("sacco-a-pelo-rifugio"));
+  assert.ok(!ids({ ...base, notte_fredda: false }).includes("sacco-a-pelo-rifugio"));
+  assert.ok(ids({ ...base, notte_fredda: false }).includes("sacco-lenzuolo"));          // il lenzuolo serve sempre in rifugio
 });
