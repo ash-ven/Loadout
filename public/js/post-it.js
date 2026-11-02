@@ -8,6 +8,7 @@
 // =====================================================================
 
 export function proponi(campo, valore, origine) {
+  if (campo.readOnly) return;               // campo bloccato (es. nel form, quando l'uscita ha una mappa): non si tocca
   const eAutomatico = campo.value === "" || campo.dataset.auto !== undefined;
   if (!eAutomatico) return;                 // l'hai scritto tu: non si tocca
   if (valore == null) {                     // l'automatico ritira il suo valore

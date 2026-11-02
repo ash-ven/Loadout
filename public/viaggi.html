@@ -101,7 +101,9 @@
           </label>
           <ul class="suggerimenti" id="suggerimenti-partenza" role="listbox" hidden></ul>
         </div>
-        <!-- Le coordinate sono sempre visibili: le compila il luogo o la mappa (vince l'ultimo), ma quello che scrivi tu vince sempre -->
+        <!-- Le coordinate sono sempre visibili: le compila il luogo, ma quello che scrivi tu vince sempre.
+             Se l'uscita ha una mappa diventano non modificabili qui: si cambiano nella pagina della mappa (revisione UX 2) -->
+        <p class="muto nota-mappa" hidden>Questi dati vengono dalla mappa: per cambiarli <a class="link-mappa" href="#">apri la mappa</a>.</p>
         <div class="riga2">
           <label><span class="nome-campo">Latitudine partenza <span class="origine"></span></span>
             <input name="lat_partenza" type="number" min="-90" max="90" step="any" placeholder="es. 44.22">
@@ -129,6 +131,7 @@
 
         <details>
           <summary>Percorso (facoltativo)</summary>
+          <p class="muto nota-mappa" hidden>Questi dati vengono dalla mappa: per cambiarli <a class="link-mappa" href="#">apri la mappa</a>.</p>
           <!-- Il percorso si può anche disegnare sulla mappa, nella pagina della mappa dell'uscita (dalla scheda: «Disegna la mappa») -->
           <div class="riga2">
             <label>Lunghezza (km)

@@ -557,3 +557,9 @@ label:has(input[data-auto]) input { background: var(--salvia-chiaro); border-col
 button.elimina-discreto { background: transparent; border: 0; padding: .55rem .4rem; color: #f1b9b0; font-weight: 600;
                           text-decoration: underline; text-underline-offset: 3px; }
 button.elimina-discreto:hover, button.elimina-discreto:focus-visible { background: transparent; color: #fff; }
+
+/* --- Revisione UX 2: con la mappa, nel form i dati del percorso si vedono ma non si scrivono (si cambiano nella pagina della mappa) --- */
+input[readonly] { background: var(--crema); color: var(--terra); border-style: dashed; cursor: not-allowed; }
+input[readonly]:focus { box-shadow: none; border-color: var(--bordo); }
+.nota-mappa { margin: 0; font-size: .85rem; }
+details > .nota-mappa { margin-top: .75rem; }

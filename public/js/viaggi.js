@@ -121,6 +121,23 @@ finestra.addEventListener("click", (e) => {
 
 // Le coordinate possono avere il post-it (compilate dal luogo, o dalla mappa nella sua pagina): scrivendo a mano diventano tuoi
 const CAMPI_POST_IT = ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
+// Revisione UX 2: se l'uscita ha una mappa, questi dati si cambiano SOLO nella pagina della mappa (un posto solo, niente contraddizioni)
+const CAMPI_DELLA_MAPPA = [...CAMPI_POST_IT, "distanza_km", "dislivello_m", "quota_min_m", "quota_max_m"];
+const noteMappa = document.querySelectorAll(".nota-mappa");
+
+// Blocca (o sblocca) i dati del percorso nel form. Bloccati = si vedono ma non si scrivono (readonly, non disabled:
+// un campo disabled non verrebbe mandato, e il PUT, che sostituisce l'uscita intera, li cancellerebbe)
+function bloccaDatiDellaMappa(idUscita) {
+  const blocca = idUscita != null;
+  for (const nome of CAMPI_DELLA_MAPPA) {
+    campi[nome].readOnly = blocca;
+    if (blocca) delete campi[nome].dataset.auto; // la nota sopra dice già da dove vengono
+  }
+  noteMappa.forEach((nota) => {
+    nota.hidden = !blocca;
+    if (blocca) nota.querySelector(".link-mappa").href = `/mappa.html?id=${idUscita}`;
+  });
+}
 staccaPostItScrivendo(CAMPI_POST_IT.map((nome) => campi[nome]));
 
 // B1: i due campi luogo con i suggerimenti (il nome e, scegliendo, le coordinate)
@@ -137,6 +154,7 @@ const luogoArrivo = attivaCampoLuogo({
 function svuotaForm() {
   form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
   CAMPI_POST_IT.forEach((nome) => delete campi[nome].dataset.auto); // reset() non toglie i post-it
+  bloccaDatiDellaMappa(null); // uscita nuova: niente mappa, tutto modificabile
   erroreForm.hidden = true;
   inModifica = null;
   titoloForm.textContent = "Prepara il tuo cammino";
@@ -169,10 +187,13 @@ function apriModifica(v) {
     campi[nome].value = v[nome] ?? "";
   }
   campi.ora_partenza.value = v.ora_partenza ?? "08:00"; // senza ora salvata, vale quella di default
-  // Coordinate in modifica: non sappiamo chi le aveva scritte, quindi indoviniamo nel modo più utile
-  // (dalla mappa se c'è una traccia, altrimenti dal luogo): scegliendo un altro luogo si aggiornano
-  for (const nome of CAMPI_POST_IT) {
-    if (campi[nome].value !== "") campi[nome].dataset.auto = v.traccia ? "mappa" : "luogo";
+  if (v.traccia) {
+    bloccaDatiDellaMappa(v.id); // c'è la mappa: i dati del percorso si cambiano nella sua pagina
+  } else {
+    // Senza mappa le coordinate in modifica le consideriamo "dal luogo": scegliendo un altro luogo si aggiornano
+    for (const nome of CAMPI_POST_IT) {
+      if (campi[nome].value !== "") campi[nome].dataset.auto = "luogo";
+    }
   }
   campi.serve_cucina.checked = v.serve_cucina;
   campi.pianificato.checked = v.pianificato;
@@ -205,25 +226,10 @@ function leggiForm() {
     quota_min_m: numero("quota_min_m"),
     ora_partenza: campi.ora_partenza.value || undefined,
     // la traccia della mappa non è un campo del form (si disegna nella pagina della mappa): in modifica
-    // la rimandiamo, altrimenti il PUT (che sostituisce il viaggio intero) la cancellerebbe
-    traccia: inModifica ? tracciaConOrigini() : undefined,
+    // la rimandiamo com'era, altrimenti il PUT (che sostituisce il viaggio intero) la cancellerebbe.
+    // I dati del percorso, con la mappa, nel form sono bloccati: quindi la traccia e le sue origini non cambiano
+    traccia: inModifica ? (prima?.traccia ?? undefined) : undefined,
   };
-}
-
-// A1 (revisione UX 2): la traccia salvata con le origini aggiornate. Se nel form cambi a mano un valore
-// che aveva compilato la mappa, diventa tuo: la mappa, riaperta, non lo sovrascrive più.
-function tracciaConOrigini() {
-  const traccia = prima?.traccia;
-  if (!traccia) return undefined;
-  const origini = { ...(traccia.origini ?? {}) }; // uscite salvate prima delle origini: nel dubbio i valori sono tuoi
-  for (const nome of ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m"]) {
-    if (campi[nome].value !== String(prima[nome] ?? "")) delete origini[nome]; // l'hai cambiato tu
-  }
-  for (const nome of CAMPI_POST_IT) { // le coordinate hanno il loro post-it anche nel form
-    if (campi[nome].dataset.auto && campi[nome].value !== "") origini[nome] = campi[nome].dataset.auto;
-    else delete origini[nome];
-  }
-  return { ...traccia, origini };
 }
 
 function validaLatoClient(d) {
