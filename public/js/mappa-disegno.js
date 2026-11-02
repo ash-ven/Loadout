@@ -26,6 +26,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   let discesa = null;          // il dislivello negativo dell'ultimo percorso calcolato (metri), o null
   let profilo = "sentieri";    // come chiedere il percorso: "sentieri" (preferisce i sentieri) o "breve" (il più corto)
   let attivita = null;         // l'attività del viaggio: con ferrata e alpinismo il server accetta i passaggi difficili
+  let bloccata = false;        // durante la navigazione col GPS la mappa non si modifica (niente tappe nuove, puntine ferme)
   let daRipristinare = null;   // in modifica: la traccia salvata, da rimettere quando la mappa nasce
   let centro = null;           // dove aprire la mappa (il luogo scelto, o la partenza)
   let ultimaRichiesta = 0;     // se tocchi in fretta partono più richieste: vale solo la risposta dell'ultima
@@ -59,6 +60,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     new MutationObserver(segnaSeAperto).observe(selettore, { attributes: true, attributeFilter: ["class"] });
     // Toccare la mappa aggiunge un punto (toccare una puntina no: Leaflet non lo passa alla mappa)
     mappa.on("click", (e) => {
+      if (bloccata) return; // in navigazione un tocco non aggiunge tappe
       if (Date.now() - apertoFinoA < 500) return; // tocco per chiudere il selettore: niente tappa
       punti.push(nuovaPuntina(e.latlng));
       ridisegna();
@@ -273,6 +275,13 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
 
   return {
     apri,
+    // La mappa di Leaflet (la usa la navigazione per disegnare la tua posizione); null se non è ancora nata
+    mappaLeaflet: () => mappa,
+    // Navigazione: blocca (true) o sblocca (false) le modifiche al percorso
+    blocca(si) {
+      bloccata = si;
+      punti.forEach((p) => (si ? p.dragging?.disable() : p.dragging?.enable()));
+    },
     // Mappa vuota
     svuota() {
       ultimaRichiesta++;

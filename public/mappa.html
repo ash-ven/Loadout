@@ -41,8 +41,37 @@
       <div class="intestazione-sezione">
         <h2><img class="icona" src="/img/icone/mappe.svg" alt="" width="24" height="24">Percorso e mappa</h2>
         <span class="conteggio" id="conteggio-punti">Nessun punto</span>
+        <!-- Navigazione con il GPS, "stile Komoot" (js/navigazione.js). La posizione resta nel browser -->
+        <button type="button" class="btn-piccolo" id="naviga"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2.5 19.5 21 12 16.8 4.5 21Z"/></svg> Naviga</button>
       </div>
+      <p class="errore" id="errore-naviga" hidden></p>
+      <!-- Senza rete: si vedono le tessere già guardate, la traccia e la tua posizione (sw.js) -->
+      <p class="avviso" id="senza-rete" hidden><span><strong>Sei senza rete.</strong> Vedi il percorso, la tua posizione e le zone
+        della mappa che avevi già guardato; le altre restano vuote. Le modifiche si salvano solo con la rete.</span></p>
       <div class="mappa-cornice"><div class="mappa" id="mappa"></div></div>
+      <!-- Il pannello della navigazione: compare solo mentre navighi -->
+      <div class="pannello-navigazione" id="pannello-navigazione" hidden>
+        <p class="avviso" id="fuori-percorso" hidden><span id="testo-fuori-percorso"></span></p>
+        <dl class="numeri-navigazione">
+          <div><dt>Fatti</dt><dd id="nav-fatti">–</dd></div>
+          <div><dt>Mancano</dt><dd id="nav-mancano">–</dd></div>
+          <div><dt>Salita restante</dt><dd id="nav-salita">–</dd></div>
+          <div><dt>Arrivo verso le</dt><dd id="nav-arrivo">–</dd></div>
+        </dl>
+        <p class="muto stato-navigazione" id="stato-navigazione" role="status"></p>
+        <div class="azioni">
+          <button type="button" class="secondario btn-piccolo" id="centra" hidden>Centra su di me</button>
+          <button type="button" class="pericolo btn-piccolo" id="termina-navigazione">Termina</button>
+        </div>
+        <p class="muto nota-navigazione">La tua posizione resta sul telefono: Loadout non la salva e non la manda a nessuno.
+          Tieni lo schermo acceso: con lo schermo spento il browser smette di leggere il GPS.</p>
+      </div>
+      <!-- Profilo altimetrico (js/profilo-altimetrico.js): salite e discese del percorso, sotto la mappa e la navigazione -->
+      <section class="profilo-altimetrico" id="profilo" aria-labelledby="titolo-profilo" hidden>
+        <h3 id="titolo-profilo">Profilo altimetrico</h3>
+        <div class="profilo-grafico" id="profilo-grafico"></div>
+        <p class="muto profilo-riepilogo" id="profilo-riepilogo"></p>
+      </section>
       <ul class="legenda" aria-label="Legenda">
         <!-- B11 (revisione UX 2): data-tipo = la legenda mostra solo quello che c'è sulla mappa (mappa-disegno.js) -->
         <li data-tipo="partenza"><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Partenza</li>
@@ -70,7 +99,8 @@
       <!-- I valori del percorso: campi normali. "dalla mappa" = li ha compilati la mappa; se li scrivi tu, restano tuoi.
            A2: sotto un valore tuo, se la mappa calcola un numero diverso, compare "La mappa calcola … · Usa questo" -->
       <form id="form-percorso" class="form-percorso" novalidate>
-        <div class="riga2">
+        <!-- Lunghezza, D+ e D− sulla stessa riga (sul telefono: lunghezza sopra, D+ e D− affiancati) -->
+        <div class="riga3">
           <label><span class="nome-campo">Lunghezza (km) <span class="origine"></span></span>
             <input name="distanza_km" type="number" min="0.1" max="999" step="0.1">
             <span class="muto calcolo-mappa" data-per="distanza_km" hidden></span>
@@ -79,9 +109,12 @@
             <input name="dislivello_m" type="number" min="0" max="9000" step="1">
             <span class="muto calcolo-mappa" data-per="dislivello_m" hidden></span>
           </label>
+          <!-- D−: stessa casella del D+ (scelta di Asiha), ma lo calcola solo la mappa: readonly e senza "name",
+               così non fa parte dei dati del form (si salva dentro la traccia, come discesa_m) -->
+          <label><span class="nome-campo">Dislivello negativo (m) <span class="origine"></span></span>
+            <input id="campo-discesa" type="number" readonly tabindex="-1" placeholder="dalla mappa">
+          </label>
         </div>
-        <!-- D−: lo calcola solo la mappa, non si scrive a mano (scelta di Asiha) -->
-        <p class="muto riga-discesa" id="riga-discesa" hidden></p>
         <div class="riga2">
           <label><span class="nome-campo">Quota minima (m) <span class="origine"></span></span>
             <input name="quota_min_m" type="number" min="-500" max="9000" step="1">

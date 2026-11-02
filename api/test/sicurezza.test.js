@@ -23,6 +23,14 @@ test("CSP delle mappe: tessere solo da MapTiler, CSS di Leaflet da unpkg, fetch 
   assert.match(csp, /connect-src 'self'(;|$)/); // BRouter lo chiama il server: il browser non esce dal nostro sito
 });
 
+// Mappa senza rete: SOLO il service worker può scaricare tessere e Leaflet; le pagine restano chiuse
+test("CSP del service worker: connect-src aperto a MapTiler e unpkg solo per sw.js", async () => {
+  const risposta = await request(app).get("/sw.js");
+  assert.equal(risposta.status, 200);
+  assert.match(risposta.headers["content-security-policy"], /connect-src 'self' https:\/\/api\.maptiler\.com https:\/\/unpkg\.com/);
+  assert.match(risposta.headers["cache-control"], /no-cache/);
+});
+
 test("percorso e chiave delle mappe senza login: 401", async () => {
   assert.equal((await request(app).get("/api/percorso?punti=44.2,10.7;44.21,10.71")).status, 401);
   assert.equal((await request(app).get("/api/mappe/config")).status, 401);

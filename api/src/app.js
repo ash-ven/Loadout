@@ -66,6 +66,14 @@ app.use("/api", cors({
 app.use(express.json({ limit: "300kb" })); // body JSON → req.body (300 kB: basta per la foto del profilo, già ridotta dal browser)
 app.use(cookieParser());                  // header Cookie → req.cookies
 app.use(logger);                          // stampa ogni richiesta nel terminale
+// Il service worker (public/sw.js, la mappa senza rete) scarica e salva le tessere di MapTiler e Leaflet da unpkg:
+// i fetch() del service worker seguono la CSP del SUO file, quindi solo per lui allarghiamo connect-src a quei due.
+// Le pagine restano con connect-src 'self'. "no-cache" = il browser controlla sempre se c'è una versione nuova.
+app.get("/sw.js", (req, res, next) => {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' https://api.maptiler.com https://unpkg.com");
+  res.setHeader("Cache-Control", "no-cache");
+  next();
+});
 app.use(express.static(cartellaPublic));  // file del frontend (HTML, CSS, JS)
 
 // === 3. ROTTE ===

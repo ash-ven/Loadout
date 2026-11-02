@@ -5,6 +5,8 @@ import { staccaPostItScrivendo } from "./post-it.js";
 import { erroriCoordinate, erroriQuote, uniformaDecimali } from "./controlli.js";
 import { mostraErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 import { scaricaGpx } from "./gpx.js";
+import { attivaNavigazione } from "./navigazione.js";
+import { attivaProfilo } from "./profilo-altimetrico.js";
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
 // Qui si disegna il percorso; «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate
@@ -32,7 +34,7 @@ const disegno = attivaDisegnoMappa({
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },
-  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); mostraDiscesa(dati?.discesa_m); },
+  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); mostraDiscesa(dati?.discesa_m); profilo.mostra(dati ? disegno.traccia() : null); },
 });
 
 // =====================================================================
@@ -70,11 +72,13 @@ function mostraCalcoli() {
     }
   }
 }
-// Il dislivello negativo: solo dalla mappa, in una riga di testo sotto lunghezza e D+ (null = nascosta)
-const rigaDiscesa = document.querySelector("#riga-discesa");
+// Il dislivello negativo: solo dalla mappa, nella sua casella accanto al D+ (null = vuota)
+const campoDiscesa = document.querySelector("#campo-discesa");
 function mostraDiscesa(metri) {
-  rigaDiscesa.hidden = metri == null;
-  if (metri != null) rigaDiscesa.textContent = `Dislivello negativo (dalla mappa): ${Math.round(metri).toLocaleString("it-IT", { useGrouping: "always" })} m`;
+  campoDiscesa.value = metri == null ? "" : Math.round(metri);
+  // con un valore ha il post-it "dalla mappa", come i campi compilati dalla mappa
+  if (metri == null) delete campoDiscesa.dataset.auto;
+  else campoDiscesa.dataset.auto = "mappa";
 }
 
 // Se scrivi in un campo, il confronto si aggiorna subito
@@ -142,6 +146,45 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+// --- Profilo altimetrico: passando sul grafico, il punto si accende anche sulla mappa ---
+let puntoSullaMappa = null;
+function accendiPunto(punto) {
+  const mappa = disegno.mappaLeaflet();
+  if (!mappa) return;
+  if (!punto) { puntoSullaMappa?.remove(); puntoSullaMappa = null; return; }
+  if (!puntoSullaMappa) {
+    puntoSullaMappa = L.circleMarker(punto, { radius: 7, color: "#2b1f05", weight: 2, fillColor: "#e8c14a", fillOpacity: 1, interactive: false }).addTo(mappa);
+  } else puntoSullaMappa.setLatLng(punto);
+}
+const profilo = attivaProfilo({
+  sezione: document.querySelector("#profilo"),
+  contenitore: document.querySelector("#profilo-grafico"),
+  riepilogo: document.querySelector("#profilo-riepilogo"),
+  suPunto: accendiPunto,
+});
+
+// --- Navigazione con il GPS: segue la traccia che vedi sulla mappa ---
+const $ = (sel) => document.querySelector(sel);
+const navigazione = attivaNavigazione({
+  el: {
+    bottone: $("#naviga"), erroreAvvio: $("#errore-naviga"), pannello: $("#pannello-navigazione"),
+    fatti: $("#nav-fatti"), mancano: $("#nav-mancano"), salita: $("#nav-salita"), arrivo: $("#nav-arrivo"),
+    fuori: $("#fuori-percorso"), testoFuori: $("#testo-fuori-percorso"), stato: $("#stato-navigazione"),
+    centra: $("#centra"), termina: $("#termina-navigazione"),
+  },
+  ottieniMappa: () => disegno.mappaLeaflet(),
+  ottieniLinea: () => disegno.traccia()?.linea ?? null,
+  blocca: (si) => disegno.blocca(si),
+  suProgresso: (metri) => profilo.posizione(metri), // il pallino blu anche sul profilo
+});
+
+// --- Senza rete: un avviso sopra la mappa (online/offline sono eventi del browser) ---
+const senzaRete = document.querySelector("#senza-rete");
+const aggiornaRete = () => { senzaRete.hidden = navigator.onLine; };
+window.addEventListener("online", aggiornaRete);
+window.addEventListener("offline", aggiornaRete);
+aggiornaRete();
+
 // --- Scarica GPX: il percorso che vedi sulla mappa (anche se non l'hai ancora salvato) ---
 let nomeViaggio = "percorso";
 const erroreGpx = document.querySelector("#errore-gpx");
@@ -171,8 +214,10 @@ if (!Number.isInteger(id) || id <= 0) {
     document.querySelector("#corpo-mappa").hidden = false; // prima visibile, poi la mappa (Leaflet misura il contenitore)
     riempi(v);
     mostraDiscesa(v.traccia?.discesa_m);
+    profilo.mostra(v.traccia);
     disegno.carica(v);
     await disegno.apri();
+    if (disegno.mappaLeaflet()) navigazione.collegaMappa(disegno.mappaLeaflet());
   } catch (err) {
     document.querySelector("#intestazione").hidden = false;
     titolo.textContent = err.status === 404 ? "Questo viaggio non esiste più o è stato eliminato" : err.message;

@@ -737,9 +737,48 @@ button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(sa
 
 /* Mappa: «Sentieri / Più breve» (due segmenti invece dei tre dei filtri) e la riga del dislivello negativo */
 .segmenti.scelta-profilo { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 15rem; max-width: 18rem; }
-.riga-discesa { margin: -.25rem 0 .75rem; }
+.riga3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+@media (max-width: 600px) { .riga3 { grid-template-columns: 1fr 1fr; } .riga3 > :first-child { grid-column: 1 / -1; } }
+/* D−: si legge come il D+ ma non si scrive (readonly): niente bordo tratteggiato né cursore "vietato" */
+#campo-discesa { border-style: solid; cursor: default; }
+#campo-discesa:not([data-auto]) { background: var(--crema); }
 
 /* Frecce del verso di percorrenza sulla linea (divIcon di Leaflet: tolgo il riquadro bianco di serie) */
 .freccia-verso { background: none; border: 0; }
 .freccia-verso svg { display: block; filter: drop-shadow(0 1px 1.5px rgba(35, 58, 45, .4)); }
 .nota-gpx { margin: .6rem 0 0; font-size: .86rem; }
+
+/* Navigazione con il GPS: pannello sotto la mappa, mappa più alta; il resto della pagina si nasconde */
+.intestazione-sezione #naviga { margin-left: auto; }
+.pannello-navigazione { margin-top: .8rem; }
+.numeri-navigazione { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin: 0; }
+.numeri-navigazione div { padding: .55rem .6rem; border-radius: var(--raggio-piccolo); background: var(--crema); text-align: center; }
+.numeri-navigazione dt { font-size: .75rem; color: var(--terra); }
+.numeri-navigazione dd { margin: .1rem 0 0; font-size: 1.15rem; font-weight: 700; color: var(--testo); }
+.stato-navigazione { margin: .5rem 0; font-size: .86rem; }
+.stato-navigazione[data-tipo="errore"] { color: var(--rosso); font-weight: 600; }
+.nota-navigazione { margin: .5rem 0 0; font-size: .8rem; }
+.posizione-gps { background: none; border: 0; }
+.in-navigazione .mappa { height: min(72vh, 680px); }
+.in-navigazione .legenda, .in-navigazione .strumenti, .in-navigazione #nota-anello, .in-navigazione #form-percorso,
+.in-navigazione .testata { display: none; }
+@media (max-width: 600px) {
+  .numeri-navigazione { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .in-navigazione .mappa { height: 58vh; }
+}
+
+/* Profilo altimetrico sotto la mappa */
+.profilo-altimetrico { margin-top: 1rem; }
+.profilo-altimetrico h3 { margin: 0 0 .4rem; font-size: 1rem; }
+.profilo-grafico { position: relative; width: 100%; touch-action: pan-y; cursor: crosshair; } /* il dito in orizzontale guarda il profilo, in verticale scorre la pagina */
+.profilo-grafico svg { display: block; }
+.profilo-griglia { stroke: var(--bordo); stroke-width: 1; stroke-dasharray: 3 4; }
+.profilo-linea { fill: none; stroke: #b07f1c; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.profilo-tappa { fill: #e8c14a; stroke: #2b1f05; stroke-width: 2; }
+.profilo-vetta { fill: #2b1f05; }
+.profilo-testo { font-size: 12px; font-weight: 700; fill: var(--testo); paint-order: stroke; stroke: var(--lana); stroke-width: 3px; }
+.profilo-km { font-size: 13px; }
+.profilo-cursore-linea { stroke: var(--testo); stroke-width: 1; stroke-dasharray: 2 3; }
+.profilo-cursore-punto { fill: #e8c14a; stroke: #2b1f05; stroke-width: 2; }
+.profilo-io-punto { fill: #1d6fd8; stroke: #fff; stroke-width: 3; }
+.profilo-riepilogo { margin: .45rem 0 0; font-size: .86rem; }
