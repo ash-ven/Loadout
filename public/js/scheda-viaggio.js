@@ -263,30 +263,57 @@ function numeroInternazionale(telefono) {
   return `39${cifre}`;
 }
 
-// Il testo del messaggio, con quello che l'app sa già dell'uscita
+// Il testo del messaggio, con quello che l'app sa già dell'uscita.
+// A4 (revisione UX 2): l'ora di PARTENZA scritta (non l'ora limite), il rientro previsto e un'ora precisa
+// entro cui preoccuparsi, così chi riceve il messaggio sa quando chiamare il 112.
 function messaggioLasciaDetto(nomeContatto) {
   const v = viaggio;
-  const giorno = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
-  const quando = v.data_partenza ? giorno(v.data_partenza) : "nei prossimi giorni";
+  const c = v.consigli ?? {};
+  const giorno = (data) => data.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+  const inizio = v.data_partenza ? new Date(`${v.data_partenza}T12:00:00`) : null;
   const tipo = v.pernotto === "nessuno"
     ? "in giornata"
     : `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}, pernotto in ${v.pernotto}`;
   // "Escursione / trekking" nel messaggio diventa la parola giusta: trekking se dura più giorni
   const attivita = v.attivita === "escursione" ? (v.n_giorni > 1 ? "trekking" : "escursione") : (ATTIVITA[v.attivita] ?? v.attivita).toLowerCase();
-  const frasi = [`Ciao${nomeContatto ? ` ${nomeContatto}` : ""}, ${quando} vado a «${v.nome}» (${attivita}, ${tipo}).`];
-  const limite = v.consigli?.ora_limite_partenza;
-  if (v.luogo_partenza) frasi.push(`Parto da ${v.luogo_partenza}${limite?.ora && !limite.prima_dell_alba ? ` entro le ${limite.ora}` : ""}.`);
+  const frasi = [`Ciao${nomeContatto ? ` ${nomeContatto}` : ""}, ${inizio ? giorno(inizio) : "nei prossimi giorni"} vado a «${v.nome}» (${attivita}, ${tipo}).`];
+
+  // Partenza: l'ora che hai scritto nel form (08:00 se non l'hai scritta)
+  const partenza = minutiDa(v.ora_partenza || "08:00");
+  frasi.push(`Parto alle ${orarioBreve(partenza)}${v.luogo_partenza ? ` da ${v.luogo_partenza}` : ""}.`);
   if (v.luogo_arrivo) frasi.push(`Arrivo a ${v.luogo_arrivo}.`);
-  // Il rientro: in giornata prima del tramonto; su più giorni, l'ultimo giorno
-  if (v.pernotto === "nessuno" && v.consigli?.sole?.disponibile) frasi.push(`Rientro previsto prima delle ${v.consigli.sole.tramonto}.`);
-  if (v.pernotto !== "nessuno" && v.data_partenza && v.n_giorni > 1) {
-    const ultimo = new Date(`${v.data_partenza}T12:00:00`);
+
+  // Rientro: ora di partenza + ore di cammino; con più giorni, l'ultimo giorno
+  const piuGiorni = v.pernotto !== "nessuno" && v.n_giorni > 1;
+  let ultimo = inizio;
+  if (inizio && piuGiorni) {
+    ultimo = new Date(inizio);
     ultimo.setDate(ultimo.getDate() + v.n_giorni - 1);
-    frasi.push(`Rientro previsto ${ultimo.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}.`);
   }
+  const quandoRientro = piuGiorni && ultimo ? `${giorno(ultimo)} ` : "";
+  const rientro = c.ore_cammino_giorno != null ? partenza + Math.round(c.ore_cammino_giorno * 60) : null;
+  if (rientro != null) frasi.push(`Rientro previsto ${quandoRientro}verso le ${orarioBreve(rientro)}.`);
+  else if (piuGiorni && ultimo) frasi.push(`Rientro previsto ${giorno(ultimo)}.`);
+
   frasi.push(v.n_persone === 1 ? "Non viene nessuno con me." : `Siamo in ${v.n_persone}.`);
-  frasi.push("Se non ti scrivo entro sera, chiama il 112.");
+
+  // Ora entro cui preoccuparsi: il rientro + 2 ore, ma mai dopo un'ora dal tramonto
+  const tramontoPiuUno = c.sole?.disponibile ? minutiDa(c.sole.tramonto) + 60 : null;
+  const candidati = [rientro != null ? rientro + 120 : null, tramontoPiuUno].filter((n) => n != null);
+  if (candidati.length) {
+    const allarme = Math.min(...candidati, 23 * 60 + 59);
+    frasi.push(`Se ${quandoRientro}alle ${orarioBreve(allarme)} non ti ho scritto, chiama il 112 e leggigli questo messaggio.`);
+  } else {
+    frasi.push("Se entro sera non ti ho scritto, chiama il 112 e leggigli questo messaggio.");
+  }
   return frasi.join(" ");
+}
+
+// "08:30" → 510 minuti dalla mezzanotte; 510 → "8:30" (all'italiana, senza lo zero davanti all'ora)
+function minutiDa(hhmm) { const [h, m] = hhmm.split(":").map(Number); return h * 60 + (m || 0); }
+function orarioBreve(minuti) {
+  const m = Math.min(Math.max(Math.round(minuti), 0), 23 * 60 + 59);
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
 }
 
 // --- Modifica viaggio: usa la finestra della pagina Viaggi, già compilata ---
