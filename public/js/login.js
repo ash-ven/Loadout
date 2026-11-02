@@ -22,7 +22,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  const bottone = form.querySelector("button");
+  const bottone = form.querySelector('button[type="submit"]'); // C2: non l'occhio della password
   bottone.disabled = true; // evita doppi click mentre aspettiamo il server
   try {
     await api("/api/auth/login", { method: "POST", body: dati });

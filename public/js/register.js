@@ -13,7 +13,7 @@ form.addEventListener("submit", async (e) => {
   if (!dati.nome || !dati.email || !dati.password) return mostraErrore("Compila tutti i campi");
   if (dati.password.length < 8) return mostraErrore("La password deve avere almeno 8 caratteri");
 
-  const bottone = form.querySelector("button");
+  const bottone = form.querySelector('button[type="submit"]'); // C2: non l'occhio della password
   bottone.disabled = true;
   try {
     await api("/api/auth/register", { method: "POST", body: dati });

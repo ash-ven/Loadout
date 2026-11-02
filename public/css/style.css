@@ -664,3 +664,11 @@ button.etichetta-piu { cursor: pointer; font: inherit; font-weight: 600; backgro
 @keyframes appena-salvato { from { background: var(--ocra-chiaro); } to { background: transparent; } }
 .riga.appena-salvato { animation: appena-salvato 2s ease-out; }
 #avviso-salvato { padding: .7rem 1rem; }
+
+/* C2 (revisione UX 2): accesso. Una riga sotto il titolo e l'occhio per vedere la password */
+.sottotitolo-accesso { margin: -.25rem 0 1rem; text-align: center; }
+.campo-password { position: relative; display: block; }
+.campo-password input { width: 100%; padding-right: 3rem; }
+button.occhio { position: absolute; top: 0; right: 0; bottom: 0; width: 44px; padding: 0; border: 0; border-radius: 0 var(--raggio-piccolo) var(--raggio-piccolo) 0;
+                background: none; color: var(--terra); }
+button.occhio:hover, button.occhio:focus-visible { background: none; color: var(--muschio); }
