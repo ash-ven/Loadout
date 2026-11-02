@@ -78,7 +78,11 @@ h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
 .menu a.menu-centrale { justify-self: center; display: grid; place-items: center; width: 62px; height: 62px; margin-top: -30px;
                         border-radius: 50%; background: var(--senape); border: 4px solid var(--crema); color: var(--su-senape); }
 .menu a.menu-centrale:hover { background: var(--senape-scuro); }
-.menu a.menu-centrale .etichetta-centrale { display: none; }
+/* B9 (revisione UX 2): anche sul telefono la scarpa ha il suo nome, sotto il cerchio, come le altre voci */
+.menu a.menu-centrale { position: relative; }
+.menu a.menu-centrale .etichetta-centrale { position: absolute; left: 50%; top: calc(100% - 5px); transform: translateX(-50%);   /* alla stessa altezza delle altre scritte */
+                                            font-size: .72rem; font-weight: 600; color: var(--muschio); white-space: nowrap; }
+.menu a.menu-centrale[aria-current="page"] .etichetta-centrale { color: var(--muschio-scuro); font-weight: 700; }
 /* Spazio in fondo alla pagina, così la barra fissa non copre l'ultimo contenuto */
 body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 
@@ -95,7 +99,8 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   .menu a.menu-centrale { justify-self: auto; display: flex; width: auto; height: auto; margin-top: 0;
                           border: 0; border-radius: 999px; background: none; color: #e3e9da; }
   .menu a.menu-centrale svg { width: 24px; height: 24px; }
-  .menu a.menu-centrale .etichetta-centrale { display: inline; }
+  .menu a.menu-centrale .etichetta-centrale { display: inline; position: static; transform: none; font-size: inherit; color: inherit; }
+  .menu a.menu-centrale[aria-current="page"] .etichetta-centrale { color: inherit; font-weight: inherit; }
   .menu a.menu-centrale:hover, .menu a.menu-centrale:focus-visible { background: rgba(246, 239, 223, .12); color: #fff; }
   .menu a.menu-centrale[aria-current="page"] { background: rgba(246, 239, 223, .16); color: #fff; }
   .menu a.solo-computer { display: flex; }
