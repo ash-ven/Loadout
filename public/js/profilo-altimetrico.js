@@ -1,8 +1,8 @@
 // =====================================================================
 //  PROFILO ALTIMETRICO: il disegno delle salite e delle discese sotto la mappa (come nelle app di trekking).
-//  In orizzontale i km, in verticale la quota. Area colorata dal salvia (in basso) al senape (in alto),
+//  In orizzontale i km, in verticale la quota. Area colorata dal salvia (in basso) al muschio (in alto),
 //  solo con i colori dell'app (le variabili di style.css, usate dalle classi qui sotto),
-//  pallini sulle tappe, quota più alta e più bassa a sinistra, km totali a destra.
+//  pallini sulle tappe, la vetta in senape, quota più alta e più bassa a sinistra, km totali a destra.
 //  Passando il dito o il mouse: km e quota di quel punto, e il punto si accende anche sulla mappa (suPunto).
 //  Disegnato a mano in SVG (niente librerie). Le posizioni sono ATTRIBUTI dell'SVG, non style="": la CSP è contenta.
 // =====================================================================

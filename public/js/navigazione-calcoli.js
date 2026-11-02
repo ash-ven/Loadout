@@ -80,3 +80,16 @@ export function riepilogo(prep, agganciata) {
 export function fuoriPercorso(distanzaM, precisioneM, soglia = 50) {
   return precisioneM <= 60 && distanzaM > soglia;
 }
+
+// D− di una mappa salvata. Le mappe nuove lo hanno dentro la traccia (discesa_m, calcolato da BRouter).
+// Quelle salvate prima che esistesse no: lo ricaviamo con la stessa regola del server,
+//   D− = D+ − (quota d'arrivo − quota di partenza)      (in un anello arrivo = partenza, quindi D− = D+)
+// usando il D+ del viaggio e le quote del primo e dell'ultimo punto della traccia. null se mancano i dati.
+export function discesaDellaTraccia(traccia, dislivelloPositivo) {
+  if (traccia?.discesa_m != null) return traccia.discesa_m;
+  const linea = traccia?.linea;
+  const inizio = linea?.[0]?.[2];
+  const fine = linea?.at(-1)?.[2];
+  if (dislivelloPositivo == null || inizio == null || fine == null) return null;
+  return Math.max(0, Math.round(dislivelloPositivo - (fine - inizio)));
+}

@@ -772,12 +772,12 @@ button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(sa
 .profilo-altimetrico h3 { margin: 0 0 .4rem; font-size: 1rem; }
 .profilo-grafico { position: relative; width: 100%; touch-action: pan-y; cursor: crosshair; } /* il dito in orizzontale guarda il profilo, in verticale scorre la pagina */
 .profilo-grafico svg { display: block; }
-.profilo-colore-alto { stop-color: var(--senape); stop-opacity: .85; }
-.profilo-colore-basso { stop-color: var(--salvia); stop-opacity: .8; }
+.profilo-colore-alto { stop-color: var(--muschio); stop-opacity: .9; }   /* scelta di Asiha: verdi scuri */
+.profilo-colore-basso { stop-color: var(--salvia); stop-opacity: .55; }
 .profilo-griglia { stroke: var(--bordo); stroke-width: 1; stroke-dasharray: 3 4; }
-.profilo-linea { fill: none; stroke: var(--senape-scuro); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.profilo-linea { fill: none; stroke: var(--muschio-scuro); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .profilo-tappa { fill: var(--lana); stroke: var(--muschio); stroke-width: 2.5; }      /* come le puntine delle tappe sulla mappa */
-.profilo-vetta { fill: var(--muschio); }
+.profilo-vetta { fill: var(--senape); stroke: var(--lana); stroke-width: 1.5; }
 .profilo-testo { font-size: 12px; font-weight: 700; fill: var(--testo); paint-order: stroke; stroke: var(--lana); stroke-width: 3px; }
 .profilo-km { font-size: 13px; }
 .profilo-cursore-linea { stroke: var(--muschio); stroke-width: 1; stroke-dasharray: 2 3; }

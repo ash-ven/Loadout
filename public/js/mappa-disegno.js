@@ -7,6 +7,7 @@
 //  quando il contenitore è già visibile.
 // =====================================================================
 import { api } from "./api.js";
+import { discesaDellaTraccia } from "./navigazione-calcoli.js";
 import { proponi } from "./post-it.js";
 import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, disegnaFrecce, eUnAnello, scriviStato } from "./mappa-base.js";
 
@@ -26,6 +27,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   let discesa = null;          // il dislivello negativo dell'ultimo percorso calcolato (metri), o null
   let profilo = "sentieri";    // come chiedere il percorso: "sentieri" (preferisce i sentieri) o "breve" (il più corto)
   let attivita = null;         // l'attività del viaggio: con ferrata e alpinismo il server accetta i passaggi difficili
+  let discesaRiaperta = null;  // D− ricavato dalla pagina per le mappe salvate senza (vedi carica)
   let bloccata = false;        // durante la navigazione col GPS la mappa non si modifica (niente tappe nuove, puntine ferme)
   let daRipristinare = null;   // in modifica: la traccia salvata, da rimettere quando la mappa nasce
   let centro = null;           // dove aprire la mappa (il luogo scelto, o la partenza)
@@ -228,7 +230,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     punti = traccia.tappe.map(([lat, lon]) => nuovaPuntina(L.latLng(lat, lon)));
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     linea = traccia.linea;
-    discesa = traccia.discesa_m ?? null;
+    discesa = traccia.discesa_m ?? discesaRiaperta; // le mappe vecchie non l'hanno salvato: lo ricava la pagina
     disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
     const tappe = traccia.tappe.map(([lat, lon]) => [lat, lon]);
     disegnaCollegamenti(livelloPercorso, interruttoreAnello.checked ? [...tappe, tappe[0]] : tappe, linea); // B11
@@ -301,6 +303,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     carica(viaggio) {
       this.svuota();
       attivita = viaggio.attivita ?? null;
+      discesaRiaperta = discesaDellaTraccia(viaggio.traccia, viaggio.dislivello_m);
       if (viaggio.lat_partenza != null && viaggio.lon_partenza != null) centro = [viaggio.lat_partenza, viaggio.lon_partenza];
       if (!viaggio.traccia?.tappe?.length || !viaggio.traccia?.linea?.length) return;
       mostraProfilo(viaggio.traccia.profilo ?? "sentieri"); // le mappe di prima non lo dicono: erano tutte "sentieri"

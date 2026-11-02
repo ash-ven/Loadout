@@ -3,6 +3,7 @@ import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
 import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
+import { discesaDellaTraccia } from "./navigazione-calcoli.js"; // D− anche per le mappe salvate prima che esistesse
 
 // C10 (revisione UX 2): un piccolo «?» accanto alle parole difficili, porta alla spiegazione nel glossario dei Consigli
 const aiuto = (id, cosa) =>
@@ -212,7 +213,8 @@ function renderConsigli() {
   if (viaggio.luogo_arrivo) parti.push(`arrivo a ${viaggio.luogo_arrivo}`);
   if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km di sentiero`);
   if (viaggio.dislivello_m != null) parti.push(`${num(viaggio.dislivello_m)} m di dislivello positivo`);
-  if (viaggio.traccia?.discesa_m != null) parti.push(`${num(viaggio.traccia.discesa_m)} m di dislivello negativo`); // D−: solo dalla mappa
+  const discesa = discesaDellaTraccia(viaggio.traccia, viaggio.dislivello_m); // D−: dalla mappa (anche quelle salvate prima)
+  if (discesa != null) parti.push(`${num(discesa)} m di dislivello negativo`);
   elPercorso.textContent = parti.length
     ? parti.join(" · ")
     : "Aggiungi km, dislivello e coordinate per avere più consigli.";
@@ -252,7 +254,8 @@ function renderCollegamenti() {
     const parti = [];
     if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km`);
     if (viaggio.dislivello_m != null) parti.push(`D+ ${num(viaggio.dislivello_m)} m`);
-    if (viaggio.traccia.discesa_m != null) parti.push(`D− ${num(viaggio.traccia.discesa_m)} m`);
+    const discesaMappa = discesaDellaTraccia(viaggio.traccia, viaggio.dislivello_m);
+    if (discesaMappa != null) parti.push(`D− ${num(discesaMappa)} m`);
     testo("#titolo-mappa", "La mappa");
     testo("#riepilogo-mappa", parti.join(" · ") || "Il percorso sui sentieri");
   } else {

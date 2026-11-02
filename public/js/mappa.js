@@ -7,6 +7,7 @@ import { mostraErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 import { scaricaGpx } from "./gpx.js";
 import { attivaNavigazione } from "./navigazione.js";
 import { attivaProfilo } from "./profilo-altimetrico.js";
+import { discesaDellaTraccia } from "./navigazione-calcoli.js";
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
 // Qui si disegna il percorso; «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate
@@ -214,7 +215,7 @@ if (!Number.isInteger(id) || id <= 0) {
     document.querySelector("#intestazione").hidden = false;
     document.querySelector("#corpo-mappa").hidden = false; // prima visibile, poi la mappa (Leaflet misura il contenitore)
     riempi(v);
-    mostraDiscesa(v.traccia?.discesa_m);
+    mostraDiscesa(discesaDellaTraccia(v.traccia, v.dislivello_m)); // anche per le mappe salvate prima del D−
     profilo.mostra(v.traccia);
     disegno.carica(v);
     await disegno.apri();
