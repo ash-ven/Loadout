@@ -15,7 +15,7 @@ export const CATEGORIE = {
 // Le attività dei viaggi, con il nome da far vedere. "escursione" comprende anche il trekking:
 // in giornata o su più giorni lo dicono già i campi giorni e pernotto.
 export const ATTIVITA = {
-  escursione: "Escursione / trekking",
+  escursione: "Escursione e trekking",
   alpinismo: "Alpinismo",
   ciaspolata: "Ciaspolata",
   ferrata: "Ferrata",

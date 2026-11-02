@@ -173,7 +173,7 @@ function apriDettaglio(o, nota = "") {
     ["Peso", `${o.peso_g.toLocaleString("it-IT", { useGrouping: "always" })} g`],
     ["Pezzi", o.quantita_posseduta],
     ["Caratteristiche", o.caratteristiche],
-    ["Codice etichetta", o.codice_etichetta],
+    ["Codice a barre", o.codice_etichetta],
     ["Note", o.note],
   ].filter(([, valore]) => valore !== null && valore !== undefined && valore !== "");
   dettaglioDati.innerHTML = voci.map(([etichetta, valore]) => `<dt>${etichetta}</dt><dd>${esc(valore)}</dd>`).join("");
@@ -543,7 +543,7 @@ if (daAprire) {
   if (oggetto) apriDettaglio(oggetto);
 }
 
-// B5: arrivo dal riquadro "Per questa uscita" con ?nuovo=Casco&categoria=sicurezza:
+// B5: arrivo dal riquadro "Per questo viaggio" con ?nuovo=Casco&categoria=sicurezza:
 // apro il form del nuovo oggetto con nome e categoria già scritti (poi tolgo i parametri dall'indirizzo)
 const richiesta = new URLSearchParams(location.search);
 if (richiesta.has("nuovo")) {
@@ -558,9 +558,9 @@ if (richiesta.has("nuovo")) {
     torna.href = `/zaino.html?id=${perUscita}`;
     torna.textContent = "← Torna allo zaino";
     infoForm.replaceChildren(torna, document.createElement("br"),
-      "Completa peso e dettagli e salva: l'oggetto entra anche nello zaino dell'uscita.");
+      "Completa peso e dettagli e salva: l'oggetto entra anche nello zaino del viaggio.");
   } else {
-    infoForm.textContent = "Dalla tua uscita: completa peso e dettagli, poi salva. Torna all'uscita e premi «Genera zaino».";
+    infoForm.textContent = "Dal tuo viaggio: completa peso e dettagli, poi salva. Torna al viaggio e premi «Genera zaino».";
   }
   infoForm.hidden = false;
   apriFinestra(campi.peso_g); // nome e categoria ci sono già: si parte dal peso

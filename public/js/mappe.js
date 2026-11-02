@@ -32,7 +32,7 @@ try {
   riepilogo.innerHTML = `<strong>${conMappa.length} ${conMappa.length === 1 ? "mappa" : "mappe"}</strong>`;
   lista.innerHTML = conMappa.length
     ? htmlGruppi(gruppiPerData(conMappa), rigaMappa)
-    : `<p class="vuoto">Nessuna mappa ancora. Apri un'uscita in <a href="/viaggi.html">Viaggi</a> e premi «Disegna la mappa».</p>`;
+    : `<p class="vuoto">Nessuna mappa ancora. Apri un viaggio in <a href="/viaggi.html">Viaggi</a> e premi «Disegna la mappa».</p>`;
 } catch (err) {
   lista.innerHTML = `<p class="errore">${esc(err.message)}</p>`;
 }

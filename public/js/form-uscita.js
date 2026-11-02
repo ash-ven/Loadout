@@ -14,16 +14,16 @@ const HTML_FINESTRA = `
     <dialog class="finestra" id="finestra" aria-labelledby="titolo-form">
       <div class="finestra-contenuto">
       <div class="finestra-testa">
-        <h2><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24"><span id="titolo-form">Prepara il tuo cammino</span></h2>
+        <h2><img class="icona" src="/img/icone/percorso.svg" alt="" width="24" height="24"><span id="titolo-form">Nuovo viaggio</span></h2>
         <button type="button" class="chiudi" id="chiudi" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <form id="form-viaggio" novalidate>
-        <label>Nome dell'uscita
+        <label>Nome del viaggio
           <input name="nome" type="text" maxlength="150" required>
         </label>
         <label>Attività
           <select name="attivita" required>
-            <option value="escursione">Escursione / trekking</option>
+            <option value="escursione">Escursione e trekking</option>
             <option value="alpinismo">Alpinismo</option>
             <option value="ciaspolata">Ciaspolata</option>
             <option value="ferrata">Ferrata</option>
@@ -199,7 +199,7 @@ export function attivaFormUscita({ suSalvato }) {
     bloccaDatiDellaMappa(null); // uscita nuova: niente mappa, tutto modificabile
     erroreForm.hidden = true;
     inModifica = null;
-    titoloForm.textContent = "Prepara il tuo cammino";
+    titoloForm.textContent = "Nuovo viaggio";
     bottoneSalva.textContent = "Crea il viaggio";
     bottoneSalva.disabled = false;
     rigaGenera.hidden = false;
@@ -276,7 +276,7 @@ export function attivaFormUscita({ suSalvato }) {
   // Ogni errore dice a quale campo si riferisce, e il messaggio compare sotto quel campo (B1)
   function validaLatoClient(d) {
     const errori = [];
-    if (!d.nome) errori.push({ campo: "nome", testo: "Scrivi il nome dell'uscita" });
+    if (!d.nome) errori.push({ campo: "nome", testo: "Scrivi il nome del viaggio" });
     if (!d.luogo_partenza) errori.push({ campo: "luogo_partenza", testo: "Scrivi da dove parti" });
     if (d.n_persone !== undefined && (!Number.isInteger(d.n_persone) || d.n_persone < 1 || d.n_persone > 50)) {
       errori.push({ campo: "n_persone", testo: "Le persone vanno da 1 a 50" });

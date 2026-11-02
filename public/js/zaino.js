@@ -40,7 +40,7 @@ const num2 = (n) => Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2
 async function caricaZaino() {
   zaino = await api(`/api/viaggi/${id}/zaino`);
   renderZaino();
-  caricaKit(); // B5: anche il riquadro "Per questa uscita" dipende da cosa c'è nello zaino
+  caricaKit(); // B5: anche il riquadro "Per questo viaggio" dipende da cosa c'è nello zaino
 }
 
 // =====================================================================
@@ -75,7 +75,7 @@ async function caricaKit() {
     elKitOk.innerHTML = gia.map(rigaKit).join("");
     // In alto, sotto il peso: la riga ocra se manca qualcosa
     elAvvisoKit.hidden = daFare === 0;
-    elTestoAvvisoKit.textContent = `Per questa uscita ${daFare === 1 ? "manca 1 cosa" : `mancano ${daFare} cose`} nello zaino`;
+    elTestoAvvisoKit.textContent = `Per questo viaggio ${daFare === 1 ? "manca 1 cosa" : `mancano ${daFare} cose`} nello zaino`;
     kitCard.hidden = false;
   } catch {
     kitCard.hidden = true;  // il riquadro è un aiuto in più: se non arriva, la pagina funziona lo stesso
@@ -141,7 +141,7 @@ function renderZaino() {
   elAvvisoPeso.hidden = !troppoPesante;
   barraRiempimento.classList.toggle("oltre-soglia", Boolean(troppoPesante));
   if (troppoPesante) {
-    const uscita = viaggio.pernotto === "nessuno" ? "per un'uscita in giornata" : "con il pernotto";
+    const uscita = viaggio.pernotto === "nessuno" ? "per un viaggio in giornata" : "con il pernotto";
     elTestoAvvisoPeso.textContent = `Lo zaino, senza acqua e cibo, pesa ${num2(p.peso_totale_kg)} kg: più del ${avviso.soglia_percento}% ` +
       `del tuo peso corporeo, il limite consigliato ${uscita} (${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
   }
@@ -228,7 +228,7 @@ bottoneGenera.addEventListener("click", async () => {
     const parti = [];
     // B3: "Aggiunto 1 oggetto: 1 indispensabile o preferito." / "Aggiunti 5 oggetti: 3 indispensabili o preferiti e 2 …"
     if (base > 0) parti.push(plurale(base, "indispensabile o preferito", "indispensabili o preferiti"));
-    if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questa uscita`);
+    if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questo viaggio`);
     let messaggio = aggiunti > 0
       ? `${aggiunti === 1 ? "Aggiunto" : "Aggiunti"} ${plurale(aggiunti, "oggetto", "oggetti")}: ${parti.join(" e ")}.`
       : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
@@ -451,7 +451,7 @@ if (!Number.isInteger(id) || id <= 0) {
       bottoneGenera.click();
     }
   } catch (err) {
-    titolo.textContent = err.status === 404 ? "Questa uscita non esiste più o è stata eliminata" : err.message;
+    titolo.textContent = err.status === 404 ? "Questo viaggio non esiste più o è stato eliminato" : err.message;
   } finally {
     clearTimeout(timerCaricamento);
     elCaricamento.hidden = true;

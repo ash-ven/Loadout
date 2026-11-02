@@ -119,7 +119,7 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" (da `form-uscita.js`, la stessa che nella scheda modifica l'uscita) |
 | `scheda-viaggio.html?id=` | `scheda-viaggio.js` | l'uscita: collegamenti allo zaino e alla mappa (o "Genera lo zaino" / "Disegna la mappa" se non ci sono ancora), consigli (acqua, alba e tramonto, ora limite, meteo in partenza e in vetta, percorso, emergenza), modifica ed elimina viaggio |
 | `zaini.html` | `zaini.js` | tutti gli zaini (uno per uscita), divisi in in arrivo / senza data / già fatti, con spuntati e peso |
-| `zaino.html?id=` | `zaino.js` | lo zaino di un'uscita: checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, "Per questa uscita"; con `&genera=1` lo riempie appena si apre |
+| `zaino.html?id=` | `zaino.js` | lo zaino di un'uscita: checklist per categoria, peso e barra, indossato, genera/svuota/aggiungi, "Per questo viaggio"; con `&genera=1` lo riempie appena si apre |
 | `mappe.html` | `mappe.js` | le uscite che hanno una mappa |
 | `mappa.html?id=` | `mappa.js` | la mappa di un'uscita, come la pagina dello zaino: si disegna il percorso (partenza, tappe, anello) e «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate (`PUT /api/viaggi/:id/percorso`) |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
@@ -160,7 +160,7 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 
 ### Oltre lo scope (giovedì e venerdì, dopo la revisione UX)
 - [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più)
-- [x] Zaino intelligente: per ogni uscita (attività, pernotto, cucina, freddo, neve, quota alta, caldo) l'app sa quale attrezzatura serve, la cerca nell'armadio e la aggiunge con «Genera zaino»; in giornata lascia fuori sacco a pelo, tenda e materassino; il riquadro «Per questa uscita» mostra cosa c'è, cosa aggiungere e cosa manca (con «Aggiungi all'armadio»); gli oggetti si riconoscono per parole chiave con sinonimi (es. imbrago/imbragatura/harness, casco/elmetto) in `api/src/services/kit.js`
+- [x] Zaino intelligente: per ogni uscita (attività, pernotto, cucina, freddo, neve, quota alta, caldo) l'app sa quale attrezzatura serve, la cerca nell'armadio e la aggiunge con «Genera zaino»; in giornata lascia fuori sacco a pelo, tenda e materassino; il riquadro «Per questo viaggio» mostra cosa c'è, cosa aggiungere e cosa manca (con «Aggiungi all'armadio»); gli oggetti si riconoscono per parole chiave con sinonimi (es. imbrago/imbragatura/harness, casco/elmetto) in `api/src/services/kit.js`
 - [x] Uscite: luogo per nome (OpenStreetMap), ora limite di partenza, quota massima e minima, ora di partenza, meteo in vetta all'ora di arrivo (Open-Meteo con la quota) con avvisi di vento, zero termico e temporali, avviso neve e bollettino valanghe; peso base (senza acqua e cibo) con soglia 10% in giornata e 20% con pernotto; «Lascia detto»: messaggio già scritto per il contatto di emergenza (WhatsApp o SMS, lo invia l'utente)
 - [x] Account e privacy (GDPR): cambio password, «Scarica i miei dati» (JSON con profilo, armadio, uscite e zaini), elimina l'account con conferma della password (tutto il resto si cancella da solo: ON DELETE CASCADE)
 - [x] Zaino: oggetti indossati (solo abbigliamento) fuori dal peso; acqua a persona al giorno con salita, caldo e cucina

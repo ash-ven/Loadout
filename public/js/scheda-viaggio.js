@@ -235,7 +235,7 @@ function renderCollegamenti() {
   } else {
     linkZaino.href = `/zaino.html?id=${id}&genera=1`; // la pagina dello zaino lo riempie appena si apre
     testo("#titolo-zaino", "Genera lo zaino");
-    testo("#riepilogo-zaino", "Ancora vuoto: lo riempio con indispensabili, preferiti e l'attrezzatura per questa uscita.");
+    testo("#riepilogo-zaino", "Ancora vuoto: lo riempio con indispensabili, preferiti e l'attrezzatura per questo viaggio.");
   }
   linkMappa.href = `/mappa.html?id=${id}`; // la mappa si disegna e si guarda nella sua pagina, come lo zaino
   if (viaggio.traccia) {
@@ -421,7 +421,7 @@ if (!Number.isInteger(id) || id <= 0) {
     proponiAggiornamento();
   } catch (err) {
     // 404 = l'uscita non esiste (o è di un altro utente): un messaggio comprensibile, senza numeri
-    titolo.textContent = err.status === 404 ? "Questa uscita non esiste più o è stata eliminata" : err.message;
+    titolo.textContent = err.status === 404 ? "Questo viaggio non esiste più o è stato eliminato" : err.message;
     document.querySelector("#elimina-viaggio").hidden = true; // niente da eliminare
     document.querySelector("#tessere").hidden = true; // niente zaino né mappa da aprire
     document.querySelector("#modifica-viaggio").hidden = true; // né da modificare

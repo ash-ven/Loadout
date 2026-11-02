@@ -97,7 +97,7 @@
     <!-- Peso corporeo e soglia dello zaino (stretch 5) -->
     <section class="card">
       <h2><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24">Peso corporeo</h2>
-      <p class="muto">Lo zaino, senza acqua e cibo, non dovrebbe superare il 10% del tuo peso nelle uscite in giornata e il 20% quando dormi fuori. Con il peso impostato, Loadout ti avvisa nella scheda di ogni uscita.</p>
+      <p class="muto">Lo zaino, senza acqua e cibo, non dovrebbe superare il 10% del tuo peso nei viaggi in giornata e il 20% quando dormi fuori. Con il peso impostato, Loadout ti avvisa nella scheda di ogni viaggio.</p>
       <form id="form-profilo" class="aggiungi" novalidate>
         <label>Peso corporeo (kg)
           <input name="peso_corporeo_kg" type="number" min="20" max="300" step="0.1">
@@ -131,11 +131,11 @@
       </form>
 
       <h3>I tuoi dati</h3>
-      <p class="muto">Tutto quello che Loadout sa di te (profilo, armadio, uscite e zaini) in un file che puoi conservare o portare altrove.</p>
+      <p class="muto">Tutto quello che Loadout sa di te (profilo, armadio, viaggi e zaini) in un file che puoi conservare o portare altrove.</p>
       <div class="azioni"><a class="btn secondario" href="/api/auth/me/dati" download>Scarica i miei dati</a></div>
 
       <h3>Elimina l'account</h3>
-      <p class="muto">Cancella per sempre il tuo account, l'armadio, le uscite e gli zaini. Non si può annullare.</p>
+      <p class="muto">Cancella per sempre il tuo account, l'armadio, i viaggi e gli zaini. Non si può annullare.</p>
       <div class="azioni"><button type="button" class="pericolo" id="apri-elimina">Elimina l'account…</button></div>
     </section>
   </main>
@@ -147,7 +147,7 @@
         <h2 id="titolo-elimina">Eliminare l'account?</h2>
         <button type="button" class="chiudi" id="chiudi-elimina" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
-      <p>Verranno cancellati <strong>per sempre</strong> il tuo profilo, tutto l'armadio, le uscite e i loro zaini. Se vuoi tenerne una copia, prima scarica i tuoi dati.</p>
+      <p>Verranno cancellati <strong>per sempre</strong> il tuo profilo, tutto l'armadio, i viaggi e i loro zaini. Se vuoi tenerne una copia, prima scarica i tuoi dati.</p>
       <form id="form-elimina" novalidate>
         <label>Per confermare, scrivi la tua password
           <input name="password" type="password" autocomplete="current-password" required>

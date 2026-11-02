@@ -123,7 +123,7 @@ form.addEventListener("submit", async (e) => {
   try {
     await api(`/api/viaggi/${id}/percorso`, { method: "PUT", body: dati });
     daSalvare = false;
-    messaggioEl.textContent = "Percorso salvato. Il meteo in vetta e i consigli dell'uscita lo usano già.";
+    messaggioEl.textContent = "Percorso salvato. Il meteo in vetta e i consigli del viaggio lo usano già.";
     messaggioEl.hidden = false;
   } catch (err) {
     erroreEl.textContent = err.message;
@@ -151,6 +151,6 @@ if (!Number.isInteger(id) || id <= 0) {
     await disegno.apri();
   } catch (err) {
     document.querySelector("#intestazione").hidden = false;
-    titolo.textContent = err.status === 404 ? "Questa uscita non esiste più o è stata eliminata" : err.message;
+    titolo.textContent = err.status === 404 ? "Questo viaggio non esiste più o è stato eliminato" : err.message;
   }
 }

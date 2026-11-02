@@ -12,7 +12,7 @@ function messaggio(schema, body) {
 
 const schema = {
   lat_partenza: { etichetta: "la latitudine di partenza", aiuto: "in Italia circa 36–47, es. 44,19", type: "number", min: -90, max: 90 },
-  nome:         { etichetta: "il nome dell'uscita", type: "string", required: true },
+  nome:         { etichetta: "il nome del viaggio", type: "string", required: true },
 };
 
 test("A3: latitudine 123 → messaggio leggibile con il suggerimento, senza 'lat_partenza'", () => {
@@ -22,6 +22,6 @@ test("A3: latitudine 123 → messaggio leggibile con il suggerimento, senza 'lat
 });
 
 test("A3: campo obbligatorio mancante → «Manca …»; dati giusti → nessun errore", () => {
-  assert.equal(messaggio(schema, { lat_partenza: 44.19 }), "Manca il nome dell'uscita");
+  assert.equal(messaggio(schema, { lat_partenza: 44.19 }), "Manca il nome del viaggio");
   assert.equal(messaggio(schema, { nome: "Cimone", lat_partenza: 44.19 }), null);
 });

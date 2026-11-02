@@ -28,7 +28,7 @@ try {
   riepilogo.innerHTML = `<strong>${zaini.length} ${zaini.length === 1 ? "zaino" : "zaini"}</strong>`;
   lista.innerHTML = zaini.length
     ? htmlGruppi(gruppiPerData(zaini), rigaZaino)
-    : `<p class="vuoto">Nessuno zaino ancora. Apri un'uscita in <a href="/viaggi.html">Viaggi</a> e premi «Genera lo zaino».</p>`;
+    : `<p class="vuoto">Nessuno zaino ancora. Apri un viaggio in <a href="/viaggi.html">Viaggi</a> e premi «Genera zaino».</p>`;
 } catch (err) {
   lista.innerHTML = `<p class="errore">${esc(err.message)}</p>`;
 }

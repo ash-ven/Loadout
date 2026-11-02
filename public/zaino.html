@@ -27,7 +27,7 @@
   <!-- Testata: torna all'uscita e il nome (nascosta finché non arrivano i dati) -->
   <section class="testata" id="intestazione" hidden>
     <div class="testata-dentro">
-      <p class="indietro"><a id="torna" href="/zaini.html">← Torna all'uscita</a></p>
+      <p class="indietro"><a id="torna" href="/zaini.html">← Torna al viaggio</a></p>
       <h1 id="titolo"></h1>
     </div>
   </section>
@@ -75,11 +75,11 @@
         <!-- C6 (revisione UX 2): "Togli tutte le spunte" in fondo alla lista, lontano da "Genera zaino" (compare solo se c'è almeno una spunta) -->
         <p class="riga-svuota"><button type="button" class="link-bottone" id="svuota" hidden>Togli tutte le spunte</button></p>
 
-        <!-- B5: "Per questa uscita": l'attrezzatura che serve e dove si trova.
+        <!-- B5: "Per questo viaggio": l'attrezzatura che serve e dove si trova.
              A6: in fondo, chiuso, con il riassunto nel titolo; dentro prima quello che manca, poi (a richiesta) quello già nello zaino -->
         <details class="card kit-dettagli" id="kit-card" hidden>
           <summary>
-            <h2><img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Per questa uscita</h2>
+            <h2><img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Per questo viaggio</h2>
             <span class="muto" id="kit-riepilogo"></span>
           </summary>
           <ul class="kit" id="kit"></ul>

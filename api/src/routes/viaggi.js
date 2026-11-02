@@ -11,7 +11,7 @@ const ATTIVITA = ["escursione", "alpinismo", "ciaspolata", "ferrata"]; // escurs
 const PERNOTTO = ["nessuno", "rifugio", "tenda", "bivacco"];
 
 const schemaViaggio = {
-  nome:          { etichetta: "il nome dell'uscita", type: "string", required: true, maxLength: 150 },
+  nome:          { etichetta: "il nome del viaggio", type: "string", required: true, maxLength: 150 },
   attivita:      { etichetta: "l'attività", type: "string", required: true, enum: ATTIVITA },
   n_persone:     { etichetta: "il numero di persone", type: "number", integer: true, min: 1, max: 50 },
   n_giorni:      { etichetta: "il numero di giorni", type: "number", integer: true, min: 1, max: 60 },
@@ -205,7 +205,7 @@ router.post("/:id/genera", caricaViaggio, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// === GET /api/viaggi/:id/kit (B5: "Per questa uscita": per ogni voce, nello zaino / nell'armadio / manca) ===
+// === GET /api/viaggi/:id/kit (B5: "Per questo viaggio": per ogni voce, nello zaino / nell'armadio / manca) ===
 router.get("/:id/kit", caricaViaggio, async (req, res, next) => {
   try {
     res.json(await kit.stato(req.user.sub, req.viaggio));

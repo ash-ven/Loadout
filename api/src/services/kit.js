@@ -231,7 +231,7 @@ export async function generaIntelligente(db, utenteId, viaggio, uscita) {
     const giaDentro = [...nelloZaino].some((id) => corrisponde(perId.get(id), voce));
     if (giaDentro) continue;
     const scelto = migliorOggetto(voce, oggetti);
-    if (!scelto) continue; // non c'è nell'armadio: lo dirà il riquadro "Per questa uscita"
+    if (!scelto) continue; // non c'è nell'armadio: lo dirà il riquadro "Per questo viaggio"
     await db.query(
       "INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id, quantita) VALUES ($1, $2, 1) ON CONFLICT DO NOTHING",
       [viaggio.id, scelto.id]
@@ -244,7 +244,7 @@ export async function generaIntelligente(db, utenteId, viaggio, uscita) {
   return { aggiunti: base + dalKit, base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio, doppioni: doppi.length };
 }
 
-// Il riquadro "Per questa uscita": per ogni voce, se è nello zaino, nell'armadio o se manca
+// Il riquadro "Per questo viaggio": per ogni voce, se è nello zaino, nell'armadio o se manca
 export async function stato(utenteId, viaggio) {
   const uscita = await condizioni(viaggio);
   const oggetti = await armadio({ query }, utenteId);
