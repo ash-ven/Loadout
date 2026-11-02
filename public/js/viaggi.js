@@ -205,9 +205,25 @@ function leggiForm() {
     quota_min_m: numero("quota_min_m"),
     ora_partenza: campi.ora_partenza.value || undefined,
     // la traccia della mappa non è un campo del form (si disegna nella pagina della mappa): in modifica
-    // la rimandiamo com'era, altrimenti il PUT (che sostituisce il viaggio intero) la cancellerebbe
-    traccia: inModifica ? (prima?.traccia ?? undefined) : undefined,
+    // la rimandiamo, altrimenti il PUT (che sostituisce il viaggio intero) la cancellerebbe
+    traccia: inModifica ? tracciaConOrigini() : undefined,
   };
+}
+
+// A1 (revisione UX 2): la traccia salvata con le origini aggiornate. Se nel form cambi a mano un valore
+// che aveva compilato la mappa, diventa tuo: la mappa, riaperta, non lo sovrascrive più.
+function tracciaConOrigini() {
+  const traccia = prima?.traccia;
+  if (!traccia) return undefined;
+  const origini = { ...(traccia.origini ?? {}) }; // uscite salvate prima delle origini: nel dubbio i valori sono tuoi
+  for (const nome of ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m"]) {
+    if (campi[nome].value !== String(prima[nome] ?? "")) delete origini[nome]; // l'hai cambiato tu
+  }
+  for (const nome of CAMPI_POST_IT) { // le coordinate hanno il loro post-it anche nel form
+    if (campi[nome].dataset.auto && campi[nome].value !== "") origini[nome] = campi[nome].dataset.auto;
+    else delete origini[nome];
+  }
+  return { ...traccia, origini };
 }
 
 function validaLatoClient(d) {

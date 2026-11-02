@@ -16,3 +16,12 @@ test("traccia: scartate se mancano pezzi, se i punti sono fuori dal mondo o non 
   assert.equal(tracciaValida({ ...buona, linea: [[95, 11, 0], [44, 11, 0]] }), false); // latitudine 95
   assert.equal(tracciaValida({ ...buona, linea: [["44", 11], [44, 11]] }), false);     // testo al posto del numero
 });
+
+// A1 (revisione UX 2): la traccia ricorda quali valori ha compilato la mappa (o il luogo); gli altri sono dell'utente
+test("traccia: le origini dei valori sono accettate solo con campi e valori conosciuti", () => {
+  assert.equal(tracciaValida({ ...buona, origini: { distanza_km: "mappa", lat_partenza: "luogo" } }), true);
+  assert.equal(tracciaValida({ ...buona, origini: {} }), true);                         // tutto scritto a mano
+  assert.equal(tracciaValida({ ...buona, origini: { distanza_km: "a mano" } }), false); // valore sconosciuto
+  assert.equal(tracciaValida({ ...buona, origini: { password: "mappa" } }), false);     // campo che non c'entra
+  assert.equal(tracciaValida({ ...buona, origini: ["mappa"] }), false);                 // non è un oggetto
+});

@@ -115,3 +115,12 @@ test("risposta di Open-Meteo per la vetta: valori all'ora di arrivo, zero termic
   // avvisi: vento forte (raffiche max 65), zero termico sotto la vetta, temporali
   assert.deepEqual(avvisiVetta(vetta).map((a) => a.tipo), ["vento", "zero_termico", "temporali"]);
 });
+
+test("A1: la traccia vale per il meteo in vetta solo se arriva alla quota massima scritta (±100 m)", async () => {
+  const { vettaDallaTraccia } = await import("../src/services/consigli.js");
+  const traccia = { linea: [[44.13, 10.59, 1239], [44.14, 10.60, 1511], [44.15, 10.61, 1300]] };
+  assert.equal(vettaDallaTraccia(traccia, 1511).quota, 1511); // la traccia arriva in vetta: si usa il suo punto più alto
+  assert.equal(vettaDallaTraccia(traccia, 1580).quota, 1511); // entro 100 m: va bene
+  assert.equal(vettaDallaTraccia(traccia, 2165), null);       // hai scritto 2.165 m, la traccia si ferma a 1.511: non vale
+  assert.equal(vettaDallaTraccia(null, 2165), null);
+});

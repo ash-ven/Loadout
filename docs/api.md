@@ -79,7 +79,9 @@ Regole dei campi del viaggio (* = obbligatorio):
 - `luogo_partenza`, `luogo_arrivo` testo max 200 (B1); `quota_max_m` intero 0–9000 (B3, il punto più alto del percorso)
 - Mappe, fase 1: `quota_min_m` intero −500–9000 (non più alta di `quota_max_m`, altrimenti 400 "La quota minima non può superare la quota massima");
   `ora_partenza` testo `HH:MM` (es. `"08:30"`; se manca, per i calcoli vale 08:00);
-  `traccia` oggetto `{ tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (2–5000) }` = il percorso disegnato sulla mappa
+  `traccia` oggetto `{ tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (2–5000), origini?: { campo: "mappa" | "luogo" } }`
+  = il percorso disegnato sulla mappa; `origini` dice quali valori (km, dislivello, quote, coordinate) sono stati compilati in automatico:
+  quelli non elencati li ha scritti l'utente e la mappa non li sovrascrive
   (con valori fuori dai limiti → 400 "Traccia non valida")
 
 Blocco `consigli` del dettaglio:
@@ -99,7 +101,8 @@ Blocco `consigli` del dettaglio:
   In più: `quota_partenza_m` (da Open-Meteo), `vento_kmh` e `raffiche_kmh` in partenza.
   `vetta` (se il viaggio ha `quota_max_m`, altrimenti `null`): una seconda richiesta a Open-Meteo, fatta insieme alla prima, con
   `elevation = quota_max_m` sulle coordinate del punto più alto della `traccia` (`fonte: "traccia"`) o, senza traccia, su quelle di partenza
-  (`fonte: "quota_scritta"`). Contiene `quota_m`, `ora_arrivo_stimata` (`ora_partenza` + ore fino alla vetta: con la traccia km/4 + salita/400
+  (`fonte: "quota_scritta"`); la traccia vale solo se il suo punto più alto è entro 100 m da `quota_max_m`, altrimenti si usa la partenza
+  e l'ora di arrivo stimata (metà delle ore del giorno). Contiene `quota_m`, `ora_arrivo_stimata` (`ora_partenza` + ore fino alla vetta: con la traccia km/4 + salita/400
   fino al punto più alto, senza traccia metà delle ore del giorno, senza ore 4 ore), i valori all'ora di arrivo `temp`, `percepita`, `raffiche_kmh`,
   quelli della giornata `temp_min`, `temp_max`, `percepita_min`, `raffiche_max_kmh`, lo `zero_termico_m` più basso tra le 7 e le 18 e `temporali`
   (codici meteo 95–99). Se la seconda richiesta fallisce resta la stima con −6 °C ogni 1000 m (`fonte: "stima"`, solo `temp_min`/`temp_max`).

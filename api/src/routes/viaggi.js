@@ -52,12 +52,19 @@ function controlliPercorso(req, res, next) {
   next();
 }
 
-// La traccia: { tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (al massimo 5000 punti) }
+// La traccia: { tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (al massimo 5000 punti),
+//               origini: { campo: "mappa" | "luogo" } (facoltativo, A1: quali valori sono stati compilati in automatico;
+//                         i campi non elencati li ha scritti l'utente) }
+const CAMPI_CON_ORIGINE = ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m",
+                           "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
 export function tracciaValida(t) {
   const latLon = (p) => Array.isArray(p) && p.length >= 2 && p.length <= 3 && p.every((n) => typeof n === "number" && Number.isFinite(n))
     && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180;
+  const originiValide = t.origini === undefined || (typeof t.origini === "object" && t.origini !== null && !Array.isArray(t.origini)
+    && Object.entries(t.origini).every(([campo, da]) => CAMPI_CON_ORIGINE.includes(campo) && ["mappa", "luogo"].includes(da)));
   return Array.isArray(t.tappe) && t.tappe.length >= 2 && t.tappe.length <= 30 && t.tappe.every(latLon)
-    && Array.isArray(t.linea) && t.linea.length >= 2 && t.linea.length <= 5000 && t.linea.every(latLon);
+    && Array.isArray(t.linea) && t.linea.length >= 2 && t.linea.length <= 5000 && t.linea.every(latLon)
+    && originiValide;
 }
 
 // === Middleware "guardiano": il viaggio :id esiste ed è mio? ===

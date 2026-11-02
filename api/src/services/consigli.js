@@ -123,7 +123,8 @@ export async function meteo(viaggio, sensibilita = null, oreGiorno = null) {
 
   // La vetta: il punto più alto della traccia (se c'è la mappa), altrimenti la partenza con la quota scritta a mano
   const quota = viaggio.quota_max_m;
-  const alto = puntoPiuAlto(viaggio.traccia);
+  // A1: la traccia vale solo se arriva davvero alla quota massima scritta (altrimenti dice un punto e un'ora sbagliati)
+  const alto = vettaDallaTraccia(viaggio.traccia, quota);
   const [latV, lonV] = alto ? [alto.lat, alto.lon] : [lat, lon];
   const urlVetta = quota == null ? null : `https://api.open-meteo.com/v1/forecast?latitude=${latV}&longitude=${lonV}&elevation=${quota}` +
     `&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_min,wind_gusts_10m_max,weather_code` +
@@ -144,7 +145,7 @@ export async function meteo(viaggio, sensibilita = null, oreGiorno = null) {
     const quotaPartenza = elevation != null ? Math.round(elevation) : null;
 
     // A che ora arrivi in vetta: ora di partenza (8:00 se non l'hai scritta) + tempo stimato fino al punto più alto
-    const ore = oreFinoAllaVetta(viaggio.traccia, oreGiorno);
+    const ore = oreFinoAllaVetta(alto ? viaggio.traccia : null, oreGiorno); // senza traccia affidabile: metà delle ore del giorno
     const arrivo = minuti(viaggio.ora_partenza || "08:00") + (ore != null ? Math.round(ore * 60) : 4 * 60);
     const oraArrivo = Math.min(Math.round(arrivo / 60), 23); // l'ora intera più vicina, per i dati "ora per ora"
 
@@ -203,6 +204,15 @@ export function puntoPiuAlto(traccia) {
     if (Number.isFinite(quota) && (!migliore || quota > migliore.quota)) migliore = { lat, lon, quota, indice };
   });
   return migliore;
+}
+
+// A1 (revisione UX 2): il punto più alto della traccia, ma SOLO se corrisponde alla quota massima dell'uscita
+// (al massimo 100 m di differenza). Se hai scritto a mano 2.165 m e la traccia arriva a 1.511 m, la traccia
+// non dice dove né quando sei in vetta: meglio la quota scritta sulle coordinate di partenza, e l'ora stimata.
+export function vettaDallaTraccia(traccia, quotaMax, tolleranza = 100) {
+  const alto = puntoPiuAlto(traccia);
+  if (!alto || quotaMax == null) return null;
+  return Math.abs(alto.quota - quotaMax) <= tolleranza ? alto : null;
 }
 
 // Ore di cammino dalla partenza alla vetta.

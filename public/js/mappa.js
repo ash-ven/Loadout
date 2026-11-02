@@ -33,22 +33,33 @@ staccaPostItScrivendo(CAMPI.map((nome) => campi[nome]));
 form.addEventListener("input", () => { daSalvare = true; messaggioEl.hidden = true; });
 window.addEventListener("beforeunload", (e) => { if (daSalvare) e.preventDefault(); });
 
-// Riempie i campi con l'uscita salvata. Non sappiamo chi aveva scritto i valori, quindi indoviniamo nel modo più utile:
-// coordinate dalla mappa se c'è una traccia, altrimenti dal luogo (così disegnando si aggiornano);
-// i quattro valori dalla mappa solo se c'è una traccia, altrimenti sono tuoi.
+// Riempie i campi con l'uscita salvata e rimette i post-it com'erano.
+// A1 (revisione UX 2): la traccia salvata ricorda quali valori aveva compilato la mappa o il luogo (traccia.origini);
+// tutti gli altri li hai scritti tu, e la mappa non li tocca più, nemmeno dopo aver riaperto la pagina.
 function riempi(v) {
   for (const nome of CAMPI) {
     campi[nome].value = v[nome] ?? "";
     delete campi[nome].dataset.auto;
   }
+  const origini = v.traccia?.origini;
+  if (origini) {
+    for (const [nome, da] of Object.entries(origini)) {
+      if (campi[nome] && campi[nome].value !== "") campi[nome].dataset.auto = da;
+    }
+    return;
+  }
+  // Uscite salvate prima che esistessero le origini: per le coordinate indoviniamo (mappa se c'è una traccia,
+  // altrimenti luogo); i quattro valori del percorso, NEL DUBBIO, sono tuoi: così la mappa non può cancellarli.
   for (const nome of ["lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"]) {
     if (campi[nome].value !== "") campi[nome].dataset.auto = v.traccia ? "mappa" : "luogo";
   }
-  if (v.traccia) {
-    for (const nome of ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m"]) {
-      if (campi[nome].value !== "") campi[nome].dataset.auto = "mappa";
-    }
-  }
+}
+
+// Quali campi sono compilati in automatico adesso: { campo: "mappa" | "luogo" } (gli altri sono tuoi)
+function originiAttuali() {
+  return Object.fromEntries(CAMPI
+    .filter((nome) => campi[nome].dataset.auto && campi[nome].value !== "")
+    .map((nome) => [nome, campi[nome].dataset.auto]));
 }
 
 // --- Salva il percorso ---
@@ -57,7 +68,9 @@ form.addEventListener("submit", async (e) => {
   erroreEl.hidden = true;
   const numero = (nome) => (campi[nome].value === "" ? null : Number(campi[nome].value));
   const dati = Object.fromEntries(CAMPI.map((nome) => [nome, numero(nome)]));
-  dati.traccia = disegno.traccia(); // { tappe, linea } oppure null
+  const traccia = disegno.traccia(); // { tappe, linea } oppure null
+  // A1: con la traccia si salva anche chi ha scritto ogni valore, così alla riapertura i post-it tornano giusti
+  dati.traccia = traccia ? { ...traccia, origini: originiAttuali() } : null;
   if (dati.quota_min_m != null && dati.quota_max_m != null && dati.quota_min_m > dati.quota_max_m) {
     erroreEl.textContent = "La quota minima non può superare la quota massima";
     erroreEl.hidden = false;
