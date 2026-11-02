@@ -40,6 +40,7 @@ let tutti = [];          // B2: TUTTO l'armadio, per il totale della testata (ch
 let filtro = "tutti";    // "tutti" | "indispensabili" | "preferiti"
 let inModifica = null;   // id dell'oggetto in modifica, oppure null se stiamo creando
 let aperto = null;       // l'oggetto mostrato nella scheda di dettaglio
+let perUscita = null;    // B6: id dell'uscita da cui sei arrivata con "Aggiungi all'armadio" (dopo il salvataggio si torna lì)
 
 // --- Caricamento dall'API: aggiorna lo stato e ridisegna ---
 async function carica() {
@@ -242,6 +243,7 @@ function svuotaForm() {
   bottoneElimina.hidden = true;
   infoForm.hidden = true;
   delete campi.categoria.dataset.scelta; // nessuna categoria scelta a mano (vedi cercaProdotto)
+  perUscita = null; // B6
   nascondiErrore();
   pulisciErroriCampi(form); // B1
 }
@@ -473,7 +475,13 @@ form.addEventListener("submit", async (e) => {
     if (inModifica) {
       await api(`/api/oggetti/${inModifica}`, { method: "PUT", body: dati });
     } else {
-      await api("/api/oggetti", { method: "POST", body: dati });
+      const nuovo = await api("/api/oggetti", { method: "POST", body: dati });
+      // B6 (revisione UX 2): arrivata dallo zaino? l'oggetto entra anche nello zaino e si torna lì
+      if (perUscita) {
+        await api(`/api/viaggi/${perUscita}/zaino`, { method: "POST", body: { oggetto_id: nuovo.id, quantita: 1 } });
+        location.href = `/zaino.html?id=${perUscita}&aggiunto=${encodeURIComponent(nuovo.nome)}`;
+        return;
+      }
     }
     finestra.close(); // la chiusura svuota anche il form (evento "close")
     await carica();
@@ -516,7 +524,17 @@ if (richiesta.has("nuovo")) {
   svuotaForm();
   campi.nome.value = richiesta.get("nuovo");
   if (CATEGORIE[richiesta.get("categoria")]) campi.categoria.value = richiesta.get("categoria");
-  infoForm.textContent = "Dalla tua uscita: completa peso e dettagli, poi salva. Torna all'uscita e premi «Genera zaino».";
+  // B6 (revisione UX 2): salvando, l'oggetto entra anche nello zaino dell'uscita e si torna lì
+  perUscita = Number(richiesta.get("uscita")) || null;
+  if (perUscita) {
+    const torna = document.createElement("a");
+    torna.href = `/zaino.html?id=${perUscita}`;
+    torna.textContent = "← Torna allo zaino";
+    infoForm.replaceChildren(torna, document.createElement("br"),
+      "Completa peso e dettagli e salva: l'oggetto entra anche nello zaino dell'uscita.");
+  } else {
+    infoForm.textContent = "Dalla tua uscita: completa peso e dettagli, poi salva. Torna all'uscita e premi «Genera zaino».";
+  }
   infoForm.hidden = false;
   apriFinestra(campi.peso_g); // nome e categoria ci sono già: si parte dal peso
 }

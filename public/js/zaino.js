@@ -100,7 +100,8 @@ function rigaKit(v) {
       <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nell'armadio: ${esc(v.oggetto.nome)}${perche}</span>
       <button type="button" class="btn-piccolo" data-aggiungi="${v.oggetto.id}">Aggiungi</button></li>`;
   }
-  const link = `/armadio.html?nuovo=${encodeURIComponent(v.voce)}&categoria=${encodeURIComponent(v.categoria)}`;
+  // B6 (revisione UX 2): &uscita= → dopo il salvataggio l'armadio riporta qui, con l'oggetto già nello zaino
+  const link = `/armadio.html?nuovo=${encodeURIComponent(v.voce)}&categoria=${encodeURIComponent(v.categoria)}&uscita=${id}`;
   return `<li class="kit-manca"><span class="kit-segno" aria-hidden="true">!</span>
     <span class="kit-testo"><strong>${esc(v.voce)}</strong> · ti manca${perche}</span>
     <a class="btn-piccolo btn secondario" href="${link}">Aggiungi all'armadio</a></li>`;
@@ -428,6 +429,12 @@ if (!Number.isInteger(id) || id <= 0) {
     armadio = await api("/api/oggetti?limit=200");
     await caricaZaino();
     document.querySelector("#corpo-zaino").hidden = false;
+    // B6: arrivo dall'armadio dopo "Aggiungi all'armadio" (?aggiunto=Telo termico): lo diciamo
+    const aggiunto = new URLSearchParams(location.search).get("aggiunto");
+    if (aggiunto) {
+      history.replaceState(null, "", `?id=${id}`);
+      mostraInfo(`«${aggiunto}» aggiunto all'armadio e allo zaino.`);
+    }
     // Arrivo da "Genera lo zaino" (o "Aggiorna lo zaino") della scheda: lo riempio subito
     if (new URLSearchParams(location.search).has("genera")) {
       history.replaceState(null, "", `?id=${id}`); // ricaricando la pagina non rigenera
