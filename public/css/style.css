@@ -637,3 +637,18 @@ input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus, textarea[ar
 .tabella-meteo tbody th { color: var(--terra); font-weight: 600; font-size: .85rem; white-space: nowrap; }
 .tabella-meteo .muto { font-size: .78rem; }
 @media (max-width: 600px) { .tabella-meteo th, .tabella-meteo td { padding: .4rem .3rem; font-size: .85rem; } }
+
+/* --- B10 (revisione UX 2): testata dell'uscita più corta sul telefono, tessere che si capisce che si toccano --- */
+button.etichetta-piu { cursor: pointer; font: inherit; font-weight: 600; background: rgba(246, 239, 223, .1); color: #f6efdf; }
+@media (max-width: 600px) {
+  .etichette:not(.aperte) .etichetta-extra { display: none; }   /* le altre etichette dietro "+N dettagli" */
+}
+.etichette.aperte .etichetta-piu { display: none; }
+@media (min-width: 601px) { .etichetta-piu { display: none; } } /* sul computer si vedono già tutte */
+/* la freccia › a destra di ogni tessera */
+.tessera { position: relative; padding-right: 2.6rem; }
+.tessera::after { content: "›"; position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%);
+                  font-size: 1.8rem; line-height: 1; color: var(--terra); transition: transform .15s, color .15s; }
+.tessera:hover::after, .tessera:focus-visible::after { color: var(--muschio); transform: translate(3px, -50%); }
+/* la barra sottile sulla tessera dello zaino */
+.barra.barra-tessera { height: 6px; margin-top: .35rem; }

@@ -48,20 +48,35 @@ function renderIntestazione() {
   const v = viaggio;
   document.title = `Loadout – ${v.nome}`;
   titolo.textContent = v.nome;
-  const parti = [
+  // B10 (revisione UX 2): prima le tre etichette principali (data e ora, attività, quota), poi le altre.
+  // Sul telefono le altre stanno dietro "+N dettagli" (il CSS le nasconde finché non lo tocchi); sul computer si vedono tutte.
+  const principali = [
+    v.data_partenza ? `partenza ${formattaData(v.data_partenza)}${v.ora_partenza ? ` · ore ${v.ora_partenza}` : ""}` : "data da decidere",
     ATTIVITA[v.attivita] ?? v.attivita,
-    ...(v.luogo_partenza ? [`da ${v.luogo_partenza}`] : []),
     ...(v.quota_max_m != null ? [`fino a ${v.quota_max_m.toLocaleString("it-IT", { useGrouping: "always" })} m`] : []),
-    v.data_partenza ? `partenza ${formattaData(v.data_partenza)}` : "data da decidere",
-    ...(v.ora_partenza ? [`ore ${v.ora_partenza}`] : []), // B7: l'ora di partenza si vede subito
+  ];
+  const altre = [
+    ...(v.luogo_partenza ? [`da ${v.luogo_partenza}`] : []),
     `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`,
     `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`,
     v.pernotto === "nessuno" ? "in giornata" : `pernotto in ${v.pernotto}`,
     v.serve_cucina ? "con cucina" : "senza cucina",
   ];
   // Ogni dato del viaggio diventa un'etichetta (createElement + textContent: niente innerHTML, niente XSS)
-  dettagli.replaceChildren(...parti.map((testo) => creaEtichetta(testo)));
-  if (v.pianificato) dettagli.append(creaEtichetta("da fare in futuro", "da-fare"));
+  const extra = altre.map((testo) => creaEtichetta(testo));
+  if (v.pianificato) extra.push(creaEtichetta("da fare in futuro", "da-fare"));
+  extra.forEach((el) => el.classList.add("etichetta-extra"));
+  const piu = document.createElement("button");
+  piu.type = "button";
+  piu.className = "etichetta etichetta-piu";
+  piu.textContent = `+${extra.length} dettagli`;
+  piu.setAttribute("aria-expanded", "false");
+  piu.addEventListener("click", () => {
+    dettagli.classList.add("aperte"); // mostra le altre etichette e nasconde questo pulsante
+    piu.setAttribute("aria-expanded", "true");
+  });
+  dettagli.classList.remove("aperte");
+  dettagli.replaceChildren(...principali.map((testo) => creaEtichetta(testo)), ...extra, piu);
 }
 
 // Un'etichetta della testata; con un'icona diventa quella "in evidenza" (sfondo senape)
@@ -207,6 +222,10 @@ formOre.addEventListener("submit", async (e) => {
 function renderCollegamenti() {
   const p = viaggio.peso;
   const testo = (selettore, valore) => { document.querySelector(selettore).textContent = valore; }; // textContent: niente XSS
+  // B10: la barra sottile di avanzamento sulla tessera dello zaino (larghezza con style.width: la CSP lo permette)
+  const barraTessera = document.querySelector("#barra-tessera");
+  barraTessera.hidden = !(p.n_oggetti > 0 && p.n_inseriti != null);
+  if (!barraTessera.hidden) barraTessera.firstElementChild.style.width = `${Math.round((p.n_inseriti / p.n_oggetti) * 100)}%`;
   if (p.n_oggetti > 0) {
     linkZaino.href = `/zaino.html?id=${id}`;
     testo("#titolo-zaino", "Lo zaino");
