@@ -89,6 +89,9 @@
         </div>
         <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
         <div class="azioni">
+          <!-- B8: importa un file GPX (letto nel browser, js/gpx-lettura.js). Il vero <input type="file"> è nascosto: lo apre il <label> -->
+          <label class="btn secondario btn-piccolo" for="file-gpx">Importa GPX</label>
+          <input type="file" id="file-gpx" accept=".gpx,application/gpx+xml" hidden>
           <button type="button" class="secondario btn-piccolo" id="togli-punto">Togli l'ultimo punto</button>
           <button type="button" class="pericolo btn-piccolo" id="ricomincia">Ricomincia</button>
         </div>
@@ -110,6 +113,9 @@
       </details>
       <p class="muto nota-anello" id="nota-anello" hidden>Con una sola tappa si torna indietro dalla stessa strada: aggiungi un'altra tappa per fare un anello.</p>
       <p id="stato-mappa" class="stato" hidden></p>
+      <p class="avviso" id="avviso-importata" hidden><span><strong>Hai modificato la traccia importata:</strong> ora il percorso è
+        ricalcolato sui sentieri. Se vuoi quella del file, importalo di nuovo.</span></p>
+      <p class="muto" id="messaggio-gpx" role="status" hidden></p>
 
       <!-- I valori del percorso: campi normali. "dalla mappa" = li ha compilati la mappa; se li scrivi tu, restano tuoi.
            A2: sotto un valore tuo, se la mappa calcola un numero diverso, compare "La mappa calcola … · Usa questo" -->

@@ -5,6 +5,7 @@ import { staccaPostItScrivendo } from "./post-it.js";
 import { erroriCoordinate, erroriQuote, uniformaDecimali } from "./controlli.js";
 import { mostraErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 import { scaricaGpx } from "./gpx.js";
+import { leggiGpx, preparaImport } from "./gpx-lettura.js";
 import { attivaNavigazione } from "./navigazione.js";
 import { attivaProfilo } from "./profilo-altimetrico.js";
 import { discesaDellaTraccia } from "./navigazione-calcoli.js";
@@ -33,6 +34,7 @@ const disegno = attivaDisegnoMappa({
   notaAnello: document.querySelector("#nota-anello"),   // B11
   sceltaProfilo: document.querySelector("#scelta-profilo"), // «Sentieri / Più breve»
   elencoTappe: document.querySelector("#elenco-tappe"),     // l'ordine dei punti, con ↑ ↓ ✕
+  avvisoImportata: document.querySelector("#avviso-importata"), // B8
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },
@@ -204,6 +206,31 @@ document.querySelector("#aggiungi-tappa").addEventListener("click", () => {
   if (problema) { erroreTappa.textContent = problema; return; }
   tappaLat.value = "";
   tappaLon.value = "";
+});
+
+// --- B8: Importa GPX. Il file lo legge il browser (file.text()), non va al server ---
+const fileGpx = document.querySelector("#file-gpx");
+const messaggioGpx = document.querySelector("#messaggio-gpx");
+fileGpx.addEventListener("change", async () => {
+  const file = fileGpx.files[0];
+  fileGpx.value = ""; // così si può reimportare lo stesso file
+  if (!file) return;
+  messaggioGpx.hidden = false;
+  messaggioGpx.classList.remove("errore");
+  try {
+    if (file.size > 20 * 1024 * 1024) throw new Error("Il file è troppo grande (più di 20 MB)");
+    const { nome, punti } = leggiGpx(await file.text());
+    const importo = preparaImport(punti);
+    const problema = disegno.importa(importo);
+    if (problema) throw new Error(problema);
+    const d = importo.dati;
+    messaggioGpx.textContent = `Traccia importata${nome ? ` («${nome}»)` : ""}: ${d.distanza_km.toLocaleString("it-IT")} km` +
+      (d.dislivello_m != null ? `, D+ ${d.dislivello_m} m, D− ${d.discesa_m} m` : ", senza quote nel file") +
+      ". Controlla e premi «Salva il percorso».";
+  } catch (err) {
+    messaggioGpx.textContent = err.message;
+    messaggioGpx.classList.add("errore");
+  }
 });
 
 // --- Senza rete: un avviso sopra la mappa (online/offline sono eventi del browser) ---

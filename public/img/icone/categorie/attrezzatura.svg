@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31503f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Attrezzatura: un moschettone (scelta di Asiha, versione B). Prima era uno zaino, uguale alla categoria Zaini.
-       Corpo con la parte alta più larga, leva dritta a sinistra con la ghiera senape, occhiello in basso -->
-  <path d="M6.3 7C6.9 4.3 9.7 2.7 13.1 2.7c3.6 0 6 2.1 5.6 5.3-.4 3-2.6 6.2-3.4 9.5-.6 2.5-2 3.8-3.9 3.8-2.1 0-3.4-1.5-3.2-3.7"/>
-  <path d="M8.4 16.3 6 8.6"/>
-  <circle cx="11.6" cy="17.8" r="1.6"/>
-  <rect x="6.2" y="11" width="2.4" height="3.6" rx=".8" transform="rotate(-17 7.4 12.8)" fill="#c8962b" stroke="none"/>
+  <!-- Attrezzatura: una tenda (scelta di Asiha). Lo zaino resta l'icona della categoria Zaini -->
+  <path d="M12 4 3 19.5h18Z"/>
+  <path d="M12 4v15.5"/>
+  <path d="M12 19.5 9.3 14.6 12 10.5"/>
+  <path d="M2 19.5h20"/>
+  <rect x="11" y="6.2" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/>
 </svg>

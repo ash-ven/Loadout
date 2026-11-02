@@ -19,8 +19,9 @@ const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 // legenda e notaAnello (B11, facoltativi): la legenda mostra solo quello che c'è, la nota spiega l'anello con una sola tappa
 // sceltaProfilo (facoltativo): il gruppo di pulsanti «Sentieri / Più breve» (data-profilo="sentieri" | "breve")
 // elencoTappe (facoltativo): la lista <ol> dove mostrare i punti in ordine, con ↑ ↓ per cambiarlo e ✕ per toglierne uno
+// avvisoImportata (facoltativo): il riquadro ocra "hai modificato la traccia importata" (B8)
 export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate,
-                                     legenda = null, notaAnello = null, sceltaProfilo = null, elencoTappe = null, suModifica = () => {}, suCalcolo = () => {} }) {
+                                     legenda = null, notaAnello = null, sceltaProfilo = null, elencoTappe = null, avvisoImportata = null, suModifica = () => {}, suCalcolo = () => {} }) {
   let mappa = null;            // nasce con apri()
   let livelloPercorso = null;  // le linee: si svuota e si ridisegna
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
@@ -29,7 +30,8 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   let profilo = "sentieri";    // come chiedere il percorso: "sentieri" (preferisce i sentieri) o "breve" (il più corto)
   let attivita = null;         // l'attività del viaggio: con ferrata e alpinismo il server accetta i passaggi difficili
   let discesaRiaperta = null;  // D− ricavato dalla pagina per le mappe salvate senza (vedi carica)
-  let bloccata = false;        // durante la navigazione col GPS la mappa non si modifica (niente tappe nuove, puntine ferme)
+  let bloccata = false;
+  let importata = false;       // B8: la linea viene da un file GPX (non da BRouter)        // durante la navigazione col GPS la mappa non si modifica (niente tappe nuove, puntine ferme)
   let daRipristinare = null;   // in modifica: la traccia salvata, da rimettere quando la mappa nasce
   let centro = null;           // dove aprire la mappa (il luogo scelto, o la partenza)
   let ultimaRichiesta = 0;     // se tocchi in fretta partono più richieste: vale solo la risposta dell'ultima
@@ -132,6 +134,11 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   // Stato → disegno: icone, conteggio, coordinate, percorso
   function ridisegna() {
     suModifica();
+    // B8: se la linea veniva da un GPX, da qui in poi il percorso lo ricalcola BRouter sui sentieri: lo diciamo
+    if (importata) {
+      importata = false;
+      if (avvisoImportata) avvisoImportata.hidden = false;
+    }
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     aggiornaConteggio();
     aggiornaCoordinate();
@@ -358,6 +365,33 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       punti.splice(posto, 0, nuovaPuntina(nuova));
       mappa.panTo(nuova);
       ridisegna();
+      return null;
+    },
+    // B8: una traccia letta da un file GPX (preparaImport in gpx-lettura.js). La linea è quella del file,
+    // NON ricalcolata da BRouter; le puntine vanno su partenza e arrivo (o a metà, per l'anello).
+    // I valori (km, D+, quote) entrano nei campi con il post-it "dalla mappa", come dopo un calcolo.
+    importa({ linea: lineaFile, tappe, anello, dati }) {
+      if (!mappa) return "La mappa non è ancora pronta";
+      if (bloccata) return "Durante la navigazione il percorso non si modifica";
+      ultimaRichiesta++;                                   // una richiesta a BRouter in corso non deve sovrascriverla
+      punti.forEach((p) => mappa.removeLayer(p));
+      interruttoreAnello.checked = anello;
+      punti = tappe.map(([lat, lon]) => nuovaPuntina(L.latLng(lat, lon)));
+      punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, anello))));
+      daRipristinare = null;
+      linea = lineaFile;
+      discesa = dati.discesa_m;
+      livelloPercorso.clearLayers();
+      disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
+      disegnaFrecce(livelloPercorso, linea);
+      suModifica();
+      aggiornaConteggio();
+      aggiornaCoordinate();
+      compilaDati(dati);
+      inquadraTutto();
+      importata = true;
+      if (avvisoImportata) avvisoImportata.hidden = true;
+      scriviStato(stato, "");
       return null;
     },
     // Navigazione: blocca (true) o sblocca (false) le modifiche al percorso
