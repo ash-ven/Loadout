@@ -659,3 +659,8 @@ button.etichetta-piu { cursor: pointer; font: inherit; font-weight: 600; backgro
 /* C6 (revisione UX 2): "Togli tutte le spunte" in fondo alla checklist, discreto ma comodo da toccare */
 .riga-svuota { margin: .25rem 0 1rem; text-align: center; }
 .riga-svuota button.link-bottone { min-height: 44px; padding: 0 .5rem; }
+
+/* C11 (revisione UX 2): la riga dell'oggetto appena salvato si illumina e poi torna normale */
+@keyframes appena-salvato { from { background: var(--ocra-chiaro); } to { background: transparent; } }
+.riga.appena-salvato { animation: appena-salvato 2s ease-out; }
+#avviso-salvato { padding: .7rem 1rem; }

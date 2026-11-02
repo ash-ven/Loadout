@@ -471,11 +471,14 @@ form.addEventListener("submit", async (e) => {
   if (mostraErroriCampi(form, errori)) return; // B1: sotto i campi sbagliati, e il cursore va al primo
 
   bottoneSalva.disabled = true;
+  const eraNuovo = !inModifica; // dopo close() inModifica si azzera: ce lo segniamo prima
+  let salvato;
   try {
     if (inModifica) {
-      await api(`/api/oggetti/${inModifica}`, { method: "PUT", body: dati });
+      salvato = await api(`/api/oggetti/${inModifica}`, { method: "PUT", body: dati });
     } else {
       const nuovo = await api("/api/oggetti", { method: "POST", body: dati });
+      salvato = nuovo;
       // B6 (revisione UX 2): arrivata dallo zaino? l'oggetto entra anche nello zaino e si torna lì
       if (perUscita) {
         await api(`/api/viaggi/${perUscita}/zaino`, { method: "POST", body: { oggetto_id: nuovo.id, quantita: 1 } });
@@ -485,12 +488,36 @@ form.addEventListener("submit", async (e) => {
     }
     finestra.close(); // la chiusura svuota anche il form (evento "close")
     await carica();
+    mostraSalvato(salvato, eraNuovo); // C11
   } catch (err) {
     mostraErrore(err.message); // es. "Hai già un oggetto con questo nome nell'armadio" (409)
   } finally {
     bottoneSalva.disabled = false;
   }
 });
+
+// --- C11 (revisione UX 2): dopo "Salva" si vede COSA è successo ---
+// La lista scorre fino all'oggetto, la sua riga si illumina per un attimo e in basso compare la conferma.
+const avvisoSalvato = document.querySelector("#avviso-salvato");
+let timerSalvato = null;
+
+function mostraSalvato(oggetto, eraNuovo) {
+  const riga = lista.querySelector(`.riga[data-id="${oggetto.id}"]`);
+  let testo = eraNuovo ? `«${oggetto.nome}» aggiunto all'armadio` : `«${oggetto.nome}» salvato`;
+  if (riga) {
+    // chi ha chiesto meno animazioni nel sistema non vede lo scorrimento morbido
+    const morbido = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    riga.scrollIntoView({ block: "center", behavior: morbido ? "smooth" : "auto" });
+    riga.classList.add("appena-salvato"); // l'animazione è nel CSS
+    riga.addEventListener("animationend", () => riga.classList.remove("appena-salvato"), { once: true });
+  } else {
+    testo += " (con la ricerca o il filtro di adesso non si vede)";
+  }
+  avvisoSalvato.textContent = testo;
+  avvisoSalvato.hidden = false;
+  clearTimeout(timerSalvato);
+  timerSalvato = setTimeout(() => { avvisoSalvato.hidden = true; }, 4000);
+}
 
 function mostraErrore(testo) {
   erroreForm.textContent = testo;
