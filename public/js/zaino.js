@@ -48,22 +48,45 @@ async function caricaZaino() {
 const kitCard = document.querySelector("#kit-card");
 const elKit = document.querySelector("#kit");
 const elKitRiepilogo = document.querySelector("#kit-riepilogo");
+const elKitGia = document.querySelector("#kit-gia");            // A6: "Mostra anche le … già nello zaino"
+const elKitGiaTitolo = document.querySelector("#kit-gia-titolo");
+const elKitOk = document.querySelector("#kit-ok");
+const elAvvisoKit = document.querySelector("#avviso-kit");      // A6: la riga ocra in alto
+const elTestoAvvisoKit = document.querySelector("#testo-avviso-kit");
 
 async function caricaKit() {
   try {
     const voci = await api(`/api/viaggi/${id}/kit`);
-    const mancano = voci.filter((v) => v.stato === "manca").length;
-    const daAggiungere = voci.filter((v) => v.stato === "nell_armadio").length;
-    elKitRiepilogo.textContent = mancano + daAggiungere === 0
-      ? "Hai tutto quello che serve per questa uscita."
-      : [daAggiungere ? `${daAggiungere} da mettere nello zaino` : "", mancano ? `${mancano} che non hai nell'armadio` : ""]
-          .filter(Boolean).join(" · ");
-    elKit.innerHTML = voci.map(rigaKit).join("");
+    // A6 (revisione UX 2): prima quello che manca nello zaino (da procurare o da prendere nell'armadio), poi il resto
+    const mancano = voci.filter((v) => v.stato === "manca");
+    const nellArmadio = voci.filter((v) => v.stato === "nell_armadio");
+    const gia = voci.filter((v) => v.stato === "nello_zaino");
+    const daFare = mancano.length + nellArmadio.length;
+    elKitRiepilogo.textContent = daFare === 0
+      ? "Hai tutto quello che serve"
+      : [mancano.length ? `${mancano.length} da procurare` : "", nellArmadio.length ? `${nellArmadio.length} nell'armadio` : "",
+         gia.length ? `${gia.length} già nello zaino` : ""].filter(Boolean).join(" · ");
+    elKit.innerHTML = [...mancano, ...nellArmadio].map(rigaKit).join("");
+    elKit.hidden = daFare === 0;
+    // Quelle già nello zaino: dietro "Mostra anche…" (un <details> dentro il riquadro)
+    elKitGia.hidden = gia.length === 0;
+    elKitGiaTitolo.textContent = `Mostra anche ${gia.length === 1 ? "quella già nello zaino" : `le ${gia.length} già nello zaino`}`;
+    elKitOk.innerHTML = gia.map(rigaKit).join("");
+    // In alto, sotto il peso: la riga ocra se manca qualcosa
+    elAvvisoKit.hidden = daFare === 0;
+    elTestoAvvisoKit.textContent = `Per questa uscita ${daFare === 1 ? "manca 1 cosa" : `mancano ${daFare} cose`} nello zaino`;
     kitCard.hidden = false;
   } catch {
-    kitCard.hidden = true; // il riquadro è un aiuto in più: se non arriva, la scheda funziona lo stesso
+    kitCard.hidden = true;  // il riquadro è un aiuto in più: se non arriva, la pagina funziona lo stesso
+    elAvvisoKit.hidden = true;
   }
 }
+
+// "Vedi": apre il riquadro in fondo e ci porta lì
+document.querySelector("#vedi-kit").addEventListener("click", () => {
+  kitCard.open = true;
+  kitCard.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 function rigaKit(v) {
   const perche = `<span class="kit-perche">${esc(v.perche)}</span>`;

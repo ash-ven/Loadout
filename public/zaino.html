@@ -55,6 +55,8 @@
           <!-- B4: l'acqua si porta in più, ma non entra nel calcolo (peso base) -->
           <p class="muto riga-acqua" id="peso-acqua" hidden></p>
           <div class="barra"><div id="barra-riempimento"></div></div>
+          <!-- A6 (revisione UX 2): se per questa uscita manca qualcosa nello zaino, lo diciamo qui in alto ("Vedi" apre il riquadro in fondo) -->
+          <p class="avviso" id="avviso-kit" hidden><span><span id="testo-avviso-kit"></span> · <button type="button" class="link-bottone" id="vedi-kit">Vedi</button></span></p>
           <p class="avviso" id="avviso-peso" hidden><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24"><span id="testo-avviso-peso"></span></p>
           <p class="muto" id="messaggio-zaino" hidden></p>
           <p class="errore" id="errore-zaino" hidden></p>
@@ -68,15 +70,23 @@
           </form>
         </section>
 
-        <!-- B5: "Per questa uscita": l'attrezzatura che serve per questa uscita e dove si trova -->
-        <section class="card" id="kit-card" hidden>
-          <h2><img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Per questa uscita</h2>
-          <p class="muto" id="kit-riepilogo"></p>
-          <ul class="kit" id="kit"></ul>
-        </section>
-
-        <!-- La checklist, divisa per categoria come l'armadio: la riempie scheda-viaggio.js -->
+        <!-- La checklist, divisa per categoria come l'armadio: la riempie zaino.js.
+             A6 (revisione UX 2): subito dopo la scheda dello zaino, così sul telefono non si scorrono quattro schermate -->
         <div class="gruppi una-colonna" id="checklist"></div>
+
+        <!-- B5: "Per questa uscita": l'attrezzatura che serve e dove si trova.
+             A6: in fondo, chiuso, con il riassunto nel titolo; dentro prima quello che manca, poi (a richiesta) quello già nello zaino -->
+        <details class="card kit-dettagli" id="kit-card" hidden>
+          <summary>
+            <h2><img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Per questa uscita</h2>
+            <span class="muto" id="kit-riepilogo"></span>
+          </summary>
+          <ul class="kit" id="kit"></ul>
+          <details class="kit-gia" id="kit-gia" hidden>
+            <summary id="kit-gia-titolo"></summary>
+            <ul class="kit" id="kit-ok"></ul>
+          </details>
+        </details>
 
       </div>
 

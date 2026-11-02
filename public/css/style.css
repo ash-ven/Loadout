@@ -566,6 +566,19 @@ details > .nota-mappa { margin-top: .75rem; }
 
 /* --- A2 (revisione UX 2): "La mappa calcola … · Usa questo" sotto i valori scritti a mano, nella pagina della mappa --- */
 .calcolo-mappa { font-size: .82rem; }
-button.usa-mappa { display: inline; padding: 0; border: 0; background: none; color: var(--muschio); font: inherit; font-weight: 700;
+button.usa-mappa, button.link-bottone { display: inline; padding: 0; border: 0; background: none; color: var(--muschio); font: inherit; font-weight: 700;
                    text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
-button.usa-mappa:hover, button.usa-mappa:focus-visible { background: none; color: var(--muschio-scuro); }
+button.usa-mappa:hover, button.usa-mappa:focus-visible, button.link-bottone:hover, button.link-bottone:focus-visible { background: none; color: var(--muschio-scuro); }
+
+/* --- A6 (revisione UX 2): "Per questa uscita" in fondo alla pagina dello zaino, chiuso, con il riassunto nel titolo --- */
+details.kit-dettagli { border: 1px solid var(--bordo); background: var(--lana); padding: 1.25rem; }
+details.kit-dettagli > summary { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem;
+                                 list-style: none; cursor: pointer; color: var(--testo); font-weight: 500; }
+details.kit-dettagli > summary::-webkit-details-marker { display: none; }
+details.kit-dettagli > summary h2 { margin: 0; }
+details.kit-dettagli > summary h2::after { content: "›"; display: inline-block; margin-left: .5rem; color: var(--terra); transition: transform .15s; }
+details.kit-dettagli[open] > summary h2::after { transform: rotate(90deg); }
+details.kit-dettagli[open] > summary { margin-bottom: .75rem; }
+details.kit-gia { margin-top: .75rem; border: 0; padding: 0; background: none; }
+details.kit-gia > summary { font-weight: 600; color: var(--muschio); font-size: .9rem; }
+@media (max-width: 600px) { details.kit-dettagli { padding: .9rem; } }
