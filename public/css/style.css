@@ -704,3 +704,23 @@ a.aiuto:hover, a.aiuto:focus-visible { background: var(--salvia-chiaro); }
 label.check.consenso { align-items: flex-start; font-size: .88rem; }
 label.check.consenso input { margin-top: .2rem; }
 textarea:disabled { background: var(--crema); cursor: not-allowed; }
+
+/* C8 (revisione UX 2): Home = la mappa di tutti i viaggi */
+/* La testa della mappa lascia spazio a destra allo zaino animato, che scende dalla testata */
+.mappa-home-testa { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem 1.2rem; margin: .5rem 0 .75rem; padding-right: 165px; }
+.mappa-home-testa h2 { margin: 0; }
+.legenda-home { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: 0; padding: 0; list-style: none; font-size: .88rem; color: var(--terra); }
+.legenda-home li { display: inline-flex; align-items: center; gap: .4rem; }
+.segno-linea { width: 22px; height: 5px; border-radius: 3px; box-shadow: 0 0 0 2px #f6efdf; }
+.segno-linea.fatti { background: #31503f; }
+.segno-linea.futuri { background: #c8962b; }
+.segno-pallino { width: 12px; height: 12px; border-radius: 50%; background: var(--terra); box-shadow: 0 0 0 2px #f6efdf; }
+.mappa-home .mappa { height: min(70vh, 620px); }
+.mappa-vuota { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: .75rem;
+               padding: 1rem; text-align: center; background: rgba(246, 239, 223, .82); }
+.mappa-vuota p { margin: 0; max-width: 22rem; font-weight: 600; color: var(--testo); }
+.totali-home { margin: .75rem 0 0; text-align: center; color: var(--terra); }
+.leaflet-popup-content { font: inherit; font-size: .92rem; line-height: 1.45; }
+.leaflet-popup-content a { font-weight: 700; color: var(--muschio); }
+@media (max-width: 860px) { .mappa-home-testa { padding-right: 100px; } }
+@media (max-width: 600px) { .mappa-home .mappa { height: max(360px, 62vh); } }

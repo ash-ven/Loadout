@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout</title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <!-- C8 (revisione UX 2): la Home è la mappa di tutti i tuoi viaggi. Leaflet: prima il suo CSS, poi il nostro (integrity: vedi mappa.html) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -34,30 +37,33 @@
   </section>
 
   <main class="container">
-    <!-- Le due sezioni principali, affiancate sugli schermi larghi -->
-    <div class="scorciatoie">
-      <section class="card scorciatoia">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/armadio.svg" alt="" width="22" height="22"></span>
-          <h2>Il mio armadio</h2>
-          <span class="conteggio" id="conta-oggetti"></span>
+    <!-- C8 (revisione UX 2, scelta di Asiha: «La mia mappa»): tutti i viaggi su una mappa sola.
+         Fatti in verde muschio, in programma (o senza data) in senape; senza mappa disegnata, un pallino sulla partenza.
+         La riempie index.js con i dati di GET /api/viaggi (che contiene già le tracce). -->
+    <section class="mappa-home" aria-labelledby="titolo-mappa-home">
+      <div class="mappa-home-testa">
+        <h2 id="titolo-mappa-home">La tua mappa</h2>
+        <ul class="legenda-home">
+          <li><span class="segno-linea fatti" aria-hidden="true"></span>Fatti</li>
+          <li><span class="segno-linea futuri" aria-hidden="true"></span>In programma</li>
+          <li><span class="segno-pallino" aria-hidden="true"></span>Senza mappa</li>
+        </ul>
+      </div>
+      <div class="mappa-cornice">
+        <div class="mappa sola-lettura" id="mappa-home" role="region" aria-label="Mappa dei tuoi viaggi"></div>
+        <!-- Senza viaggi da mostrare (o senza mappe disponibili): un messaggio sopra la mappa -->
+        <div class="mappa-vuota" id="mappa-vuota" hidden>
+          <p id="testo-mappa-vuota">La tua mappa si riempie con i viaggi che fai.</p>
+          <a class="btn" href="/viaggi.html?nuovo=1">Nuovo viaggio</a>
         </div>
-        <p>Tutta la tua attrezzatura, con peso, categoria, indispensabili e preferiti.</p>
-        <a class="btn" href="/armadio.html">Apri l'armadio <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-      </section>
-
-      <section class="card scorciatoia">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/viaggi.svg" alt="" width="22" height="22"></span>
-          <h2>I miei viaggi</h2>
-          <span class="conteggio" id="conta-viaggi"></span>
-        </div>
-        <p>Descrivi il viaggio, genera lo zaino e spunta la checklist prima di partire.</p>
-        <a class="btn" href="/viaggi.html">Vai ai viaggi <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-      </section>
-    </div>
+      </div>
+      <p class="totali-home" id="totali" hidden></p>
+    </section>
   </main>
 
+  <!-- Leaflet come script "classico" (crea la variabile globale L), prima del modulo della pagina -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script type="module" src="/js/index.js"></script>
 </body>
 </html>

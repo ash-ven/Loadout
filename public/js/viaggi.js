@@ -102,3 +102,5 @@ if (daModificare) {
   if (v) formUscita.modifica(v, { alChiudere: () => { location.href = `/scheda-viaggio.html?id=${daModificare}`; } });
   else location.href = "/viaggi.html"; // id sbagliato o viaggio non mio: torno alla lista
 }
+// C8 (revisione UX 2): dalla Home vuota, «Nuovo viaggio» porta qui con ?nuovo=1 e apre subito il form
+if (new URLSearchParams(location.search).has("nuovo")) formUscita.nuova();
