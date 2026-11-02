@@ -32,6 +32,7 @@ const disegno = attivaDisegnoMappa({
   legenda: document.querySelector(".legenda"),          // B11
   notaAnello: document.querySelector("#nota-anello"),   // B11
   sceltaProfilo: document.querySelector("#scelta-profilo"), // «Sentieri / Più breve»
+  elencoTappe: document.querySelector("#elenco-tappe"),     // l'ordine dei punti, con ↑ ↓ ✕
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },
@@ -178,6 +179,31 @@ const navigazione = attivaNavigazione({
   ottieniLinea: () => disegno.traccia()?.linea ?? null,
   blocca: (si) => disegno.blocca(si),
   suProgresso: (metri) => profilo.posizione(metri), // il pallino blu anche sul profilo
+});
+
+// --- Tappa da coordinate ---
+const tappaLat = document.querySelector("#tappa-lat");
+const tappaLon = document.querySelector("#tappa-lon");
+const erroreTappa = document.querySelector("#errore-tappa");
+uniformaDecimali([tappaLat, tappaLon]); // C1: sempre la virgola
+// Incollare "44.1934, 10.7012" (o "44,1934 10,7012") nel primo campo: un campo numerico rifiuterebbe il testo,
+// quindi lo leggiamo noi, prendiamo i due numeri e riempiamo tutti e due i campi
+tappaLat.addEventListener("paste", (e) => {
+  const numeri = (e.clipboardData.getData("text").match(/-?\d+(?:[.,]\d+)?/g) ?? []).map((n) => Number(n.replace(",", ".")));
+  if (numeri.length < 2) return; // un numero solo: lo incolla il browser, come sempre
+  e.preventDefault();
+  [tappaLat.value, tappaLon.value] = numeri;
+});
+document.querySelector("#aggiungi-tappa").addEventListener("click", () => {
+  const lat = tappaLat.value === "" ? NaN : Number(tappaLat.value);
+  const lon = tappaLon.value === "" ? NaN : Number(tappaLon.value);
+  const problema = !Number.isFinite(lat) || lat < -90 || lat > 90 ? "La latitudine va da −90 a 90 (in Italia circa 36–47, es. 44,19)"
+    : !Number.isFinite(lon) || lon < -180 || lon > 180 ? "La longitudine va da −180 a 180 (in Italia circa 6–19, es. 10,70)"
+    : disegno.aggiungiTappa(lat, lon);
+  erroreTappa.hidden = !problema;
+  if (problema) { erroreTappa.textContent = problema; return; }
+  tappaLat.value = "";
+  tappaLon.value = "";
 });
 
 // --- Senza rete: un avviso sopra la mappa (online/offline sono eventi del browser) ---

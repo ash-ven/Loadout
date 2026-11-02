@@ -9,7 +9,7 @@
 import { api } from "./api.js";
 import { discesaDellaTraccia } from "./navigazione-calcoli.js";
 import { proponi } from "./post-it.js";
-import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, disegnaFrecce, eUnAnello, scriviStato } from "./mappa-base.js";
+import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, disegnaFrecce, eUnAnello, metriTra, scriviStato } from "./mappa-base.js";
 
 const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 
@@ -18,8 +18,9 @@ const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 //                  oppure con null quando non c'è un percorso (A2: la pagina li mostra sotto i valori scritti a mano)
 // legenda e notaAnello (B11, facoltativi): la legenda mostra solo quello che c'è, la nota spiega l'anello con una sola tappa
 // sceltaProfilo (facoltativo): il gruppo di pulsanti «Sentieri / Più breve» (data-profilo="sentieri" | "breve")
+// elencoTappe (facoltativo): la lista <ol> dove mostrare i punti in ordine, con ↑ ↓ per cambiarlo e ✕ per toglierne uno
 export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate,
-                                     legenda = null, notaAnello = null, sceltaProfilo = null, suModifica = () => {}, suCalcolo = () => {} }) {
+                                     legenda = null, notaAnello = null, sceltaProfilo = null, elencoTappe = null, suModifica = () => {}, suCalcolo = () => {} }) {
   let mappa = null;            // nasce con apri()
   let livelloPercorso = null;  // le linee: si svuota e si ridisegna
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
@@ -151,6 +152,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     conteggio.classList.toggle("in-evidenza", n >= 2 && interruttoreAnello.checked);
     if (notaAnello) notaAnello.hidden = !andataRitorno;
     aggiornaLegenda();
+    aggiornaElenco();
   }
 
   // B11: la legenda mostra solo i tipi di puntina presenti (e "Sui sentieri" se c'è il percorso). Senza punti, tutto: fa da guida
@@ -162,6 +164,59 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       voce.hidden = punti.length === 0 ? voce.dataset.tipo === "anello" : !presenti.has(voce.dataset.tipo);
     });
   }
+
+  // L'elenco dei punti in ordine: «Partenza», «Tappa 2», «Arrivo»… con le coordinate e i pulsanti.
+  // ↑ e ↓ scambiano un punto con quello prima o dopo (il ruolo segue la posizione: chi va in fondo diventa l'arrivo),
+  // ✕ toglie proprio quel punto. Costruito con createElement e textContent: niente innerHTML.
+  const NOMI = { partenza: "Partenza", anello: "Partenza e arrivo", arrivo: "Arrivo" };
+  function aggiornaElenco() {
+    if (!elencoTappe) return;
+    const coord = (n) => n.toLocaleString("it-IT", { maximumFractionDigits: 5 });
+    elencoTappe.replaceChildren(...punti.map((p, i) => {
+      const tipo = tipoDelPunto(i, punti.length, interruttoreAnello.checked);
+      const riga = document.createElement("li");
+      riga.dataset.indice = i;
+      const nome = document.createElement("span");
+      nome.className = "tappa-nome";
+      nome.textContent = NOMI[tipo] ?? `Tappa ${i}`;
+      const dove = document.createElement("span");
+      dove.className = "muto tappa-coordinate-testo";
+      dove.textContent = `${coord(p.getLatLng().lat)} · ${coord(p.getLatLng().lng)}`;
+      const bottone = (azione, testo, etichetta, disattivo) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "tappa-bottone";
+        b.dataset.azione = azione;
+        b.textContent = testo;
+        b.setAttribute("aria-label", `${etichetta}: ${nome.textContent}`);
+        b.title = etichetta;
+        b.disabled = disattivo;
+        return b;
+      };
+      riga.append(nome, dove,
+        bottone("su", "↑", "Sposta prima", i === 0),
+        bottone("giu", "↓", "Sposta dopo", i === punti.length - 1),
+        bottone("togli", "✕", "Togli questo punto", false));
+      return riga;
+    }));
+    elencoTappe.hidden = punti.length < 2; // con un punto solo non c'è niente da riordinare
+  }
+  elencoTappe?.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-azione]");
+    if (!b || bloccata) return;
+    const i = Number(b.closest("li").dataset.indice);
+    if (b.dataset.azione === "togli") {
+      mappa.removeLayer(punti[i]);
+      punti.splice(i, 1);
+    } else {
+      const j = b.dataset.azione === "su" ? i - 1 : i + 1;
+      [punti[i], punti[j]] = [punti[j], punti[i]]; // scambio
+    }
+    ridisegna(); // icone, coordinate di partenza e arrivo, percorso: tutto rifatto con il nuovo ordine
+    // il cursore resta sullo stesso pulsante della riga spostata (comodo da tastiera)
+    const nuovo = b.dataset.azione === "su" ? i - 1 : b.dataset.azione === "giu" ? i + 1 : null;
+    if (nuovo != null) elencoTappe.querySelector(`li[data-indice="${nuovo}"] [data-azione="${b.dataset.azione}"]`)?.focus();
+  });
 
   // Le coordinate di partenza e arrivo le propone la mappa (post-it "mappa"): con l'anello, arrivo = partenza.
   // Il NOME del luogo non si tocca mai: se sposti di poco la partenza, resta quello che hai scelto.
@@ -279,6 +334,32 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     apri,
     // La mappa di Leaflet (la usa la navigazione per disegnare la tua posizione); null se non è ancora nata
     mappaLeaflet: () => mappa,
+    // Una tappa da coordinate scritte (o incollate). Va nel punto del giro dove ALLUNGA MENO il percorso:
+    // per ogni posto possibile (tra due punti vicini) calcoliamo quanto si allunga la strada in linea d'aria,
+    //   allungamento = A→tappa + tappa→B − A→B
+    // e scegliamo il più piccolo. Partenza e arrivo restano dove sono (nell'anello si può andare anche dopo l'ultima tappa).
+    // Con 0 o 1 punti la tappa diventa la partenza o il secondo punto. → null se va bene, altrimenti il motivo
+    aggiungiTappa(lat, lon) {
+      if (!mappa) return "La mappa non è ancora pronta";
+      if (bloccata) return "Durante la navigazione il percorso non si modifica";
+      const nuova = L.latLng(lat, lon);
+      const giro = puntiDelGiro().map((p) => [p.lat, p.lng]);
+      const qui = [lat, lon];
+      let posto = punti.length;                          // 0 o 1 punti: in fondo
+      if (punti.length >= 2) {
+        const ultimoPosto = interruttoreAnello.checked ? punti.length : punti.length - 1; // senza anello l'arrivo resta ultimo
+        let minimo = Infinity;
+        for (let i = 1; i <= ultimoPosto; i++) {
+          const a = giro[i - 1], b = giro[i];
+          const allungamento = metriTra(a, qui) + metriTra(qui, b) - metriTra(a, b);
+          if (allungamento < minimo) { minimo = allungamento; posto = i; }
+        }
+      }
+      punti.splice(posto, 0, nuovaPuntina(nuova));
+      mappa.panTo(nuova);
+      ridisegna();
+      return null;
+    },
     // Navigazione: blocca (true) o sblocca (false) le modifiche al percorso
     blocca(si) {
       bloccata = si;

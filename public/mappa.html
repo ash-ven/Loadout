@@ -93,6 +93,21 @@
           <button type="button" class="pericolo btn-piccolo" id="ricomincia">Ricomincia</button>
         </div>
       </div>
+      <!-- I punti in ordine, con ↑ ↓ per cambiarlo e ✕ per toglierne uno (lo riempie mappa-disegno.js) -->
+      <ol class="elenco-tappe" id="elenco-tappe" aria-label="Ordine dei punti del percorso" hidden></ol>
+      <!-- Una tappa da coordinate (richiesta di Asiha): si apre con un tocco; incollando «44.1934, 10.7012» nel primo campo
+           si riempiono tutti e due. La tappa va dove allunga meno il percorso (mappa-disegno.js, aggiungiTappa) -->
+      <details class="tappa-coordinate" id="tappa-coordinate">
+        <summary>Aggiungi una tappa da coordinate</summary>
+        <div class="riga-tappa">
+          <label>Latitudine <input id="tappa-lat" type="number" min="-90" max="90" step="any" placeholder="es. 44,1934"></label>
+          <label>Longitudine <input id="tappa-lon" type="number" min="-180" max="180" step="any" placeholder="es. 10,7012"></label>
+          <button type="button" class="btn-piccolo" id="aggiungi-tappa">Aggiungi tappa</button>
+        </div>
+        <p class="muto">Puoi incollare le due coordinate insieme nel primo campo (es. «44.1934, 10.7012» copiate da Google Maps).
+          La tappa va nel punto del percorso dove lo allunga di meno; partenza e arrivo restano gli stessi.</p>
+        <p class="errore" id="errore-tappa" hidden></p>
+      </details>
       <p class="muto nota-anello" id="nota-anello" hidden>Con una sola tappa si torna indietro dalla stessa strada: aggiungi un'altra tappa per fare un anello.</p>
       <p id="stato-mappa" class="stato" hidden></p>
 

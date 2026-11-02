@@ -784,3 +784,24 @@ button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(sa
 .profilo-cursore-punto { fill: var(--senape); stroke: var(--su-senape); stroke-width: 2; }
 .profilo-io-punto { fill: #1d6fd8; stroke: #fff; stroke-width: 3; } /* "sei qui": lo stesso blu del pallino GPS sulla mappa */
 .profilo-riepilogo { margin: .45rem 0 0; font-size: .86rem; }
+
+/* Tappa da coordinate (sotto gli strumenti della mappa) */
+.tappa-coordinate { margin-top: .8rem; }
+.tappa-coordinate summary { cursor: pointer; font-weight: 600; color: var(--muschio); }
+.riga-tappa { display: grid; grid-template-columns: 1fr 1fr auto; gap: .5rem; align-items: end; margin-top: .6rem; }
+.tappa-coordinate .muto { margin: .4rem 0 0; font-size: .84rem; }
+@media (max-width: 600px) { .riga-tappa { grid-template-columns: 1fr 1fr; } .riga-tappa button { grid-column: 1 / -1; } }
+.in-navigazione .tappa-coordinate { display: none; }
+
+/* Ordine dei punti sotto la mappa: nome, coordinate, ↑ ↓ ✕ */
+.elenco-tappe { list-style: none; margin: .8rem 0 0; padding: 0; border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); overflow: hidden; }
+.elenco-tappe li { display: flex; align-items: center; gap: .5rem; padding: .3rem .4rem .3rem .8rem; border-top: 1px solid var(--bordo); background: var(--lana-chiara); }
+.elenco-tappe li:first-child { border-top: 0; }
+.tappa-nome { font-weight: 600; color: var(--testo); min-width: 7.5rem; }
+.tappa-coordinate-testo { flex: 1; min-width: 0; font-size: .82rem; overflow-wrap: anywhere; }
+button.tappa-bottone { width: 44px; height: 44px; padding: 0; border-radius: 50%; background: none; color: var(--muschio); font-size: 1.1rem; }
+button.tappa-bottone:hover { background: var(--salvia-chiaro); }
+button.tappa-bottone:disabled { opacity: .3; cursor: default; background: none; }
+button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
+.in-navigazione .elenco-tappe { display: none; }
+@media (max-width: 600px) { .tappa-nome { min-width: 0; } .tappa-coordinate-testo { display: none; } }
