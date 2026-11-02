@@ -123,6 +123,7 @@ elKit.addEventListener("click", async (e) => {
 });
 
 function renderZaino() {
+  bottoneSvuota.hidden = !zaino.oggetti.some((o) => o.inserito); // C6: senza spunte non serve
   const p = zaino.peso;
 
   // Peso e barra (US5 CA2: kg con 2 decimali, aggiornati senza ricaricare)
@@ -244,13 +245,18 @@ bottoneGenera.addEventListener("click", async () => {
 });
 
 // --- Svuota checklist (US5 CA4) ---
+// C6 (revisione UX 2): niente finestra di conferma; ci ricordiamo cosa era spuntato e per qualche secondo si può annullare
 bottoneSvuota.addEventListener("click", async () => {
-  if (!confirm("Togliere la spunta a tutti gli oggetti dello zaino?")) return;
+  const spuntati = zaino.oggetti.filter((o) => o.inserito).map((o) => o.oggetto_id);
   nascondiErrore();
   try {
     const { svuotati } = await api(`/api/viaggi/${id}/zaino/svuota`, { method: "POST" });
     await caricaZaino();
-    mostraInfo(`Spunte tolte: ${svuotati} ${svuotati === 1 ? "oggetto" : "oggetti"} da rimettere nello zaino. Gli oggetti restano nella lista.`);
+    mostraAnnulla(`Spunte tolte: ${svuotati} ${svuotati === 1 ? "oggetto" : "oggetti"}`, async () => {
+      // rimettiamo la spunta a quelli che l'avevano (una richiesta per oggetto, tutte insieme)
+      await Promise.all(spuntati.map((oggettoId) =>
+        api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "PATCH", body: { inserito: true } })));
+    });
   } catch (err) {
     mostraErrore(err.message);
   }
@@ -308,9 +314,15 @@ elChecklist.addEventListener("click", async (e) => {
       const indossato = bottoneIndosso.getAttribute("aria-pressed") !== "true";
       await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "PATCH", body: { indossato } });
     } else {
-      const tolto = zaino.oggetti.find((o) => String(o.oggetto_id) === String(oggettoId)); // per "Annulla"
+      const o = zaino.oggetti.find((x) => String(x.oggetto_id) === String(oggettoId)); // com'era, per "Annulla"
       await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "DELETE" });
-      if (tolto) mostraAnnulla(tolto);
+      if (o) mostraAnnulla(`Hai tolto «${o.nome}» dallo zaino`, async () => {
+        // Lo rimettiamo com'era: stessa quantità, e se serve la spunta e "lo indosso"
+        await api(`/api/viaggi/${id}/zaino`, { method: "POST", body: { oggetto_id: o.oggetto_id, quantita: o.quantita } });
+        if (o.inserito || o.indossato) {
+          await api(`/api/viaggi/${id}/zaino/${o.oggetto_id}`, { method: "PATCH", body: { inserito: o.inserito, ...(o.indossato ? { indossato: true } : {}) } });
+        }
+      });
     }
     await caricaZaino();
   } catch (err) {
@@ -342,34 +354,32 @@ formAggiungi.addEventListener("submit", async (e) => {
   }
 });
 
-// --- A7 (revisione UX 2): "Togli" resta un tocco solo, ma per qualche secondo si può annullare ---
+// --- A7 (revisione UX 2): "Togli" resta un tocco solo, ma per qualche secondo si può annullare.
+//     C6: lo stesso riquadro serve anche per "Togli tutte le spunte". Chi lo chiama passa il testo
+//     e la funzione che rimette le cose com'erano (azione). ---
 const boxAnnulla = document.querySelector("#annulla");
 const testoAnnulla = document.querySelector("#testo-annulla");
 const bottoneAnnulla = document.querySelector("#bottone-annulla");
-let daRimettere = null;  // l'oggetto appena tolto, com'era (quantità, spunta, indossato)
+let azioneAnnulla = null; // la funzione che disfa l'ultima operazione
 let timerAnnulla = null;
 
-function mostraAnnulla(oggetto) {
-  daRimettere = oggetto;
-  testoAnnulla.textContent = `Hai tolto «${oggetto.nome}» dallo zaino`;
+function mostraAnnulla(testo, azione) {
+  azioneAnnulla = azione;
+  testoAnnulla.textContent = testo;
   boxAnnulla.hidden = false;
   clearTimeout(timerAnnulla);
-  timerAnnulla = setTimeout(() => { boxAnnulla.hidden = true; daRimettere = null; }, 7000); // 7 secondi per ripensarci
+  timerAnnulla = setTimeout(() => { boxAnnulla.hidden = true; azioneAnnulla = null; }, 7000); // 7 secondi per ripensarci
 }
 
 bottoneAnnulla.addEventListener("click", async () => {
-  const o = daRimettere;
-  if (!o) return;
+  const azione = azioneAnnulla;
+  if (!azione) return;
   clearTimeout(timerAnnulla);
   boxAnnulla.hidden = true;
-  daRimettere = null;
+  azioneAnnulla = null;
   nascondiErrore();
   try {
-    // Lo rimettiamo com'era: stessa quantità, e se serve la spunta e "lo indosso"
-    await api(`/api/viaggi/${id}/zaino`, { method: "POST", body: { oggetto_id: o.oggetto_id, quantita: o.quantita } });
-    if (o.inserito || o.indossato) {
-      await api(`/api/viaggi/${id}/zaino/${o.oggetto_id}`, { method: "PATCH", body: { inserito: o.inserito, ...(o.indossato ? { indossato: true } : {}) } });
-    }
+    await azione();
     await caricaZaino();
   } catch (err) {
     mostraErrore(err.message);

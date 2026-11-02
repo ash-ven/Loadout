@@ -47,7 +47,6 @@
             <h2><img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Il tuo zaino</h2>
             <div class="azioni">
               <button type="button" id="genera">Genera zaino</button>
-              <button type="button" class="secondario" id="svuota">Togli tutte le spunte</button>
             </div>
           </div>
           <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti
@@ -73,6 +72,8 @@
         <!-- La checklist, divisa per categoria come l'armadio: la riempie zaino.js.
              A6 (revisione UX 2): subito dopo la scheda dello zaino, così sul telefono non si scorrono quattro schermate -->
         <div class="gruppi una-colonna" id="checklist"></div>
+        <!-- C6 (revisione UX 2): "Togli tutte le spunte" in fondo alla lista, lontano da "Genera zaino" (compare solo se c'è almeno una spunta) -->
+        <p class="riga-svuota"><button type="button" class="link-bottone" id="svuota" hidden>Togli tutte le spunte</button></p>
 
         <!-- B5: "Per questa uscita": l'attrezzatura che serve e dove si trova.
              A6: in fondo, chiuso, con il riassunto nel titolo; dentro prima quello che manca, poi (a richiesta) quello già nello zaino -->
@@ -93,7 +94,7 @@
     </div>
   </main>
 
-  <!-- A7 (revisione UX 2): dopo "Togli", per qualche secondo, "Annulla" (in basso, sopra il menu del telefono) -->
+  <!-- A7 e C6 (revisione UX 2): dopo "Togli" o "Togli tutte le spunte", per qualche secondo, "Annulla" (in basso, sopra il menu del telefono) -->
   <div class="annulla" id="annulla" role="status" hidden>
     <span id="testo-annulla"></span>
     <button type="button" id="bottone-annulla">Annulla</button>

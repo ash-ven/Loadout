@@ -655,3 +655,7 @@ button.etichetta-piu { cursor: pointer; font: inherit; font-weight: 600; backgro
 
 /* --- B11 (revisione UX 2): la nota sotto la mappa per l'anello con una sola tappa --- */
 .nota-anello { margin: .6rem 0 0; font-size: .85rem; }
+
+/* C6 (revisione UX 2): "Togli tutte le spunte" in fondo alla checklist, discreto ma comodo da toccare */
+.riga-svuota { margin: .25rem 0 1rem; text-align: center; }
+.riga-svuota button.link-bottone { min-height: 44px; padding: 0 .5rem; }
