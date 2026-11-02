@@ -1,6 +1,7 @@
 // =====================================================================
 //  PROFILO ALTIMETRICO: il disegno delle salite e delle discese sotto la mappa (come nelle app di trekking).
-//  In orizzontale i km, in verticale la quota. Area colorata dal verde (in basso) al senape (in alto),
+//  In orizzontale i km, in verticale la quota. Area colorata dal salvia (in basso) al senape (in alto),
+//  solo con i colori dell'app (le variabili di style.css, usate dalle classi qui sotto),
 //  pallini sulle tappe, quota più alta e più bassa a sinistra, km totali a destra.
 //  Passando il dito o il mouse: km e quota di quel punto, e il punto si accende anche sulla mappa (suPunto).
 //  Disegnato a mano in SVG (niente librerie). Le posizioni sono ATTRIBUTI dell'SVG, non style="": la CSP è contenta.
@@ -10,7 +11,7 @@ import { preparaTraccia, aggancia } from "./navigazione-calcoli.js";
 const ALTO = 170;                                  // altezza del disegno in pixel
 const SOPRA = 22, SOTTO = 22;                      // spazio per le scritte sopra e sotto
 const nf = (n) => Math.round(n).toLocaleString("it-IT", { useGrouping: "always" });
-const kmTesto = (m) => `${(m / 1000).toLocaleString("it-IT", { minimumFractionDigits: 1, maximumFractionDigits: 2 })} km`;
+const kmTesto = (m) => `${(m / 1000).toLocaleString("it-IT", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`; // un decimale, come il campo Lunghezza
 
 // contenitore: il <div> dove disegnare; riepilogo: il <p> con i numeri sotto; suPunto([lat, lon] | null)
 export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () => {} }) {
@@ -52,8 +53,8 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
            aria-label="Profilo altimetrico: da ${nf(quote[0])} m a ${nf(quote.at(-1))} m, punto più alto ${nf(max)} m, ${kmTesto(prep.totale)}">
         <defs>
           <linearGradient id="profilo-colore" x1="0" y1="${y(max)}" x2="0" y2="${base}" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#c8962b" stop-opacity=".85"/>
-            <stop offset="1" stop-color="#5f8463" stop-opacity=".8"/>
+            <stop offset="0" class="profilo-colore-alto"/>
+            <stop offset="1" class="profilo-colore-basso"/>
           </linearGradient>
         </defs>
         <line x1="0" y1="${y(max)}" x2="${largo}" y2="${y(max)}" class="profilo-griglia"/>
@@ -75,13 +76,12 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     segnaIo();
   }
 
+  // D+ e D− qui NON li ricalcoliamo: sono già nelle caselle sopra (calcolati da BRouter, che filtra i piccoli saliscendi);
+  // ricalcolati dai punti della linea verrebbero un po' diversi, e due numeri diversi confondono
   function scriviRiepilogo() {
-    const { prep, quote, min, max } = dati;
-    const salita = prep.salita.at(-1);
-    let discesa = 0;
-    for (let i = 1; i < quote.length; i++) discesa += Math.max(0, quote[i - 1] - quote[i]);
-    riepilogo.textContent = `Partenza ${nf(quote[0])} m · Arrivo ${nf(quote.at(-1))} m · Punto più alto ${nf(max)} m · ` +
-      `Punto più basso ${nf(min)} m · Salite ${nf(salita)} m · Discese ${nf(discesa)} m · ${kmTesto(prep.totale)}`;
+    const { quote, min, max } = dati;
+    riepilogo.textContent = `Partenza ${nf(quote[0])} m · Arrivo ${nf(quote.at(-1))} m · ` +
+      `Punto più alto ${nf(max)} m · Punto più basso ${nf(min)} m`;
   }
 
   // La quota a una certa distanza dalla partenza (tra due punti: in proporzione)

@@ -767,18 +767,20 @@ button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(sa
   .in-navigazione .mappa { height: 58vh; }
 }
 
-/* Profilo altimetrico sotto la mappa */
+/* Profilo altimetrico sotto la mappa: solo i colori dell'app (variabili qui sopra) */
 .profilo-altimetrico { margin-top: 1rem; }
 .profilo-altimetrico h3 { margin: 0 0 .4rem; font-size: 1rem; }
 .profilo-grafico { position: relative; width: 100%; touch-action: pan-y; cursor: crosshair; } /* il dito in orizzontale guarda il profilo, in verticale scorre la pagina */
 .profilo-grafico svg { display: block; }
+.profilo-colore-alto { stop-color: var(--senape); stop-opacity: .85; }
+.profilo-colore-basso { stop-color: var(--salvia); stop-opacity: .8; }
 .profilo-griglia { stroke: var(--bordo); stroke-width: 1; stroke-dasharray: 3 4; }
-.profilo-linea { fill: none; stroke: #b07f1c; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
-.profilo-tappa { fill: #e8c14a; stroke: #2b1f05; stroke-width: 2; }
-.profilo-vetta { fill: #2b1f05; }
+.profilo-linea { fill: none; stroke: var(--senape-scuro); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.profilo-tappa { fill: var(--lana); stroke: var(--muschio); stroke-width: 2.5; }      /* come le puntine delle tappe sulla mappa */
+.profilo-vetta { fill: var(--muschio); }
 .profilo-testo { font-size: 12px; font-weight: 700; fill: var(--testo); paint-order: stroke; stroke: var(--lana); stroke-width: 3px; }
 .profilo-km { font-size: 13px; }
-.profilo-cursore-linea { stroke: var(--testo); stroke-width: 1; stroke-dasharray: 2 3; }
-.profilo-cursore-punto { fill: #e8c14a; stroke: #2b1f05; stroke-width: 2; }
-.profilo-io-punto { fill: #1d6fd8; stroke: #fff; stroke-width: 3; }
+.profilo-cursore-linea { stroke: var(--muschio); stroke-width: 1; stroke-dasharray: 2 3; }
+.profilo-cursore-punto { fill: var(--senape); stroke: var(--su-senape); stroke-width: 2; }
+.profilo-io-punto { fill: #1d6fd8; stroke: #fff; stroke-width: 3; } /* "sei qui": lo stesso blu del pallino GPS sulla mappa */
 .profilo-riepilogo { margin: .45rem 0 0; font-size: .86rem; }

@@ -153,7 +153,8 @@ function accendiPunto(punto) {
   if (!mappa) return;
   if (!punto) { puntoSullaMappa?.remove(); puntoSullaMappa = null; return; }
   if (!puntoSullaMappa) {
-    puntoSullaMappa = L.circleMarker(punto, { radius: 7, color: "#2b1f05", weight: 2, fillColor: "#e8c14a", fillOpacity: 1, interactive: false }).addTo(mappa);
+    // senape e su-senape, come il cursore del profilo
+    puntoSullaMappa = L.circleMarker(punto, { radius: 7, color: "#2b1f05", weight: 2, fillColor: "#c8962b", fillOpacity: 1, interactive: false }).addTo(mappa);
   } else puntoSullaMappa.setLatLng(punto);
 }
 const profilo = attivaProfilo({

@@ -21,7 +21,7 @@ const LEAFLET = "https://unpkg.com/leaflet@1.9.4/dist/leaflet";
 const DA_SALVARE_SUBITO = [
   "/mappa.html", "/css/style.css", "/img/favicon.svg", "/img/logo-topbar.svg", "/img/icone/mappe.svg",
   "/js/api.js", "/js/menu.js", "/js/mappa.js", "/js/mappa-disegno.js", "/js/mappa-base.js", "/js/post-it.js",
-  "/js/controlli.js", "/js/errori-campi.js", "/js/gpx.js", "/js/navigazione.js", "/js/navigazione-calcoli.js",
+  "/js/controlli.js", "/js/errori-campi.js", "/js/gpx.js", "/js/navigazione.js", "/js/navigazione-calcoli.js", "/js/profilo-altimetrico.js",
   `${LEAFLET}.css`, `${LEAFLET}.js`,
 ];
 
