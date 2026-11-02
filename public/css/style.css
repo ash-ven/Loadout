@@ -582,3 +582,23 @@ details.kit-dettagli[open] > summary { margin-bottom: .75rem; }
 details.kit-gia { margin-top: .75rem; border: 0; padding: 0; background: none; }
 details.kit-gia > summary { font-weight: 600; color: var(--muschio); font-size: .9rem; }
 @media (max-width: 600px) { details.kit-dettagli { padding: .9rem; } }
+
+/* --- A7 (revisione UX 2): righe dello zaino più facili da toccare --- */
+/* Casella + icona + nome + peso = un'unica zona che spunta (il <label>), allargata fino al bordo sinistro della riga */
+.riga-spunta { flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: .8rem;
+               margin: -.6rem 0 -.6rem -.9rem; padding: .6rem 0 .6rem .9rem;
+               font-size: inherit; color: inherit; font-weight: inherit; cursor: pointer; }
+.riga-zaino .spunta { width: 1.5rem; height: 1.5rem; }                       /* 24 px */
+/* "Lo indosso" e "Togli" a 44 px (la misura minima consigliata per il dito), "Togli" un po' staccato dalla quantità */
+button.togli, button.indosso, .indosso-vuoto { width: 44px; height: 44px; }
+button.togli { margin-left: .2rem; }
+.riga-zaino { gap: .5rem; }
+/* "Annulla" dopo aver tolto un oggetto: in basso, sopra il menu del telefono */
+.annulla { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 30;
+           display: flex; align-items: center; gap: .75rem; width: max-content; max-width: calc(100% - 2rem);
+           padding: .35rem .5rem .35rem 1rem; border-radius: 14px; background: var(--muschio-scuro); color: #f6efdf;
+           box-shadow: 0 6px 24px rgba(35, 58, 45, .25); font-size: .92rem; }
+.annulla button { min-height: 44px; padding: .3rem .7rem; background: none; border: 0; color: var(--ocra-chiaro); font-weight: 700;
+                  text-decoration: underline; text-underline-offset: 3px; }
+.annulla button:hover, .annulla button:focus-visible { background: rgba(246, 239, 223, .12); }
+@media (min-width: 761px) { .annulla { bottom: 1.5rem; } }

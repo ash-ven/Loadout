@@ -172,15 +172,19 @@ function renderZaino() {
 
 // Una riga della checklist. Qui la riga NON è un pulsante: dentro ci sono già dei controlli
 // (spunta, quantità, togli), e un controllo non può stare dentro un altro.
+// A7 (revisione UX 2): casella, icona, nome e peso stanno dentro un <label>: toccando il nome si spunta
+// (il label "gira" il tocco alla sua casella), e la zona da toccare diventa tutta la parte sinistra della riga.
 function rigaZaino(o) {
   return `
     <div class="riga riga-zaino ${o.inserito ? "inserito" : ""} ${o.indossato ? "addosso" : ""}" data-id="${o.oggetto_id}">
-      <input type="checkbox" class="spunta" ${o.inserito ? "checked" : ""} aria-label="Inserito nello zaino: ${esc(o.nome)}">
-      <span class="riquadro-icona"><img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22"></span>
-      <span class="riga-testo">
-        <span class="riga-nome">${esc(o.nome)}</span>
-        <span class="riga-nota">${o.marchio ? `${esc(o.marchio)} · ` : ""}${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}${o.indossato ? " · addosso" : ""}</span>
-      </span>
+      <label class="riga-spunta">
+        <input type="checkbox" class="spunta" ${o.inserito ? "checked" : ""}>
+        <span class="riquadro-icona"><img src="/img/icone/categorie/${o.categoria}.svg" alt="" width="22" height="22"></span>
+        <span class="riga-testo">
+          <span class="riga-nome">${esc(o.nome)}</span>
+          <span class="riga-nota">${o.marchio ? `${esc(o.marchio)} · ` : ""}${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}${o.indossato ? " · addosso" : ""}</span>
+        </span>
+      </label>
       ${o.categoria === "abbigliamento" ? pulsanteIndosso(o) : '<span class="indosso-vuoto"></span>'}
       <!-- max = pezzi che possiedi (B2): le frecce del campo non vanno oltre -->
       <input type="number" class="quantita" min="1" max="${o.quantita_posseduta}" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">
@@ -297,7 +301,9 @@ elChecklist.addEventListener("click", async (e) => {
       const indossato = bottoneIndosso.getAttribute("aria-pressed") !== "true";
       await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "PATCH", body: { indossato } });
     } else {
+      const tolto = zaino.oggetti.find((o) => String(o.oggetto_id) === String(oggettoId)); // per "Annulla"
       await api(`/api/viaggi/${id}/zaino/${oggettoId}`, { method: "DELETE" });
+      if (tolto) mostraAnnulla(tolto);
     }
     await caricaZaino();
   } catch (err) {
@@ -326,6 +332,40 @@ formAggiungi.addEventListener("submit", async (e) => {
     await caricaZaino();
   } catch (err) {
     mostraErrore(err.message); // es. "Questo oggetto è già nello zaino" (409)
+  }
+});
+
+// --- A7 (revisione UX 2): "Togli" resta un tocco solo, ma per qualche secondo si può annullare ---
+const boxAnnulla = document.querySelector("#annulla");
+const testoAnnulla = document.querySelector("#testo-annulla");
+const bottoneAnnulla = document.querySelector("#bottone-annulla");
+let daRimettere = null;  // l'oggetto appena tolto, com'era (quantità, spunta, indossato)
+let timerAnnulla = null;
+
+function mostraAnnulla(oggetto) {
+  daRimettere = oggetto;
+  testoAnnulla.textContent = `Hai tolto «${oggetto.nome}» dallo zaino`;
+  boxAnnulla.hidden = false;
+  clearTimeout(timerAnnulla);
+  timerAnnulla = setTimeout(() => { boxAnnulla.hidden = true; daRimettere = null; }, 7000); // 7 secondi per ripensarci
+}
+
+bottoneAnnulla.addEventListener("click", async () => {
+  const o = daRimettere;
+  if (!o) return;
+  clearTimeout(timerAnnulla);
+  boxAnnulla.hidden = true;
+  daRimettere = null;
+  nascondiErrore();
+  try {
+    // Lo rimettiamo com'era: stessa quantità, e se serve la spunta e "lo indosso"
+    await api(`/api/viaggi/${id}/zaino`, { method: "POST", body: { oggetto_id: o.oggetto_id, quantita: o.quantita } });
+    if (o.inserito || o.indossato) {
+      await api(`/api/viaggi/${id}/zaino/${o.oggetto_id}`, { method: "PATCH", body: { inserito: o.inserito, ...(o.indossato ? { indossato: true } : {}) } });
+    }
+    await caricaZaino();
+  } catch (err) {
+    mostraErrore(err.message);
   }
 });
 
