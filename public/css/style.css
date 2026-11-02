@@ -476,6 +476,7 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 /* z-index: 0 tiene i livelli di Leaflet (fino a 1000) dentro la mappa: senza, coprirebbero il menu in basso sul telefono */
 .mappa { position: relative; z-index: 0; height: 480px; cursor: crosshair; background: var(--crema); --filtro: .7; }
 .mappa.sola-lettura { cursor: grab; }
+.mappa.senza-filtro { --filtro: 0; } /* Home sul Satellite: le foto senza il filtro caldo (scelta di Asiha) */
 @media (max-width: 600px) { .mappa { height: max(340px, 60vh); } }
 
 /* Il filtro "Loadout" SOLO sulle tessere: linee e puntine stanno in altri livelli ("pane") e restano vive.
@@ -782,7 +783,7 @@ button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(sa
 .profilo-km { font-size: 13px; }
 .profilo-cursore-linea { stroke: var(--muschio); stroke-width: 1; stroke-dasharray: 2 3; }
 .profilo-cursore-punto { fill: var(--senape); stroke: var(--su-senape); stroke-width: 2; }
-.profilo-io-punto { fill: #1d6fd8; stroke: #fff; stroke-width: 3; } /* "sei qui": lo stesso blu del pallino GPS sulla mappa */
+.profilo-io-punto { fill: var(--senape); stroke: var(--lana); stroke-width: 3; } /* "sei qui": come il pallino GPS sulla mappa */
 .profilo-riepilogo { margin: .45rem 0 0; font-size: .86rem; }
 
 /* Tappa da coordinate (sotto gli strumenti della mappa) */
@@ -805,3 +806,4 @@ button.tappa-bottone:disabled { opacity: .3; cursor: default; background: none; 
 button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 .in-navigazione .elenco-tappe { display: none; }
 @media (max-width: 600px) { .tappa-nome { min-width: 0; } .tappa-coordinate-testo { display: none; } }
+.data-consenso { margin: -.3rem 0 .2rem 1.9rem; font-size: .82rem; }

@@ -62,14 +62,7 @@
       </div>
       <p class="muto">Tutti facoltativi, li vedi solo tu e si salvano da soli. Contatto, note mediche e tessera compaiono nel riquadro Emergenza di ogni viaggio; la sensibilità al freddo adatta i consigli sul vestiario.</p>
       <form id="form-dati" novalidate>
-        <label>Esperienza in montagna
-          <select name="livello_esperienza">
-            <option value="">Non indicata</option>
-            <option value="principiante">Principiante</option>
-            <option value="intermedio">Intermedio</option>
-            <option value="esperto">Esperto</option>
-          </select>
-        </label>
+        <!-- "Esperienza in montagna" tolta (scelta di Asiha): nessuna funzione dell'app la usava (minimizzazione GDPR) -->
         <label>Come senti il freddo
           <select name="sensibilita_freddo">
             <option value="">Non indicato</option>
@@ -89,6 +82,8 @@
         <!-- C9: le note mediche sono dati sulla salute (GDPR, art. 9): servono un consenso esplicito e una casella spuntata da te -->
         <label class="check consenso"><input type="checkbox" id="consenso-salute">
           <span>Le note mediche sono dati sulla salute: le salviamo solo se spunti questa casella e le mostriamo solo nel riquadro Emergenza dei tuoi viaggi.</span></label>
+        <!-- Quando hai dato il consenso (lo registra il server: consenso_salute_il) -->
+        <p class="muto data-consenso" id="data-consenso" hidden></p>
         <label>Note mediche per chi ti soccorre
           <textarea name="note_mediche" disabled maxlength="300" rows="2" placeholder="es. allergia alle punture d'api, asma (inalatore nella tasca alta), gruppo sanguigno 0+"></textarea>
         </label>

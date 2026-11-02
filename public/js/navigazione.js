@@ -13,11 +13,12 @@ const km = (metri) => `${(metri / 1000).toLocaleString("it-IT", { minimumFractio
 const metri = (m) => `${Math.round(m).toLocaleString("it-IT", { useGrouping: "always" })} m`;
 const orario = (data) => data.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 
-// Il pallino: blu (il colore che tutti riconoscono come "sei qui"), con una punta se il GPS sa dove vai
+// Il pallino "sei qui": senape con il bordo crema, i colori dell'app (scelta di Asiha: niente blu),
+// ben visibile sopra la linea muschio del percorso; con una punta se il GPS sa dove vai
 function iconaPosizione(direzione) {
-  const punta = direzione == null ? "" : `<g transform="rotate(${Math.round(direzione)} 14 14)"><path d="M14 1.5 19 9H9Z" fill="#1d6fd8"/></g>`;
+  const punta = direzione == null ? "" : `<g transform="rotate(${Math.round(direzione)} 14 14)"><path d="M14 1.5 19 9H9Z" fill="#a97b1c"/></g>`;
   return L.divIcon({ className: "posizione-gps", iconSize: [28, 28], iconAnchor: [14, 14],
-    html: `<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">${punta}<circle cx="14" cy="14" r="7.5" fill="#1d6fd8" stroke="#fff" stroke-width="3"/></svg>` });
+    html: `<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">${punta}<circle cx="14" cy="14" r="7.5" fill="#c8962b" stroke="#f6efdf" stroke-width="3"/></svg>` });
 }
 
 // el = gli elementi della pagina; ottieniMappa() e ottieniLinea() li dà la pagina; blocca(sì/no) ferma le modifiche
@@ -84,7 +85,7 @@ export function attivaNavigazione({ el, ottieniMappa, ottieniLinea, blocca, suPr
     const qui = [lat, lon];
     const direzione = speed > 0.3 && Number.isFinite(heading) ? heading : null; // da fermi la direzione non è affidabile
     if (!pallino) {
-      cerchio = L.circle(qui, { radius: accuracy, color: "#1d6fd8", weight: 1, fillOpacity: 0.12, interactive: false }).addTo(mappa);
+      cerchio = L.circle(qui, { radius: accuracy, color: "#c8962b", weight: 1, fillOpacity: 0.15, interactive: false }).addTo(mappa);
       pallino = L.marker(qui, { icon: iconaPosizione(direzione), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(mappa);
     } else {
       cerchio.setLatLng(qui).setRadius(accuracy);

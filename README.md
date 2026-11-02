@@ -78,6 +78,7 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_percorso.sql` | mappe, fase 1: quota minima, ora di partenza, traccia del percorso (per il meteo in vetta) |
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
 | `loadout_stretch_zaino_litri.sql` | zaini nell'armadio: categoria `zaini`, capienza `litri`; `fn_genera_zaino` non aggiunge più gli zaini (lo sceglie l'app in base ai litri) |
+| `loadout_stretch_profilo_consenso.sql` | profilo: data del consenso alle note mediche (`consenso_salute_il`, GDPR art. 9), tolto il livello di esperienza |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
 
@@ -93,6 +94,7 @@ docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_quota.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_intelligente.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_litri.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo_consenso.sql
 ```
 
 Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` in `/docker-entrypoint-initdb.d`.

@@ -109,6 +109,9 @@ try {
     sfondoIniziale: "Satellite", // scelta di Asiha: più bella per la Home
     opzioni: { boxZoom: false }, // niente "rettangolo" con Maiusc: qui non serve
   });
+  // Sul Satellite niente filtro caldo (le foto vere stanno meglio così); sugli altri sfondi resta, come nelle altre mappe
+  elMappa.classList.add("senza-filtro");
+  mappa.on("baselayerchange", (e) => elMappa.classList.toggle("senza-filtro", e.name === "Satellite"));
   const livello = L.featureGroup().addTo(mappa);
   for (const v of fattiSullaMappa) {
     L.marker(partenza(v), { icon: icona("partenza"), title: v.nome, alt: v.nome, riseOnHover: true })

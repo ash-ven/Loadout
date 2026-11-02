@@ -23,15 +23,32 @@ campoPeso.value = utente.peso_corporeo_kg ?? "";
 mostraSoglia(utente.peso_corporeo_kg);
 mostraFoto();
 // I campi del form "Dati personali" (stessi nomi delle colonne del database)
-const CAMPI_DATI = ["livello_esperienza", "sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
+const CAMPI_DATI = ["sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
 for (const nome of CAMPI_DATI) {
   formDati.elements[nome].value = utente[nome] ?? "";
 }
-// C9: le note mediche si possono scrivere solo con il consenso (spuntato già se le avevi salvate prima)
+// C9: le note mediche si possono scrivere solo con il consenso. Il server registra QUANDO l'hai dato
+// (consenso_salute_il): la casella è spuntata solo se il consenso c'è davvero
 const consensoSalute = document.querySelector("#consenso-salute");
 const campoNote = formDati.elements.note_mediche;
-consensoSalute.checked = Boolean(utente.note_mediche);
+const dataConsenso = document.querySelector("#data-consenso");
+consensoSalute.checked = Boolean(utente.consenso_salute_il);
 campoNote.disabled = !consensoSalute.checked;
+mostraDataConsenso();
+// Note salvate prima che chiedessimo il consenso: restano visibili, ma per tenerle va spuntata la casella
+if (utente.note_mediche && !utente.consenso_salute_il) {
+  infoDati.textContent = "Le tue note mediche sono state salvate prima che chiedessimo il consenso: spunta la casella per tenerle. " +
+    "Se salvi senza spunta, vengono cancellate.";
+  infoDati.hidden = false;
+}
+
+function mostraDataConsenso() {
+  dataConsenso.hidden = !utente.consenso_salute_il;
+  if (utente.consenso_salute_il) {
+    dataConsenso.textContent = `Consenso dato il ${new Date(utente.consenso_salute_il).toLocaleDateString("it-IT")}. ` +
+      "Togliendo la spunta lo ritiri e le note vengono cancellate.";
+  }
+}
 
 // =====================================================================
 //  FOTO (C1)
@@ -110,10 +127,12 @@ async function salvaDati() {
     dati[nome] = formDati.elements[nome].value.trim();
   }
   if (!consensoSalute.checked) dati.note_mediche = "";
+  dati.consenso_salute = consensoSalute.checked; // il server registra la data del consenso, o lo ritira
   mostraStato(statoDati, "Salvataggio…");
   try {
     utente = await api("/api/auth/me", { method: "PATCH", body: dati });
     mostraStato(statoDati, "✓ Salvato", true);
+    mostraDataConsenso();
   } catch (err) {
     mostraStato(statoDati, "");
     erroreDati.textContent = err.message; // es. "Numero di telefono non valido"
@@ -129,14 +148,16 @@ formDati.addEventListener("change", (e) => {
 formDati.addEventListener("submit", (e) => { e.preventDefault(); salvaDati(); });
 
 // Togliendo il consenso, le note mediche spariscono subito anche dal server
-consensoSalute.addEventListener("change", () => {
+// Spuntare = dare il consenso (si registra subito la data); togliere la spunta = ritirarlo (note cancellate)
+consensoSalute.addEventListener("change", async () => {
   campoNote.disabled = !consensoSalute.checked;
+  const cherano = campoNote.value.trim() !== "";
+  if (!consensoSalute.checked) campoNote.value = "";
+  await salvaDati();
   if (consensoSalute.checked) {
     campoNote.focus();
-  } else if (campoNote.value.trim() !== "") {
-    campoNote.value = "";
-    salvaDati();
-    infoDati.textContent = "Note mediche cancellate.";
+  } else {
+    infoDati.textContent = cherano ? "Consenso ritirato: note mediche cancellate." : "Consenso ritirato.";
     infoDati.hidden = false;
   }
 });
