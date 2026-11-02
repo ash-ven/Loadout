@@ -104,6 +104,18 @@ export function disegnaTracciato(livello, punti) {
   L.polyline(punti, { ...comune, color: "#31503f", weight: 5, opacity: 1 }).addTo(livello);
 }
 
+// B11 (revisione UX 2): se la puntina è lontana dall'inizio (o dalla fine) del sentiero, una linea tratteggiata sottile
+// le collega, così si vede che partenza e arrivo fanno parte del percorso. giro = i punti [lat, lon] toccati, linea = la traccia
+export function disegnaCollegamenti(livello, giro, linea) {
+  if (!giro.length || !linea?.length) return;
+  const coppie = [[giro[0], linea[0]], [giro.at(-1), linea.at(-1)]];
+  for (const [puntina, sentiero] of coppie) {
+    if (metriTra(puntina, sentiero) > 30) {
+      L.polyline([puntina, sentiero.slice(0, 2)], { color: "#6d6553", weight: 2, dashArray: "4 6", opacity: .9, interactive: false }).addTo(livello);
+    }
+  }
+}
+
 // Linea provvisoria mentre BRouter risponde: puntini senape (si capisce che è "in attesa")
 export function disegnaProvvisoria(livello, punti) {
   L.polyline(punti, { color: "#c8962b", weight: 4, dashArray: "1 9", lineCap: "round", opacity: .95, interactive: false }).addTo(livello);

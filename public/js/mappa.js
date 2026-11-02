@@ -25,6 +25,8 @@ const disegno = attivaDisegnoMappa({
   interruttoreAnello: document.querySelector("#anello"),
   bottoneTogli: document.querySelector("#togli-punto"),
   bottoneRicomincia: document.querySelector("#ricomincia"),
+  legenda: document.querySelector(".legenda"),          // B11
+  notaAnello: document.querySelector("#nota-anello"),   // B11
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },

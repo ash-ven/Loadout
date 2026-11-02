@@ -8,15 +8,16 @@
 // =====================================================================
 import { api } from "./api.js";
 import { proponi } from "./post-it.js";
-import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, eUnAnello, scriviStato } from "./mappa-base.js";
+import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, eUnAnello, scriviStato } from "./mappa-base.js";
 
 const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 
 // suModifica: chiamata ogni volta che il percorso cambia (la pagina la usa per "modifiche non salvate")
 // suCalcolo(dati): chiamata con i valori calcolati dalla mappa ({ distanza_km, dislivello_m, quota_min_m, quota_max_m })
 //                  oppure con null quando non c'è un percorso (A2: la pagina li mostra sotto i valori scritti a mano)
+// legenda e notaAnello (B11, facoltativi): la legenda mostra solo quello che c'è, la nota spiega l'anello con una sola tappa
 export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate,
-                                     suModifica = () => {}, suCalcolo = () => {} }) {
+                                     legenda = null, notaAnello = null, suModifica = () => {}, suCalcolo = () => {} }) {
   let mappa = null;            // nasce con apri()
   let livelloPercorso = null;  // le linee: si svuota e si ridisegna
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
@@ -135,9 +136,23 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     let testo = "Nessun punto";
     if (n === 1) testo = "Solo la partenza";
     else if (n >= 2) testo = tappe > 0 ? `Partenza + ${tappe} ${tappe === 1 ? "tappa" : "tappe"}` : "Partenza e arrivo";
-    if (n >= 2 && interruttoreAnello.checked) testo = "Anello · " + testo.toLowerCase();
+    // B11: con l'anello e una sola tappa si torna dalla stessa strada: è un'andata e ritorno, non un anello
+    const andataRitorno = interruttoreAnello.checked && n === 2;
+    if (n >= 2 && interruttoreAnello.checked) testo = (andataRitorno ? "Andata e ritorno · " : "Anello · ") + testo.toLowerCase();
     conteggio.textContent = testo;
     conteggio.classList.toggle("in-evidenza", n >= 2 && interruttoreAnello.checked);
+    if (notaAnello) notaAnello.hidden = !andataRitorno;
+    aggiornaLegenda();
+  }
+
+  // B11: la legenda mostra solo i tipi di puntina presenti (e "Sui sentieri" se c'è il percorso). Senza punti, tutto: fa da guida
+  function aggiornaLegenda() {
+    if (!legenda) return;
+    const presenti = new Set(punti.map((p, i) => tipoDelPunto(i, punti.length, interruttoreAnello.checked)));
+    if (linea) presenti.add("sentieri");
+    legenda.querySelectorAll("[data-tipo]").forEach((voce) => {
+      voce.hidden = punti.length === 0 ? voce.dataset.tipo === "anello" : !presenti.has(voce.dataset.tipo);
+    });
   }
 
   // Le coordinate di partenza e arrivo le propone la mappa (post-it "mappa"): con l'anello, arrivo = partenza.
@@ -174,7 +189,9 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       if (numero !== ultimaRichiesta) return;           // nel frattempo è partita una richiesta più nuova
       livelloPercorso.clearLayers();
       disegnaTracciato(livelloPercorso, dati.traccia.map(([lat, lon]) => [lat, lon]));
+      disegnaCollegamenti(livelloPercorso, giro.map((p) => [p.lat, p.lng]), dati.traccia); // B11
       linea = dati.traccia;
+      aggiornaLegenda();
       compilaDati(dati);
       scriviStato(stato, "");
     } catch (err) {
@@ -202,6 +219,8 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     linea = traccia.linea;
     disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
+    const tappe = traccia.tappe.map(([lat, lon]) => [lat, lon]);
+    disegnaCollegamenti(livelloPercorso, interruttoreAnello.checked ? [...tappe, tappe[0]] : tappe, linea); // B11
     aggiornaConteggio();
     inquadraTutto();
     scriviStato(stato, "");

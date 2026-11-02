@@ -652,3 +652,6 @@ button.etichetta-piu { cursor: pointer; font: inherit; font-weight: 600; backgro
 .tessera:hover::after, .tessera:focus-visible::after { color: var(--muschio); transform: translate(3px, -50%); }
 /* la barra sottile sulla tessera dello zaino */
 .barra.barra-tessera { height: 6px; margin-top: .35rem; }
+
+/* --- B11 (revisione UX 2): la nota sotto la mappa per l'anello con una sola tappa --- */
+.nota-anello { margin: .6rem 0 0; font-size: .85rem; }

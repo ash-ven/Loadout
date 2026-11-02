@@ -44,10 +44,12 @@
       </div>
       <div class="mappa-cornice"><div class="mappa" id="mappa"></div></div>
       <ul class="legenda" aria-label="Legenda">
-        <li><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Partenza</li>
-        <li><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="#f6efdf" stroke="#31503f" stroke-width="3"/></svg>Tappa</li>
-        <li><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#c8962b"/></svg>Arrivo</li>
-        <li><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#31503f" stroke-width="3.5" stroke-linecap="round"/></svg>Sui sentieri</li>
+        <!-- B11 (revisione UX 2): data-tipo = la legenda mostra solo quello che c'è sulla mappa (mappa-disegno.js) -->
+        <li data-tipo="partenza"><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Partenza</li>
+        <li data-tipo="anello" hidden><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/><circle cx="15" cy="14.5" r="5.2" fill="none" stroke="#c8962b" stroke-width="3"/></svg>Partenza e arrivo</li>
+        <li data-tipo="tappa"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="#f6efdf" stroke="#31503f" stroke-width="3"/></svg>Tappa</li>
+        <li data-tipo="arrivo"><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#c8962b"/></svg>Arrivo</li>
+        <li data-tipo="sentieri"><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#31503f" stroke-width="3.5" stroke-linecap="round"/></svg>Sui sentieri</li>
       </ul>
       <div class="strumenti">
         <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
@@ -56,6 +58,7 @@
           <button type="button" class="pericolo btn-piccolo" id="ricomincia">Ricomincia</button>
         </div>
       </div>
+      <p class="muto nota-anello" id="nota-anello" hidden>Con una sola tappa si torna indietro dalla stessa strada: aggiungi un'altra tappa per fare un anello.</p>
       <p id="stato-mappa" class="stato" hidden></p>
 
       <!-- I valori del percorso: campi normali. "dalla mappa" = li ha compilati la mappa; se li scrivi tu, restano tuoi.

@@ -2,6 +2,7 @@ import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
 import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
+import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 
 // --- Quale viaggio? L'id arriva dall'URL: scheda-viaggio.html?id=7 ---
 const id = Number(new URLSearchParams(location.search).get("id"));
@@ -252,15 +253,28 @@ function renderCollegamenti() {
 
 // Arrivo dalla modifica del viaggio con attività, pernotto, cucina o giorni cambiati (?aggiorna=1):
 // propongo di aggiornare lo zaino. "Aggiorna" apre lo zaino e fa "Genera", che aggiunge solo quello che manca.
-function proponiAggiornamento() {
-  if (!new URLSearchParams(location.search).has("aggiorna") || !(viaggio.peso.n_oggetti > 0)) return;
-  history.replaceState(null, "", `?id=${id}`); // tolgo "aggiorna" dall'indirizzo: ricaricando non riappare
-  elProponiZaino.textContent = "Hai cambiato l'uscita: vuoi aggiornare lo zaino? Aggiungo solo quello che manca. ";
+// B12 (revisione UX 2): un riquadro ocra con titolo e l'elenco di quello che "Genera" aggiungerebbe dall'armadio.
+// subito = true dopo una modifica fatta in questa pagina; altrimenti vale il vecchio ?aggiorna=1 nell'indirizzo
+async function proponiAggiornamento(subito = false) {
+  const daIndirizzo = new URLSearchParams(location.search).has("aggiorna");
+  if ((!subito && !daIndirizzo) || !(viaggio.peso.n_oggetti > 0)) return;
+  if (daIndirizzo) history.replaceState(null, "", `?id=${id}`); // ricaricando la pagina non riappare
+  let daAggiungere = [];
+  try {
+    daAggiungere = (await api(`/api/viaggi/${id}/kit`)).filter((v) => v.stato === "nell_armadio").map((v) => v.oggetto.nome);
+  } catch { /* l'elenco è un aiuto in più: senza, il riquadro resta utile */ }
+  const titolo = document.createElement("strong");
+  titolo.textContent = "Lo zaino è da aggiornare. ";
+  const testo = daAggiungere.length
+    ? `Con le modifiche servono anche: ${elenco(daAggiungere)} (nell'armadio). `
+    : "Con le modifiche potrebbero servire altre cose: «Aggiorna lo zaino» aggiunge solo quello che manca. ";
   const link = document.createElement("a");
   link.className = "btn btn-piccolo";
   link.href = `/zaino.html?id=${id}&genera=1`;
   link.textContent = "Aggiorna lo zaino";
-  elProponiZaino.append(link);
+  const corpo = document.createElement("span");
+  corpo.append(titolo, testo, link);
+  elProponiZaino.replaceChildren(corpo);
   elProponiZaino.hidden = false;
 }
 
@@ -362,10 +376,20 @@ function orarioBreve(minuti) {
   return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
 }
 
-// --- Modifica viaggio: usa la finestra della pagina Viaggi, già compilata ---
-document.querySelector("#modifica-viaggio").addEventListener("click", () => {
-  location.href = `/viaggi.html?modifica=${id}`;
+// --- Modifica viaggio ---
+// B12 (revisione UX 2): la finestra di modifica si apre QUI (prima portava sopra la lista dei Viaggi).
+// Dopo il salvataggio la scheda si aggiorna senza cambiare pagina, e se serve propone di aggiornare lo zaino.
+let utente = null; // il profilo (per il riquadro Emergenza, che va riscritto se cambia l'uscita)
+const formUscita = attivaFormUscita({
+  suSalvato: async ({ zainoDaAggiornare }) => {
+    await caricaViaggio();
+    renderCollegamenti();
+    if (utente) mostraEmergenza(utente); // "Lascia detto" usa i dati dell'uscita
+    elProponiZaino.hidden = true;
+    if (zainoDaAggiornare) await proponiAggiornamento(true);
+  },
 });
+document.querySelector("#modifica-viaggio").addEventListener("click", () => formUscita.modifica(viaggio));
 
 // --- Elimina viaggio (prima era un pulsante nella lista dei viaggi) ---
 document.querySelector("#elimina-viaggio").addEventListener("click", async () => {
@@ -391,7 +415,8 @@ if (!Number.isInteger(id) || id <= 0) {
   try {
     await caricaViaggio();
     renderCollegamenti();
-    mostraEmergenza(await api("/api/auth/me")); // C1: il contatto di emergenza dal profilo
+    utente = await api("/api/auth/me");
+    mostraEmergenza(utente); // C1: il contatto di emergenza dal profilo
     document.querySelector("#corpo-scheda").hidden = false; // tutto ok: mostro i consigli
     proponiAggiornamento();
   } catch (err) {
