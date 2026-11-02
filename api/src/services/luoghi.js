@@ -7,6 +7,7 @@
 // =====================================================================
 
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
+const QUOTE = "https://api.open-meteo.com/v1/elevation"; // A5: la quota dei luoghi trovati, tutti insieme in una richiesta
 const INTESTAZIONI = { "User-Agent": "Loadout/1.0 (progetto di stage ITS Futura)", Accept: "application/json" };
 const PAUSA_MS = 1100;          // poco più di un secondo tra una richiesta e l'altra
 const ATTESA_MAX_MS = 6000;
@@ -18,10 +19,32 @@ let ultima = 0;                 // quando è partita l'ultima richiesta (millise
 
 // Alcuni tipi di luogo di OpenStreetMap, tradotti per l'utente
 const TIPI = {
-  peak: "cima", saddle: "passo", alpine_hut: "rifugio", wilderness_hut: "bivacco", hut: "baita",
+  peak: "cima", saddle: "passo", mountain_pass: "passo", ridge: "cresta", valley: "valle", alpine_hut: "rifugio", wilderness_hut: "bivacco", hut: "baita",
   village: "paese", town: "paese", city: "città", hamlet: "frazione", locality: "località",
   parking: "parcheggio", lake: "lago", water: "lago", camp_site: "campeggio", viewpoint: "punto panoramico",
+  shelter: "riparo", spring: "sorgente", waterfall: "cascata", hotel: "albergo", guest_house: "albergo", chalet: "baita",
 };
+
+// --- A5 (revisione UX 2): la quota di ogni luogo, per distinguere gli omonimi ("passo · 1.402 m") ---
+// Funzione "pura": unisce ai luoghi le quote della risposta di Open-Meteo ({ elevation: [1402.3, …] }, nello stesso ordine)
+export function conQuote(luoghi, risposta) {
+  const quote = Array.isArray(risposta?.elevation) ? risposta.elevation : [];
+  return luoghi.map((l, i) => ({ ...l, quota_m: Number.isFinite(quote[i]) ? Math.round(quote[i]) : null }));
+}
+
+// Chiede a Open-Meteo le quote di tutti i luoghi in una volta. Se non risponde, la ricerca funziona lo stesso (quota null)
+async function aggiungiQuote(luoghi) {
+  if (luoghi.length === 0) return luoghi;
+  try {
+    const url = `${QUOTE}?latitude=${luoghi.map((l) => l.lat).join(",")}&longitude=${luoghi.map((l) => l.lon).join(",")}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+    return conQuote(luoghi, await res.json());
+  } catch (err) {
+    console.error("quote dei luoghi non disponibili:", err.message);
+    return conQuote(luoghi, null);
+  }
+}
 
 // --- Funzione "pura" (niente rete): la risposta di Nominatim → il nostro formato. La provano i test ---
 export function daNominatim(risultati) {
@@ -59,12 +82,14 @@ export async function cerca(testo) {
   const chiave = testo.toLowerCase();
   if (memoria.has(chiave)) return memoria.get(chiave);
 
-  const url = `${NOMINATIM}?format=jsonv2&addressdetails=1&limit=6&accept-language=it&q=${encodeURIComponent(testo)}`;
-  const risultati = await inCoda(async () => {
+  // A5: fino a 8 luoghi (prima 6), così tra gli omonimi è più facile trovare quello giusto
+  const url = `${NOMINATIM}?format=jsonv2&addressdetails=1&limit=8&accept-language=it&q=${encodeURIComponent(testo)}`;
+  const trovati = await inCoda(async () => {
     const res = await fetch(url, { headers: INTESTAZIONI, signal: AbortSignal.timeout(ATTESA_MAX_MS) });
     if (!res.ok) throw new Error(`Nominatim HTTP ${res.status}`);
     return daNominatim(await res.json());
   });
+  const risultati = await aggiungiQuote(trovati); // fuori dalla coda: la regola "1 al secondo" vale solo per Nominatim
 
   if (memoria.size >= MEMORIA_MAX) memoria.delete(memoria.keys().next().value);
   memoria.set(chiave, risultati);

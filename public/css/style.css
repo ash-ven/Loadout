@@ -434,7 +434,7 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 .campo-luogo { display: grid; gap: .3rem; }
 .suggerimenti { list-style: none; margin: 0; padding: .3rem; display: grid; gap: .15rem;
                 background: var(--lana-chiara); border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); }
-.suggerimento { display: flex; justify-content: space-between; gap: .75rem; width: 100%; padding: .55rem .7rem; text-align: left;
+.suggerimento { display: flex; flex-direction: column; align-items: flex-start; gap: .1rem;   /* A5: nome sopra, tipo e quota sotto */ width: 100%; padding: .55rem .7rem; text-align: left;
                 background: transparent; color: var(--testo); font-weight: 500; border-radius: 8px; }
 .suggerimento:hover, .suggerimento:focus-visible { background: var(--salvia-chiaro); }
 .suggerimento .muto { flex-shrink: 0; font-size: .8rem; }

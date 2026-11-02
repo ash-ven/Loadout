@@ -136,7 +136,7 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 ## Luoghi (B1)
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/luoghi?q=malga prato | — | fino a 6 luoghi: `[ { etichetta, tipo, lat, lon } ]` (es. `"Rifugio Vajolet (Pozza di Fassa, TN)"`, `"rifugio"`) | 200, 400 (`BAD_QUERY`: 3–100 caratteri), 401, 502 (`LUOGHI_NON_DISPONIBILI`) |
+| GET | /api/luoghi?q=malga prato | — | fino a 8 luoghi: `[ { etichetta, tipo, lat, lon, quota_m } ]` (`quota_m` da Open-Meteo, `null` se non risponde) (es. `"Rifugio Vajolet (Pozza di Fassa, TN)"`, `"rifugio"`) | 200, 400 (`BAD_QUERY`: 3–100 caratteri), 401, 502 (`LUOGHI_NON_DISPONIBILI`) |
 
 - Il server interroga Nominatim (OpenStreetMap), al massimo una richiesta al secondo, e tiene i risultati in memoria.
 - Nel viaggio si salvano `luogo_partenza` e `luogo_arrivo` (testo, max 200) insieme alle coordinate. Nel form "Da dove parti" è

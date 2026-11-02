@@ -29,9 +29,12 @@ export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, suScel
       const risultati = await api(`/api/luoghi?q=${encodeURIComponent(testo)}`);
       if (numero !== ultimaRicerca) return; // è arrivata una ricerca più nuova: questa non serve più
       trovati = risultati;
+      // A5 (revisione UX 2): su due righe, il nome e poi tipo e quota ("passo · 1.402 m"), per distinguere gli omonimi
+      const dettagli = (l) => [l.tipo, l.quota_m != null ? `${l.quota_m.toLocaleString("it-IT", { useGrouping: "always" })} m` : null]
+        .filter(Boolean).join(" · ");
       mostra(risultati.length
         ? risultati.map((l, i) => `<li><button type="button" class="suggerimento" data-i="${i}">
-            <span>${esc(l.etichetta)}</span>${l.tipo ? `<span class="muto">${esc(l.tipo)}</span>` : ""}</button></li>`).join("")
+            <span>${esc(l.etichetta)}</span>${dettagli(l) ? `<span class="muto">${esc(dettagli(l))}</span>` : ""}</button></li>`).join("")
         : '<li class="suggerimento-info">Nessun luogo trovato: prova un nome più semplice, o scrivi le coordinate a mano.</li>');
     } catch (err) {
       if (numero === ultimaRicerca) mostra(`<li class="suggerimento-info">${esc(err.message)}</li>`);
