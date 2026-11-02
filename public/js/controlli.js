@@ -38,3 +38,17 @@ export function erroriQuote(d) {
   }
   return errori;
 }
+
+// C1 (revisione UX 2): il browser mostra «44,15» quando il valore lo scrive il programma (mappa, luogo),
+// ma lascia «44.15» se lo scrivi tu col punto. Quando esci dal campo lo riscriviamo da programma:
+// così si vede sempre la virgola. Si può scrivere con il punto o con la virgola, il numero è lo stesso.
+export function uniformaDecimali(campi) {
+  for (const campo of campi) {
+    campo.addEventListener("change", () => {
+      if (campo.value === "" || campo.readOnly) return;
+      const valore = campo.value; // per il programma il valore ha sempre il punto: «44.15»
+      campo.value = "";           // svuotare e riscrivere obbliga il browser a ridisegnarlo con la virgola
+      campo.value = valore;
+    });
+  }
+}

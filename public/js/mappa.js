@@ -2,7 +2,7 @@ import { api } from "./api.js";
 import "./menu.js";
 import { attivaDisegnoMappa } from "./mappa-disegno.js";
 import { staccaPostItScrivendo } from "./post-it.js";
-import { erroriCoordinate, erroriQuote } from "./controlli.js";
+import { erroriCoordinate, erroriQuote, uniformaDecimali } from "./controlli.js";
 import { mostraErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
@@ -74,6 +74,7 @@ QUATTRO.forEach((nome) => campi[nome].addEventListener("input", mostraCalcoli));
 // Scrivendo a mano il post-it si stacca (e la pagina ha modifiche da salvare)
 staccaPostItScrivendo(CAMPI.map((nome) => campi[nome]));
 pulisciScrivendo(form); // B1: correggendo un campo, il suo messaggio d'errore sparisce
+uniformaDecimali(CAMPI.map((nome) => campi[nome])); // C1: sempre la virgola
 form.addEventListener("input", () => { daSalvare = true; messaggioEl.hidden = true; });
 window.addEventListener("beforeunload", (e) => { if (daSalvare) e.preventDefault(); });
 

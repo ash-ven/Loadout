@@ -7,7 +7,7 @@
 import { api } from "./api.js";
 import { attivaCampoLuogo } from "./campo-luogo.js";
 import { staccaPostItScrivendo } from "./post-it.js";
-import { erroriCoordinate, erroriQuote } from "./controlli.js";
+import { erroriCoordinate, erroriQuote, uniformaDecimali } from "./controlli.js";
 import { mostraErroriCampi, pulisciErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 
 const HTML_FINESTRA = `
@@ -70,14 +70,14 @@ const HTML_FINESTRA = `
         <p class="muto nota-mappa" hidden>Questi dati vengono dalla mappa: per cambiarli <a class="link-mappa" href="#">apri la mappa</a>.</p>
         <div class="riga2">
           <label><span class="nome-campo">Latitudine partenza <span class="origine"></span></span>
-            <input name="lat_partenza" type="number" min="-90" max="90" step="any" placeholder="es. 44.22">
+            <input name="lat_partenza" type="number" min="-90" max="90" step="any" placeholder="es. 44,22">
           </label>
           <label><span class="nome-campo">Longitudine partenza <span class="origine"></span></span>
-            <input name="lon_partenza" type="number" min="-180" max="180" step="any" placeholder="es. 10.99">
+            <input name="lon_partenza" type="number" min="-180" max="180" step="any" placeholder="es. 10,99">
           </label>
         </div>
         <div class="campo-luogo">
-          <label>Arrivo <span class="muto">(se diverso)</span>
+          <label><span>Arrivo <span class="muto">(se diverso)</span></span>
             <input name="luogo_arrivo" type="text" maxlength="200" autocomplete="off" placeholder="es. Rifugio Lagazuoi"
                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggerimenti-arrivo">
           </label>
@@ -119,7 +119,8 @@ const HTML_FINESTRA = `
           </label>
         </details>
 
-        <label class="check"><input name="pianificato" type="checkbox"> <img class="icona" src="/img/icone/da-fare.svg" alt="" width="24" height="24">Percorso da fare in futuro</label>
+        <!-- C5 (revisione UX 2): niente più casella «Percorso da fare in futuro»: un viaggio senza data è da fare
+             (pianificato lo calcoliamo noi al salvataggio, così il filtro «Da fare» continua a funzionare) -->
         <label class="check" id="riga-genera"><input name="genera" type="checkbox" checked> <img class="icona" src="/img/icone/zaino.svg" alt="" width="24" height="24">Genera subito lo zaino</label>
         <p class="errore" id="form-errore" hidden></p>
         <div class="azioni">
@@ -178,6 +179,7 @@ export function attivaFormUscita({ suSalvato }) {
   }
   staccaPostItScrivendo(CAMPI_POST_IT.map((nome) => campi[nome]));
   pulisciScrivendo(form); // correggendo un campo, il suo messaggio d'errore sparisce
+  uniformaDecimali(CAMPI_DELLA_MAPPA.map((nome) => campi[nome])); // C1: sempre la virgola
 
   // I due campi luogo con i suggerimenti (il nome e, scegliendo, le coordinate)
   const luogoPartenza = attivaCampoLuogo({
@@ -237,7 +239,6 @@ export function attivaFormUscita({ suSalvato }) {
       }
     }
     campi.serve_cucina.checked = v.serve_cucina;
-    campi.pianificato.checked = v.pianificato;
     apriFinestra();
   }
 
@@ -260,7 +261,7 @@ export function attivaFormUscita({ suSalvato }) {
       lat_arrivo: numero("lat_arrivo"),
       lon_arrivo: numero("lon_arrivo"),
       note: campi.note.value.trim(),
-      pianificato: campi.pianificato.checked,
+      pianificato: campi.data_partenza.value === "", // C5: senza data = da fare in futuro
       luogo_partenza: campi.luogo_partenza.value.trim(),
       luogo_arrivo: campi.luogo_arrivo.value.trim(),
       quota_max_m: numero("quota_max_m"),
