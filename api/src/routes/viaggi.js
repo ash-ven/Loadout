@@ -11,27 +11,27 @@ const ATTIVITA = ["escursione", "alpinismo", "ciaspolata", "ferrata"]; // escurs
 const PERNOTTO = ["nessuno", "rifugio", "tenda", "bivacco"];
 
 const schemaViaggio = {
-  nome:          { type: "string", required: true, maxLength: 150 },
-  attivita:      { type: "string", required: true, enum: ATTIVITA },
-  n_persone:     { type: "number", integer: true, min: 1, max: 50 },
-  n_giorni:      { type: "number", integer: true, min: 1, max: 60 },
-  pernotto:      { type: "string", enum: PERNOTTO },
-  serve_cucina:  { type: "boolean" },
-  data_partenza: { type: "date" },
-  lat_partenza:  { type: "number", min: -90,  max: 90 },
-  lon_partenza:  { type: "number", min: -180, max: 180 },
-  lat_arrivo:    { type: "number", min: -90,  max: 90 },
-  lon_arrivo:    { type: "number", min: -180, max: 180 },
-  dislivello_m:  { type: "number", integer: true, min: 0, max: 9000 },
-  distanza_km:   { type: "number", min: 0.1, max: 999 },
-  note:          { type: "string", maxLength: 1000 },
-  pianificato:   { type: "boolean" },
-  luogo_partenza:{ type: "string", maxLength: 200 },   // B1: obbligatorio nel form; qui facoltativo (viaggi vecchi, richieste di prova)
-  luogo_arrivo:  { type: "string", maxLength: 200 },
-  quota_max_m:   { type: "number", integer: true, min: 0, max: 9000 }, // B3
-  quota_min_m:   { type: "number", integer: true, min: -500, max: 9000 },     // mappe
-  ora_partenza:  { type: "string", pattern: /^([01]\d|2[0-3]):[0-5]\d$/, formato: "HH:MM, es. 08:30" },
-  traccia:       { type: "object" },                                          // mappe: controllata da tracciaValida()
+  nome:          { etichetta: "il nome dell'uscita", type: "string", required: true, maxLength: 150 },
+  attivita:      { etichetta: "l'attività", type: "string", required: true, enum: ATTIVITA },
+  n_persone:     { etichetta: "il numero di persone", type: "number", integer: true, min: 1, max: 50 },
+  n_giorni:      { etichetta: "il numero di giorni", type: "number", integer: true, min: 1, max: 60 },
+  pernotto:      { etichetta: "il pernotto", type: "string", enum: PERNOTTO },
+  serve_cucina:  { etichetta: "«serve la cucina»", type: "boolean" },
+  data_partenza: { etichetta: "la data di partenza", type: "date" },
+  lat_partenza:  { etichetta: "la latitudine di partenza", aiuto: "in Italia circa 36–47, es. 44,19", type: "number", min: -90,  max: 90 },
+  lon_partenza:  { etichetta: "la longitudine di partenza", aiuto: "in Italia circa 6–19, es. 10,70", type: "number", min: -180, max: 180 },
+  lat_arrivo:    { etichetta: "la latitudine di arrivo", aiuto: "in Italia circa 36–47, es. 44,19", type: "number", min: -90,  max: 90 },
+  lon_arrivo:    { etichetta: "la longitudine di arrivo", aiuto: "in Italia circa 6–19, es. 10,70", type: "number", min: -180, max: 180 },
+  dislivello_m:  { etichetta: "il dislivello positivo", type: "number", integer: true, min: 0, max: 9000 },
+  distanza_km:   { etichetta: "la lunghezza", type: "number", min: 0.1, max: 999 },
+  note:          { etichetta: "le note", type: "string", maxLength: 1000 },
+  pianificato:   { etichetta: "«da fare in futuro»", type: "boolean" },
+  luogo_partenza:{ etichetta: "il luogo di partenza", type: "string", maxLength: 200 },   // B1: obbligatorio nel form; qui facoltativo (viaggi vecchi, richieste di prova)
+  luogo_arrivo:  { etichetta: "il luogo di arrivo", type: "string", maxLength: 200 },
+  quota_max_m:   { etichetta: "la quota massima", type: "number", integer: true, min: 0, max: 9000 }, // B3
+  quota_min_m:   { etichetta: "la quota minima", type: "number", integer: true, min: -500, max: 9000 },     // mappe
+  ora_partenza:  { etichetta: "l'ora di partenza", type: "string", pattern: /^([01]\d|2[0-3]):[0-5]\d$/, formato: "HH:MM, es. 08:30" },
+  traccia:       { etichetta: "la traccia della mappa", type: "object" },                                          // mappe: controllata da tracciaValida()
 };
 
 // Il percorso di un'uscita (pagina della mappa): la traccia e i valori che la mappa compila.
@@ -223,14 +223,14 @@ router.get("/:id/zaino", caricaViaggio, async (req, res, next) => {
 
 // --- Aggiungi / modifica / rimuovi ---
 const schemaAggiungi = {
-  oggetto_id: { type: "number", required: true, integer: true, min: 1 },
-  quantita:   { type: "number", integer: true, min: 1, max: 99 },
+  oggetto_id: { etichetta: "l'oggetto", type: "number", required: true, integer: true, min: 1 },
+  quantita:   { etichetta: "la quantità", type: "number", integer: true, min: 1, max: 99 },
 };
 
 const schemaModifica = {
-  inserito:  { type: "boolean" },
-  quantita:  { type: "number", integer: true, min: 1, max: 99 },
-  indossato: { type: "boolean" }, // B3: lo porto addosso, non pesa nello zaino
+  inserito:  { etichetta: "la spunta", type: "boolean" },
+  quantita:  { etichetta: "la quantità", type: "number", integer: true, min: 1, max: 99 },
+  indossato: { etichetta: "«lo indosso»", type: "boolean" }, // B3: lo porto addosso, non pesa nello zaino
 };
 
 // B2: la risposta quando chiedi più pezzi di quanti ne possiedi

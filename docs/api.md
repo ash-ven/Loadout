@@ -170,7 +170,8 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 - I risultati restano in memoria (max 500 codici) finché il server è acceso.
 
 ## Note sugli status code
-- **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico o troppo grande, JSON malformato) oppure una regola dell'app non rispettata; il `message` spiega cosa correggere.
+- **400**: dati non validi nel body o nell'URL (campo mancante, tipo sbagliato, fuori dai limiti, id non numerico o troppo grande, JSON malformato) oppure una regola dell'app non rispettata; il `message` spiega cosa correggere, con il nome leggibile del campo
+  (es. `"La latitudine di partenza va da -90 a 90 (in Italia circa 36–47, es. 44,19)"`, `"Manca il nome dell'uscita"`), mai il nome della colonna.
   Codici: `VALIDATION_ERROR`, `BAD_ID`, `BAD_QUERY`, `BAD_JSON`, `BAD_INPUT`, `WEAK_PASSWORD`, `BAD_EMAIL`, `BAD_TELEFONO`, `BAD_FOTO`, `QUANTITA_OLTRE_POSSEDUTI`, `NON_INDOSSABILE`.
 - **401**: non autenticato (manca il cookie, token scaduto o manomesso) oppure credenziali errate al login.
 - **404**: la risorsa non esiste **oppure non è mia**: non riveliamo che esiste (niente 403).

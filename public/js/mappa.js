@@ -2,6 +2,7 @@ import { api } from "./api.js";
 import "./menu.js";
 import { attivaDisegnoMappa } from "./mappa-disegno.js";
 import { staccaPostItScrivendo } from "./post-it.js";
+import { erroriCoordinate } from "./controlli.js";
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
 // Qui si disegna il percorso; «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate
@@ -110,8 +111,12 @@ form.addEventListener("submit", async (e) => {
   const traccia = disegno.traccia(); // { tappe, linea } oppure null
   // A1: con la traccia si salva anche chi ha scritto ogni valore, così alla riapertura i post-it tornano giusti
   dati.traccia = traccia ? { ...traccia, origini: originiAttuali() } : null;
+  const errori = erroriCoordinate(dati); // A3: coordinate fuori dai limiti, con un esempio
   if (dati.quota_min_m != null && dati.quota_max_m != null && dati.quota_min_m > dati.quota_max_m) {
-    erroreEl.textContent = "La quota minima non può superare la quota massima";
+    errori.push("La quota minima non può superare la quota massima");
+  }
+  if (errori.length) {
+    erroreEl.textContent = errori.join("; ");
     erroreEl.hidden = false;
     return;
   }

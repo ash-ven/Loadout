@@ -37,9 +37,9 @@ const limiteRegistrazione = rateLimit({
 
 // === POST /api/auth/register ===
 const schemaRegister = {
-  email:    { type: "string", required: true, maxLength: 255 },
-  password: { type: "string", required: true },
-  nome:     { type: "string", required: true, maxLength: 100 },
+  email:    { etichetta: "l'email", type: "string", required: true, maxLength: 255 },
+  password: { etichetta: "la password", type: "string", required: true },
+  nome:     { etichetta: "il nome", type: "string", required: true, maxLength: 100 },
 };
 
 router.post("/register", limiteRegistrazione, validate(schemaRegister), async (req, res, next) => {
@@ -58,8 +58,8 @@ router.post("/register", limiteRegistrazione, validate(schemaRegister), async (r
 
 // === POST /api/auth/login ===
 const schemaLogin = {
-  email:    { type: "string", required: true },
-  password: { type: "string", required: true },
+  email:    { etichetta: "l'email", type: "string", required: true },
+  password: { etichetta: "la password", type: "string", required: true },
 };
 
 router.post("/login", limiteLogin, validate(schemaLogin), async (req, res, next) => {
@@ -100,14 +100,14 @@ router.get("/me", requireAuth, async (req, res, next) => {
 // === PATCH /api/auth/me (modifica parziale del profilo: solo i campi inviati) ===
 // "" o null su un campo nullable = svuotalo (es. togliere la foto o il contatto di emergenza)
 const schemaProfilo = {
-  peso_corporeo_kg:   { type: "number", min: 20, max: 300, nullable: true },     // stretch 5
-  livello_esperienza: { type: "string", enum: ["principiante", "intermedio", "esperto"], nullable: true }, // C1
-  emergenza_nome:     { type: "string", maxLength: 100, nullable: true },
-  emergenza_telefono: { type: "string", maxLength: 30, nullable: true },
-  note_mediche:       { type: "string", maxLength: 300, nullable: true },
-  tessera_soccorso:   { type: "string", maxLength: 80, nullable: true },
-  sensibilita_freddo: { type: "string", enum: ["alta", "normale", "bassa"], nullable: true },
-  foto:               { type: "string", maxLength: 200000, nullable: true },
+  peso_corporeo_kg:   { etichetta: "il peso corporeo", type: "number", min: 20, max: 300, nullable: true },     // stretch 5
+  livello_esperienza: { etichetta: "il livello di esperienza", type: "string", enum: ["principiante", "intermedio", "esperto"], nullable: true }, // C1
+  emergenza_nome:     { etichetta: "il nome del contatto di emergenza", type: "string", maxLength: 100, nullable: true },
+  emergenza_telefono: { etichetta: "il telefono del contatto di emergenza", type: "string", maxLength: 30, nullable: true },
+  note_mediche:       { etichetta: "le note mediche", type: "string", maxLength: 300, nullable: true },
+  tessera_soccorso:   { etichetta: "la tessera", type: "string", maxLength: 80, nullable: true },
+  sensibilita_freddo: { etichetta: "la sensibilità al freddo", type: "string", enum: ["alta", "normale", "bassa"], nullable: true },
+  foto:               { etichetta: "la foto", type: "string", maxLength: 200000, nullable: true },
 };
 
 router.patch("/me", requireAuth, validate(schemaProfilo), async (req, res, next) => {
@@ -150,8 +150,8 @@ router.get("/me/foto", requireAuth, async (req, res, next) => {
 // === PUT /api/auth/me/password — cambia la password (serve quella attuale) ===
 // Stesso limite di tentativi del login: chi ha rubato il cookie non può provare mille password "attuali"
 const schemaPassword = {
-  attuale: { type: "string", required: true },
-  nuova:   { type: "string", required: true },
+  attuale: { etichetta: "la password attuale", type: "string", required: true },
+  nuova:   { etichetta: "la nuova password", type: "string", required: true },
 };
 router.put("/me/password", requireAuth, limiteLogin, validate(schemaPassword), async (req, res, next) => {
   try {
@@ -193,7 +193,7 @@ router.get("/me/dati", requireAuth, async (req, res, next) => {
 
 // === DELETE /api/auth/me — elimina l'account e TUTTI i suoi dati (serve la password) ===
 // Oggetti, viaggi e zaini spariscono da soli: nel database sono collegati con ON DELETE CASCADE
-const schemaElimina = { password: { type: "string", required: true } };
+const schemaElimina = { password: { etichetta: "la password", type: "string", required: true } };
 router.delete("/me", requireAuth, limiteLogin, validate(schemaElimina), async (req, res, next) => {
   try {
     const { rows } = await query("SELECT password_hash FROM utente WHERE id = $1", [req.user.sub]);

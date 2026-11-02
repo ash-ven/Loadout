@@ -4,6 +4,7 @@ import { segno } from "./segni.js";
 import { ATTIVITA } from "./categorie.js";
 import { attivaCampoLuogo } from "./campo-luogo.js";
 import { staccaPostItScrivendo } from "./post-it.js";
+import { erroriCoordinate } from "./controlli.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -236,6 +237,7 @@ function validaLatoClient(d) {
   const errori = [];
   if (!d.nome) errori.push("Il nome dell'uscita è obbligatorio");
   if (!d.luogo_partenza) errori.push("Scrivi da dove parti");
+  errori.push(...erroriCoordinate(d)); // A3: coordinate fuori dai limiti, con un esempio
   if (d.quota_max_m !== undefined && (!Number.isInteger(d.quota_max_m) || d.quota_max_m < 0 || d.quota_max_m > 9000)) {
     errori.push("La quota massima deve essere un numero intero di metri, tra 0 e 9000");
   }
