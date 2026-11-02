@@ -609,3 +609,12 @@ button.togli { margin-left: .2rem; }
                 font-weight: 600; text-align: center; pointer-events: none; }
 /* Le puntine si trascinano con un dito anche se la mappa (sul telefono) lascia scorrere la pagina */
 .leaflet-marker-draggable { touch-action: none; }
+
+/* --- B1 (revisione UX 2): il messaggio d'errore sotto il campo sbagliato, e il campo con il bordo rosso --- */
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--rosso); }
+input[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus, textarea[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgba(163, 49, 42, .2); }
+.errore-campo { color: var(--rosso); font-size: .82rem; font-weight: 600; }
+/* nello zaino: sotto la riga dell'oggetto */
+.errore-riga { margin: 0; padding: .35rem .9rem .6rem 3.2rem; color: var(--rosso); font-size: .85rem; font-weight: 600;
+               border-bottom: 1px solid var(--bordo); }
+.errore-riga a { color: var(--muschio); }

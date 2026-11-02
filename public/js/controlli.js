@@ -10,13 +10,31 @@ const COORDINATE = [
   ["lon_arrivo", "La longitudine di arrivo", 180, "in Italia circa 6–19, es. 10,70"],
 ];
 
-// d = i dati letti dal form (numeri, oppure undefined/null se il campo è vuoto) → elenco di messaggi
+// d = i dati letti dal form (numeri, oppure undefined/null se il campo è vuoto)
+// → elenco di errori { campo, testo } (B1: ogni messaggio va sotto il suo campo)
 export function erroriCoordinate(d) {
   const errori = [];
   for (const [campo, nome, limite, aiuto] of COORDINATE) {
     const v = d[campo];
     if (v == null) continue; // facoltative
-    if (!Number.isFinite(v) || v < -limite || v > limite) errori.push(`${nome} va da −${limite} a ${limite} (${aiuto})`);
+    if (!Number.isFinite(v) || v < -limite || v > limite) errori.push({ campo, testo: `${nome} va da −${limite} a ${limite} (${aiuto})` });
+  }
+  return errori;
+}
+
+// Quota minima e massima: insieme ai limiti, la minima non può superare la massima
+export function erroriQuote(d) {
+  const errori = [];
+  const intero = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
+  if (d.quota_max_m != null && !intero(d.quota_max_m, 0, 9000)) {
+    errori.push({ campo: "quota_max_m", testo: "La quota massima va da 0 a 9.000 m (numero intero)" });
+  }
+  if (d.quota_min_m != null && !intero(d.quota_min_m, -500, 9000)) {
+    errori.push({ campo: "quota_min_m", testo: "La quota minima va da −500 a 9.000 m (numero intero)" });
+  }
+  if (d.quota_min_m != null && d.quota_max_m != null && d.quota_min_m > d.quota_max_m) {
+    errori.push({ campo: "quota_min_m",
+      testo: `La quota minima non può superare la quota massima (${d.quota_max_m.toLocaleString("it-IT", { useGrouping: "always" })} m)` });
   }
   return errori;
 }

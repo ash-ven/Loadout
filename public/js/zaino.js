@@ -263,14 +263,15 @@ elChecklist.addEventListener("change", async (e) => {
   } else if (e.target.matches(".quantita")) {
     const quantita = Number(e.target.value);
     const posseduti = Number(e.target.max); // B2: quanti ne hai nell'armadio
+    // B1 (revisione UX 2): il messaggio sotto la riga dell'oggetto, non in cima alla pagina (fuori vista)
     if (!Number.isInteger(quantita) || quantita < 1) {
-      mostraErrore("La quantità deve essere un numero intero, almeno 1");
       renderZaino(); // rimette il valore giusto
+      erroreSottoRiga(oggettoId, "La quantità deve essere un numero intero, almeno 1");
       return;
     }
     if (quantita > posseduti) {
-      mostraErrore(posseduti === 1 ? "Nell'armadio ne hai solo uno" : `Nell'armadio ne hai solo ${posseduti}`);
       renderZaino();
+      erroreSottoRiga(oggettoId, `Nell'armadio ne hai ${posseduti}`, true);
       return;
     }
     modifica = { quantita };
@@ -368,6 +369,28 @@ bottoneAnnulla.addEventListener("click", async () => {
     mostraErrore(err.message);
   }
 });
+
+// B1: un messaggio subito sotto la riga di un oggetto (sparisce alla prossima modifica dello zaino, che ridisegna la lista).
+// conLink = aggiunge "Aggiorna i pezzi", che apre l'armadio sulla scheda di quell'oggetto
+function erroreSottoRiga(oggettoId, testo, conLink = false) {
+  const riga = elChecklist.querySelector(`.riga-zaino[data-id="${oggettoId}"]`);
+  if (!riga) return mostraErrore(testo);
+  const messaggio = document.createElement("p");
+  messaggio.className = "errore-riga";
+  messaggio.id = `errore-riga-${oggettoId}`;
+  messaggio.setAttribute("role", "alert"); // il lettore di schermo lo annuncia subito
+  messaggio.textContent = testo;
+  if (conLink) {
+    const link = document.createElement("a");
+    link.href = `/armadio.html?apri=${oggettoId}`;
+    link.textContent = "Aggiorna i pezzi";
+    messaggio.append(" · ", link);
+  }
+  riga.after(messaggio);
+  const campo = riga.querySelector(".quantita");
+  campo.setAttribute("aria-invalid", "true");
+  campo.setAttribute("aria-describedby", messaggio.id);
+}
 
 // --- Messaggi ---
 function mostraInfo(testo) {

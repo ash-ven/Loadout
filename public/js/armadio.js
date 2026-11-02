@@ -1,5 +1,6 @@
 import { api, esc } from "./api.js";
 import "./menu.js";
+import { mostraErroriCampi, pulisciErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 import { CATEGORIE } from "./categorie.js";
 import { segno, iconaSegno } from "./segni.js";
 
@@ -222,6 +223,7 @@ function svuotaForm() {
   infoForm.hidden = true;
   delete campi.categoria.dataset.scelta; // nessuna categoria scelta a mano (vedi cercaProdotto)
   nascondiErrore();
+  pulisciErroriCampi(form); // B1
 }
 
 // --- La finestra (dialog) con il form ---
@@ -425,13 +427,14 @@ function leggiForm() {
   };
 }
 
+// B1 (revisione UX 2): ogni errore dice a quale campo si riferisce, e il messaggio compare sotto quel campo
 function validaLatoClient(dati) {
   const errori = [];
-  if (!dati.nome) errori.push("Il nome è obbligatorio");
-  if (!dati.categoria) errori.push("Scegli una categoria");
-  if (!Number.isInteger(dati.peso_g) || dati.peso_g < 1) errori.push("Il peso deve essere un numero intero di almeno 1 grammo");
+  if (!dati.nome) errori.push({ campo: "nome", testo: "Scrivi il nome dell'oggetto" });
+  if (!dati.categoria) errori.push({ campo: "categoria", testo: "Scegli una categoria" });
+  if (!Number.isInteger(dati.peso_g) || dati.peso_g < 1) errori.push({ campo: "peso_g", testo: "Il peso va scritto in grammi: un numero intero, almeno 1" });
   if (!Number.isInteger(dati.quantita_posseduta) || dati.quantita_posseduta < 1 || dati.quantita_posseduta > 99) {
-    errori.push("I pezzi posseduti devono essere tra 1 e 99");
+    errori.push({ campo: "quantita_posseduta", testo: "I pezzi posseduti vanno da 1 a 99" });
   }
   return errori;
 }
@@ -443,7 +446,7 @@ form.addEventListener("submit", async (e) => {
 
   const dati = leggiForm();
   const errori = validaLatoClient(dati);
-  if (errori.length) return mostraErrore(errori.join("; "));
+  if (mostraErroriCampi(form, errori)) return; // B1: sotto i campi sbagliati, e il cursore va al primo
 
   bottoneSalva.disabled = true;
   try {
@@ -473,7 +476,17 @@ function nascondiErrore() {
 // --- Ricerca: ogni volta che cambia il testo, si ricarica dall'API ---
 q.addEventListener("input", carica);
 
-carica(); // primo caricamento all'apertura della pagina
+pulisciScrivendo(form); // B1: correggendo un campo (o scegliendo la categoria), il suo messaggio d'errore sparisce
+
+await carica(); // primo caricamento all'apertura della pagina
+
+// B1: arrivo dallo zaino con ?apri=ID ("Aggiorna i pezzi"): apro la scheda di quell'oggetto
+const daAprire = Number(new URLSearchParams(location.search).get("apri"));
+if (daAprire) {
+  history.replaceState(null, "", location.pathname);
+  const oggetto = oggetti.find((o) => o.id === daAprire);
+  if (oggetto) apriDettaglio(oggetto);
+}
 
 // B5: arrivo dal riquadro "Per questa uscita" con ?nuovo=Casco&categoria=sicurezza:
 // apro il form del nuovo oggetto con nome e categoria già scritti (poi tolgo i parametri dall'indirizzo)

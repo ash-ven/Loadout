@@ -4,7 +4,8 @@ import { segno } from "./segni.js";
 import { ATTIVITA } from "./categorie.js";
 import { attivaCampoLuogo } from "./campo-luogo.js";
 import { staccaPostItScrivendo } from "./post-it.js";
-import { erroriCoordinate } from "./controlli.js";
+import { erroriCoordinate, erroriQuote } from "./controlli.js";
+import { mostraErroriCampi, pulisciErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
@@ -140,6 +141,7 @@ function bloccaDatiDellaMappa(idUscita) {
   });
 }
 staccaPostItScrivendo(CAMPI_POST_IT.map((nome) => campi[nome]));
+pulisciScrivendo(form); // B1: correggendo un campo, il suo messaggio d'errore sparisce
 
 // B1: i due campi luogo con i suggerimenti (il nome e, scegliendo, le coordinate)
 const luogoPartenza = attivaCampoLuogo({
@@ -155,6 +157,7 @@ const luogoArrivo = attivaCampoLuogo({
 function svuotaForm() {
   form.reset(); // rimette i valori iniziali scritti nell'HTML (1 persona, 1 giorno, "genera" spuntato)
   CAMPI_POST_IT.forEach((nome) => delete campi[nome].dataset.auto); // reset() non toglie i post-it
+  pulisciErroriCampi(form); // B1: niente messaggi rimasti dall'ultima volta
   bloccaDatiDellaMappa(null); // uscita nuova: niente mappa, tutto modificabile
   erroreForm.hidden = true;
   inModifica = null;
@@ -233,26 +236,21 @@ function leggiForm() {
   };
 }
 
+// B1 (revisione UX 2): ogni errore dice a quale campo si riferisce, e il messaggio compare sotto quel campo
 function validaLatoClient(d) {
   const errori = [];
-  if (!d.nome) errori.push("Il nome dell'uscita è obbligatorio");
-  if (!d.luogo_partenza) errori.push("Scrivi da dove parti");
-  errori.push(...erroriCoordinate(d)); // A3: coordinate fuori dai limiti, con un esempio
-  if (d.quota_max_m !== undefined && (!Number.isInteger(d.quota_max_m) || d.quota_max_m < 0 || d.quota_max_m > 9000)) {
-    errori.push("La quota massima deve essere un numero intero di metri, tra 0 e 9000");
-  }
-  if (d.quota_min_m !== undefined && (!Number.isInteger(d.quota_min_m) || d.quota_min_m < -500 || d.quota_min_m > 9000)) {
-    errori.push("La quota minima deve essere un numero intero di metri, tra -500 e 9000");
-  }
-  if (d.quota_min_m !== undefined && d.quota_max_m !== undefined && d.quota_min_m > d.quota_max_m) {
-    errori.push("La quota minima non può superare la quota massima");
-  }
+  if (!d.nome) errori.push({ campo: "nome", testo: "Scrivi il nome dell'uscita" });
+  if (!d.luogo_partenza) errori.push({ campo: "luogo_partenza", testo: "Scrivi da dove parti" });
   if (d.n_persone !== undefined && (!Number.isInteger(d.n_persone) || d.n_persone < 1 || d.n_persone > 50)) {
-    errori.push("Le persone devono essere tra 1 e 50");
+    errori.push({ campo: "n_persone", testo: "Le persone vanno da 1 a 50" });
   }
   if (d.n_giorni !== undefined && (!Number.isInteger(d.n_giorni) || d.n_giorni < 1 || d.n_giorni > 60)) {
-    errori.push("I giorni devono essere tra 1 e 60");
+    errori.push({ campo: "n_giorni", testo: "I giorni vanno da 1 a 60" });
   }
+  errori.push(...erroriCoordinate(d)); // A3: coordinate fuori dai limiti, con un esempio
+  errori.push(...erroriQuote(d));
+  // Le quote stanno nel riquadro «Percorso»: se lì c'è un errore, lo apriamo, altrimenti il campo non si vedrebbe
+  if (errori.some((e) => e.campo === "quota_min_m" || e.campo === "quota_max_m")) form.querySelector("details").open = true;
   return errori;
 }
 
@@ -263,7 +261,7 @@ form.addEventListener("submit", async (e) => {
 
   const dati = leggiForm();
   const errori = validaLatoClient(dati);
-  if (errori.length) return mostraErrore(errori.join("; "));
+  if (mostraErroriCampi(form, errori)) return; // B1: sotto i campi sbagliati, e il cursore va al primo
 
   bottoneSalva.disabled = true;
   try {

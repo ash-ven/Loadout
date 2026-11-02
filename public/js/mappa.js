@@ -2,7 +2,8 @@ import { api } from "./api.js";
 import "./menu.js";
 import { attivaDisegnoMappa } from "./mappa-disegno.js";
 import { staccaPostItScrivendo } from "./post-it.js";
-import { erroriCoordinate } from "./controlli.js";
+import { erroriCoordinate, erroriQuote } from "./controlli.js";
+import { mostraErroriCampi, pulisciScrivendo } from "./errori-campi.js";
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
 // Qui si disegna il percorso; «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate
@@ -70,6 +71,7 @@ QUATTRO.forEach((nome) => campi[nome].addEventListener("input", mostraCalcoli));
 
 // Scrivendo a mano il post-it si stacca (e la pagina ha modifiche da salvare)
 staccaPostItScrivendo(CAMPI.map((nome) => campi[nome]));
+pulisciScrivendo(form); // B1: correggendo un campo, il suo messaggio d'errore sparisce
 form.addEventListener("input", () => { daSalvare = true; messaggioEl.hidden = true; });
 window.addEventListener("beforeunload", (e) => { if (daSalvare) e.preventDefault(); });
 
@@ -111,15 +113,8 @@ form.addEventListener("submit", async (e) => {
   const traccia = disegno.traccia(); // { tappe, linea } oppure null
   // A1: con la traccia si salva anche chi ha scritto ogni valore, così alla riapertura i post-it tornano giusti
   dati.traccia = traccia ? { ...traccia, origini: originiAttuali() } : null;
-  const errori = erroriCoordinate(dati); // A3: coordinate fuori dai limiti, con un esempio
-  if (dati.quota_min_m != null && dati.quota_max_m != null && dati.quota_min_m > dati.quota_max_m) {
-    errori.push("La quota minima non può superare la quota massima");
-  }
-  if (errori.length) {
-    erroreEl.textContent = errori.join("; ");
-    erroreEl.hidden = false;
-    return;
-  }
+  // A3 + B1: coordinate e quote controllate prima di salvare, con il messaggio sotto il campo sbagliato
+  if (mostraErroriCampi(form, [...erroriCoordinate(dati), ...erroriQuote(dati)])) return;
   const bottone = document.querySelector("#salva-percorso");
   bottone.disabled = true;
   try {
