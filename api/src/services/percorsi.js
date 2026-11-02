@@ -1,5 +1,7 @@
 // Mappe, fase 4: percorso a piedi lungo i sentieri tra due o più punti, calcolato da BRouter
-// (servizio gratuito basato su OpenStreetMap, profilo "hiking-mountain" = escursionismo in montagna).
+// (servizio gratuito basato su OpenStreetMap). Due profili, scelti sulla mappa con l'interruttore:
+//   "sentieri" → hiking-mountain: preferisce i sentieri, evita l'asfalto, pesa le salite (a volte allunga);
+//   "breve"    → shortest: la strada più corta, anche se passa da strade e carrozzabili.
 // Come per alba, meteo e luoghi, il servizio esterno lo chiama il SERVER, non il browser:
 // così la CSP resta chiusa (connect-src 'self'), abbiamo un timeout e messaggi d'errore in italiano.
 // (Ripreso dal commit 893a42b di giovedì e ampliato con le quote e il punto più alto.)
@@ -9,10 +11,13 @@ const BROUTER = "https://brouter.de/brouter";
 // Errore "nessun sentiero vicino a quel punto": la rotta lo traduce in 404
 export class NessunPercorso extends Error {}
 
+export const PROFILI = { sentieri: "hiking-mountain", breve: "shortest" };
+
 // punti: [[lat, lon], [lat, lon], ...] (per l'anello il browser rimette la partenza in fondo)
-export async function calcola(punti) {
+// profilo: "sentieri" (predefinito) oppure "breve"
+export async function calcola(punti, profilo = "sentieri") {
   const lonlats = punti.map(([lat, lon]) => `${lon},${lat}`).join("|"); // BRouter vuole PRIMA la longitudine, separati da |
-  const url = `${BROUTER}?lonlats=${lonlats}&profile=hiking-mountain&alternativeidx=0&format=geojson`;
+  const url = `${BROUTER}?lonlats=${lonlats}&profile=${PROFILI[profilo]}&alternativeidx=0&format=geojson`;
 
   const risposta = await fetch(url, { signal: AbortSignal.timeout(10_000) }); // massimo 10 secondi
   if (!risposta.ok) {
@@ -42,11 +47,23 @@ export function daBRouter(geojson) {
   return {
     distanza_km: Math.round(Number(linea.properties["track-length"]) / 100) / 10, // metri → km con 1 decimale
     dislivello_m: Math.round(Number(linea.properties["filtered ascend"])),        // dislivello positivo in metri
+    discesa_m: discesa(linea.properties),                                          // dislivello negativo in metri
     quota_min_m: quote.length ? Math.min(...quote) : null,
     quota_max_m: quote.length ? Math.max(...quote) : null,
     punto_piu_alto: indiceAlto >= 0 ? punti[indiceAlto].slice(0, 2) : null,      // per il meteo in vetta
     traccia: semplifica(punti, 20, indiceAlto),
   };
+}
+
+// Il dislivello negativo (D−): BRouter non lo dà, ma dà la salita totale ("filtered ascend") e la differenza
+// di quota tra arrivo e partenza ("plain-ascend", negativa se arrivi più in basso). Siccome
+//   arrivo − partenza = salite − discese   →   discese = salite − (arrivo − partenza)
+// Esempio: sali 650 m e arrivi 200 m più in alto → scendi 450 m. In un anello D− = D+.
+export function discesa(proprieta) {
+  const salita = Number(proprieta?.["filtered ascend"]);
+  const netto = Number(proprieta?.["plain-ascend"]);
+  if (!Number.isFinite(salita) || !Number.isFinite(netto)) return null;
+  return Math.max(0, Math.round(salita - netto)); // max 0: per i piccoli arrotondamenti di BRouter
 }
 
 const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro

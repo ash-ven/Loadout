@@ -25,3 +25,12 @@ test("traccia: le origini dei valori sono accettate solo con campi e valori cono
   assert.equal(tracciaValida({ ...buona, origini: { password: "mappa" } }), false);     // campo che non c'entra
   assert.equal(tracciaValida({ ...buona, origini: ["mappa"] }), false);                 // non è un oggetto
 });
+
+// Profilo del percorso e dislivello negativo stanno nella traccia (niente colonne nuove)
+test("traccia: profilo sentieri/breve e discesa_m intera tra 0 e 9000", () => {
+  assert.equal(tracciaValida({ ...buona, profilo: "breve", discesa_m: 450 }), true);
+  assert.equal(tracciaValida({ ...buona, profilo: "sentieri", discesa_m: null }), true);
+  assert.equal(tracciaValida({ ...buona, profilo: "auto" }), false);   // profilo sconosciuto
+  assert.equal(tracciaValida({ ...buona, discesa_m: -5 }), false);      // negativa
+  assert.equal(tracciaValida({ ...buona, discesa_m: 12.5 }), false);    // non intera
+});

@@ -212,6 +212,7 @@ function renderConsigli() {
   if (viaggio.luogo_arrivo) parti.push(`arrivo a ${viaggio.luogo_arrivo}`);
   if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km di sentiero`);
   if (viaggio.dislivello_m != null) parti.push(`${num(viaggio.dislivello_m)} m di dislivello positivo`);
+  if (viaggio.traccia?.discesa_m != null) parti.push(`${num(viaggio.traccia.discesa_m)} m di dislivello negativo`); // D−: solo dalla mappa
   elPercorso.textContent = parti.length
     ? parti.join(" · ")
     : "Aggiungi km, dislivello e coordinate per avere più consigli.";
@@ -251,6 +252,7 @@ function renderCollegamenti() {
     const parti = [];
     if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km`);
     if (viaggio.dislivello_m != null) parti.push(`D+ ${num(viaggio.dislivello_m)} m`);
+    if (viaggio.traccia.discesa_m != null) parti.push(`D− ${num(viaggio.traccia.discesa_m)} m`);
     testo("#titolo-mappa", "La mappa");
     testo("#riepilogo-mappa", parti.join(" · ") || "Il percorso sui sentieri");
   } else {

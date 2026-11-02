@@ -27,10 +27,11 @@ const disegno = attivaDisegnoMappa({
   bottoneRicomincia: document.querySelector("#ricomincia"),
   legenda: document.querySelector(".legenda"),          // B11
   notaAnello: document.querySelector("#nota-anello"),   // B11
+  sceltaProfilo: document.querySelector("#scelta-profilo"), // «Sentieri / Più breve»
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },
-  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); },
+  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); mostraDiscesa(dati?.discesa_m); },
 });
 
 // =====================================================================
@@ -68,6 +69,13 @@ function mostraCalcoli() {
     }
   }
 }
+// Il dislivello negativo: solo dalla mappa, in una riga di testo sotto lunghezza e D+ (null = nascosta)
+const rigaDiscesa = document.querySelector("#riga-discesa");
+function mostraDiscesa(metri) {
+  rigaDiscesa.hidden = metri == null;
+  if (metri != null) rigaDiscesa.textContent = `Dislivello negativo (dalla mappa): ${Math.round(metri).toLocaleString("it-IT", { useGrouping: "always" })} m`;
+}
+
 // Se scrivi in un campo, il confronto si aggiorna subito
 QUATTRO.forEach((nome) => campi[nome].addEventListener("input", mostraCalcoli));
 
@@ -147,6 +155,7 @@ if (!Number.isInteger(id) || id <= 0) {
     document.querySelector("#intestazione").hidden = false;
     document.querySelector("#corpo-mappa").hidden = false; // prima visibile, poi la mappa (Leaflet misura il contenitore)
     riempi(v);
+    mostraDiscesa(v.traccia?.discesa_m);
     disegno.carica(v);
     await disegno.apri();
   } catch (err) {

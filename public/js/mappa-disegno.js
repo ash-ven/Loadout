@@ -16,12 +16,15 @@ const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 // suCalcolo(dati): chiamata con i valori calcolati dalla mappa ({ distanza_km, dislivello_m, quota_min_m, quota_max_m })
 //                  oppure con null quando non c'è un percorso (A2: la pagina li mostra sotto i valori scritti a mano)
 // legenda e notaAnello (B11, facoltativi): la legenda mostra solo quello che c'è, la nota spiega l'anello con una sola tappa
+// sceltaProfilo (facoltativo): il gruppo di pulsanti «Sentieri / Più breve» (data-profilo="sentieri" | "breve")
 export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate,
-                                     legenda = null, notaAnello = null, suModifica = () => {}, suCalcolo = () => {} }) {
+                                     legenda = null, notaAnello = null, sceltaProfilo = null, suModifica = () => {}, suCalcolo = () => {} }) {
   let mappa = null;            // nasce con apri()
   let livelloPercorso = null;  // le linee: si svuota e si ridisegna
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
   let linea = null;            // la traccia dell'ultimo percorso calcolato: [[lat, lon, quota], ...]
+  let discesa = null;          // il dislivello negativo dell'ultimo percorso calcolato (metri), o null
+  let profilo = "sentieri";    // come chiedere il percorso: "sentieri" (preferisce i sentieri) o "breve" (il più corto)
   let daRipristinare = null;   // in modifica: la traccia salvata, da rimettere quando la mappa nasce
   let centro = null;           // dove aprire la mappa (il luogo scelto, o la partenza)
   let ultimaRichiesta = 0;     // se tocchi in fretta partono più richieste: vale solo la risposta dell'ultima
@@ -172,6 +175,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     const giro = puntiDelGiro();
     livelloPercorso.clearLayers();
     linea = null;
+    discesa = null;
     if (giro.length < 2) {
       ultimaRichiesta++;            // un'eventuale risposta in arrivo non serve più
       compilaDati(null);            // niente percorso: i valori della mappa si svuotano (i tuoi restano)
@@ -180,17 +184,18 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     }
 
     disegnaProvvisoria(livelloPercorso, giro);
-    scriviStato(stato, "Cerco il percorso sui sentieri…", "attesa");
+    scriviStato(stato, profilo === "breve" ? "Cerco il percorso più breve…" : "Cerco il percorso sui sentieri…", "attesa");
     const numero = ++ultimaRichiesta;
     const parametro = giro.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(";");
 
     try {
-      const dati = await api(`/api/percorso?punti=${parametro}`);
+      const dati = await api(`/api/percorso?punti=${parametro}&profilo=${profilo}`);
       if (numero !== ultimaRichiesta) return;           // nel frattempo è partita una richiesta più nuova
       livelloPercorso.clearLayers();
       disegnaTracciato(livelloPercorso, dati.traccia.map(([lat, lon]) => [lat, lon]));
       disegnaCollegamenti(livelloPercorso, giro.map((p) => [p.lat, p.lng]), dati.traccia); // B11
       linea = dati.traccia;
+      discesa = dati.discesa_m ?? null;
       aggiornaLegenda();
       compilaDati(dati);
       scriviStato(stato, "");
@@ -218,6 +223,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     punti = traccia.tappe.map(([lat, lon]) => nuovaPuntina(L.latLng(lat, lon)));
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     linea = traccia.linea;
+    discesa = traccia.discesa_m ?? null;
     disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
     const tappe = traccia.tappe.map(([lat, lon]) => [lat, lon]);
     disegnaCollegamenti(livelloPercorso, interruttoreAnello.checked ? [...tappe, tappe[0]] : tappe, linea); // B11
@@ -234,6 +240,19 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     mappa.fitBounds(confini, { padding: [30, 30] });
     requestAnimationFrame(() => { mappa.invalidateSize(); mappa.fitBounds(confini, { padding: [30, 30] }); });
   }
+
+  // «Sentieri / Più breve»: segna il pulsante scelto (aria-pressed) e, se c'è già un percorso, lo ricalcola
+  function mostraProfilo(nuovo) {
+    profilo = nuovo;
+    sceltaProfilo?.querySelectorAll("button[data-profilo]")
+      .forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.profilo === profilo)));
+  }
+  sceltaProfilo?.addEventListener("click", (e) => {
+    const bottone = e.target.closest("button[data-profilo]");
+    if (!bottone || bottone.dataset.profilo === profilo) return;
+    mostraProfilo(bottone.dataset.profilo);
+    if (mappa && daRipristinare === null && punti.length >= 2) ridisegna();
+  });
 
   // --- Pulsanti ---
   interruttoreAnello.addEventListener("change", () => { if (mappa) ridisegna(); else aggiornaConteggio(); });
@@ -256,8 +275,10 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       punti.forEach((p) => mappa?.removeLayer(p));
       punti = [];
       linea = null;
+      discesa = null;
       daRipristinare = null;
       centro = null;
+      mostraProfilo("sentieri");
       livelloPercorso?.clearLayers();
       interruttoreAnello.checked = false;
       aggiornaConteggio();
@@ -268,6 +289,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       this.svuota();
       if (viaggio.lat_partenza != null && viaggio.lon_partenza != null) centro = [viaggio.lat_partenza, viaggio.lon_partenza];
       if (!viaggio.traccia?.tappe?.length || !viaggio.traccia?.linea?.length) return;
+      mostraProfilo(viaggio.traccia.profilo ?? "sentieri"); // le mappe di prima non lo dicono: erano tutte "sentieri"
       if (mappa) ripristina(viaggio.traccia);
       else {
         daRipristinare = viaggio.traccia;
@@ -276,11 +298,12 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
         conteggio.textContent = `Percorso salvato (${viaggio.traccia.tappe.length} punti)`;
       }
     },
-    // Quello da salvare nel viaggio: { tappe, linea } oppure null (niente percorso calcolato)
+    // Quello da salvare nel viaggio: { tappe, linea, profilo, discesa_m } oppure null (niente percorso calcolato)
     traccia() {
       if (daRipristinare) return daRipristinare;           // la mappa non è mai stata aperta: resta quella salvata
       if (punti.length < 2 || !linea) return null;
-      return { tappe: punti.map((p) => [arrotonda(p.getLatLng().lat), arrotonda(p.getLatLng().lng)]), linea };
+      return { tappe: punti.map((p) => [arrotonda(p.getLatLng().lat), arrotonda(p.getLatLng().lng)]), linea, profilo,
+               ...(discesa != null ? { discesa_m: discesa } : {}) };
     },
   };
 }

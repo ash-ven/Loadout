@@ -79,7 +79,7 @@ Regole dei campi del viaggio (* = obbligatorio):
 - `luogo_partenza`, `luogo_arrivo` testo max 200 (B1); `quota_max_m` intero 0–9000 (B3, il punto più alto del percorso)
 - Mappe, fase 1: `quota_min_m` intero −500–9000 (non più alta di `quota_max_m`, altrimenti 400 "La quota minima non può superare la quota massima");
   `ora_partenza` testo `HH:MM` (es. `"08:30"`; se manca, per i calcoli vale 08:00);
-  `traccia` oggetto `{ tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (2–5000), origini?: { campo: "mappa" | "luogo" } }`
+  `traccia` oggetto `{ tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (2–5000), origini?: { campo: "mappa" | "luogo" }, profilo?: "sentieri" | "breve", discesa_m?: 0–9000 }` (profilo = come è stato calcolato, discesa_m = dislivello negativo dalla mappa)
   = il percorso disegnato sulla mappa; `origini` dice quali valori (km, dislivello, quote, coordinate) sono stati compilati in automatico:
   quelli non elencati li ha scritti l'utente e la mappa non li sovrascrive
   (con valori fuori dai limiti → 400 "Traccia non valida")
@@ -145,7 +145,7 @@ Forma di `GET /api/viaggi/:id/zaino` (vista `v_zaino_peso` per `peso`, `v_zaino_
 ## Mappe e percorso sui sentieri
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/percorso?punti=44.21,10.64;44.22,10.62 | — | `{ distanza_km, dislivello_m, quota_min_m, quota_max_m, punto_piu_alto: [lat, lon], traccia: [[lat, lon, quota], …] }` | 200, 400 (`BAD_QUERY`: 2–30 coppie lat,lon), 401, 404 (`NESSUN_PERCORSO`: un punto lontano dai sentieri), 502 (`SERVIZIO_PERCORSI`: BRouter non risponde) |
+| GET | /api/percorso?punti=44.21,10.64;44.22,10.62&profilo= | — | `{ distanza_km, dislivello_m, discesa_m, quota_min_m, quota_max_m, punto_piu_alto: [lat, lon], traccia: [[lat, lon, quota], …] }`; `profilo=sentieri` (predefinito, BRouter hiking-mountain) oppure `breve` (shortest); `discesa_m` = dislivello negativo | 200, 400 (`BAD_QUERY`: 2–30 coppie lat,lon, profilo sconosciuto), 401, 404 (`NESSUN_PERCORSO`: un punto lontano dai sentieri), 502 (`SERVIZIO_PERCORSI`: BRouter non risponde) |
 | PUT | /api/viaggi/:id/percorso | `{ traccia, distanza_km, dislivello_m, quota_min_m, quota_max_m, lat_partenza, lon_partenza, lat_arrivo, lon_arrivo }` (tutti facoltativi, `null` = vuoto) | il viaggio aggiornato. Salva SOLO il percorso (pagina della mappa): il resto dell'uscita non cambia; i campi non mandati diventano `null` | 200, 400 (stesse regole del viaggio, quota minima ≤ massima, traccia valida), 401, 404 |
 | GET | /api/mappe/config | — | `{ chiave }` – la chiave di MapTiler per le tessere della mappa | 200, 401, 503 (`MAPPE_NON_CONFIGURATE`: manca `MAPTILER_KEY` nel `.env`) |
 

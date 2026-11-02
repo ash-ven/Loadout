@@ -2,12 +2,12 @@
 // non serve internet e il risultato è sempre lo stesso.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { daBRouter, semplifica, NessunPercorso } from "../src/services/percorsi.js";
+import { daBRouter, semplifica, discesa, NessunPercorso } from "../src/services/percorsi.js";
 
 // Una risposta come quella di BRouter: coordinate [lon, lat, quota], lunghezza e salita come TESTO
 const finta = {
   features: [{
-    properties: { "track-length": "6234", "filtered ascend": "412" },
+    properties: { "track-length": "6234", "filtered ascend": "412", "plain-ascend": "99" },
     geometry: { coordinates: [
       [10.70000, 44.20000, 1501.4],
       [10.70010, 44.20005, 1503],   // a pochi metri dal primo: la semplificazione lo toglie
@@ -30,6 +30,14 @@ test("BRouter: coordinate girate in [lat, lon, quota] e punto più alto per il m
   assert.deepEqual(p.punto_piu_alto, [44.205, 10.705]);
   assert.deepEqual(p.traccia[0], [44.2, 10.7, 1501]);
   assert.equal(p.traccia.length, 3); // il secondo punto (a ~9 m dal primo) è stato tolto
+});
+
+// D−: salita totale meno (quota d'arrivo − quota di partenza). Qui 412 − 99 = 313 m di discesa
+test("BRouter: dislivello negativo ricavato da salita totale e differenza di quota", () => {
+  assert.equal(daBRouter(finta).discesa_m, 313);
+  assert.equal(discesa({ "filtered ascend": "650", "plain-ascend": "-200" }), 850); // arrivi più in basso: scendi di più
+  assert.equal(discesa({ "filtered ascend": "500", "plain-ascend": "0" }), 500);    // anello: D− = D+
+  assert.equal(discesa({ "filtered ascend": "500" }), null);                         // manca il dato: non inventiamo
 });
 
 test("semplifica: tiene sempre primo, ultimo e il punto da tenere, anche se vicinissimi", () => {

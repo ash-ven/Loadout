@@ -7,7 +7,7 @@
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="con-pulsante-fisso">
   <header class="topbar">
     <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="38" height="38"><span>Load<span class="out">out</span></span></a>
     <!-- Menu: telefono = barra in basso (Viaggi al centro, la scarpa senape); computer = nella barra in alto.
@@ -24,13 +24,12 @@
     <a href="#" id="esci" class="icona-alto esci" aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
   </header>
 
-  <!-- Testata: titolo, riepilogo e i due pulsanti per aggiungere oggetti -->
+  <!-- Testata: titolo, riepilogo e «Scansiona etichetta» (il + per aggiungere è il pulsante di lato, in fondo alla pagina) -->
   <section class="testata">
     <div class="testata-dentro">
       <h1>Il mio armadio</h1>
       <p id="riepilogo"></p>
       <div class="testata-azioni">
-        <button type="button" id="apri-nuovo"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Aggiungi</button>
         <!-- Stretch 2: legge il codice a barre con la fotocamera (finestra "Scansiona l'etichetta" qui sotto) -->
         <button type="button" class="su-scuro" id="scansiona"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10"/></svg> Scansiona etichetta</button>
       </div>
@@ -159,6 +158,10 @@
       </div>
     </dialog>
   </main>
+
+  <!-- Il + per aggiungere un oggetto: fisso in basso a destra, ti segue mentre scorri (scelta di Asiha).
+       Solo icona: il nome lo danno aria-label (lettori di schermo) e title (suggerimento col mouse) -->
+  <button type="button" class="pulsante-fisso" id="apri-nuovo" aria-label="Aggiungi un oggetto" title="Aggiungi un oggetto"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 
   <!-- C11 (revisione UX 2): dopo il salvataggio, una conferma in basso (stesso riquadro scuro di "Annulla" nello zaino) -->
   <div class="annulla" id="avviso-salvato" role="status" hidden></div>

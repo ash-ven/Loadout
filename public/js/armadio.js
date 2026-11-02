@@ -17,7 +17,7 @@ const bottoneSalva = document.querySelector("#salva");
 const bottoneAnnulla = document.querySelector("#annulla");
 const bottoneElimina = document.querySelector("#elimina-oggetto"); // dentro la finestra, solo in modifica
 const finestra = document.querySelector("#finestra");              // il <dialog> con il form
-const bottoneNuovo = document.querySelector("#apri-nuovo");        // "Aggiungi" nella testata
+const bottoneNuovo = document.querySelector("#apri-nuovo");        // il + fisso in basso a destra
 const bottoneScansiona = document.querySelector("#scansiona");     // "Scansiona etichetta" nella testata
 const bottoneChiudi = document.querySelector("#chiudi");           // la X in alto nella finestra
 // La scheda di dettaglio (B1): un secondo <dialog>, in sola lettura
@@ -91,7 +91,7 @@ function render() {
         <button type="button" class="btn-piccolo" id="aggiungi-cercato">Aggiungi «${esc(cercato)}» all'armadio</button></p>`;
     } else {
       lista.innerHTML = `<p class="vuoto">${
-        oggetti.length === 0 ? "Nessun oggetto qui. Premi «Aggiungi» per inserire il primo." : "Nessun oggetto con questo filtro."
+        oggetti.length === 0 ? "Nessun oggetto qui. Premi + in basso a destra per inserire il primo." : "Nessun oggetto con questo filtro."
       }</p>`;
     }
     return;

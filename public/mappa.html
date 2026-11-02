@@ -52,6 +52,11 @@
         <li data-tipo="sentieri"><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#31503f" stroke-width="3.5" stroke-linecap="round"/></svg>Sui sentieri</li>
       </ul>
       <div class="strumenti">
+        <!-- Come cercare il percorso (scelta di Asiha: parte su Sentieri). Il pulsante scelto ha aria-pressed="true" -->
+        <div class="segmenti scelta-profilo" id="scelta-profilo" role="group" aria-label="Come cercare il percorso">
+          <button type="button" data-profilo="sentieri" aria-pressed="true" title="Preferisce i sentieri ed evita l'asfalto, anche se a volte allunga">Sentieri</button>
+          <button type="button" data-profilo="breve" aria-pressed="false" title="La strada più corta, anche se passa da strade e carrozzabili">Più breve</button>
+        </div>
         <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
         <div class="azioni">
           <button type="button" class="secondario btn-piccolo" id="togli-punto">Togli l'ultimo punto</button>
@@ -74,6 +79,8 @@
             <span class="muto calcolo-mappa" data-per="dislivello_m" hidden></span>
           </label>
         </div>
+        <!-- D−: lo calcola solo la mappa, non si scrive a mano (scelta di Asiha) -->
+        <p class="muto riga-discesa" id="riga-discesa" hidden></p>
         <div class="riga2">
           <label><span class="nome-campo">Quota minima (m) <span class="origine"></span></span>
             <input name="quota_min_m" type="number" min="-500" max="9000" step="1">

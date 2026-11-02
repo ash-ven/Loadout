@@ -724,3 +724,17 @@ textarea:disabled { background: var(--crema); cursor: not-allowed; }
 .leaflet-popup-content a { font-weight: 700; color: var(--muschio); }
 @media (max-width: 860px) { .mappa-home-testa { padding-right: 100px; } }
 @media (max-width: 600px) { .mappa-home .mappa { height: max(360px, 62vh); } }
+
+/* Armadio: il + per aggiungere, fisso in basso a destra (position: fixed = resta fermo sullo schermo mentre la pagina scorre).
+   Sul telefono sta sopra il menu in basso (alto 80px). */
+button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 25;
+                        width: 56px; height: 56px; padding: 0; border-radius: 50%; box-shadow: 0 6px 20px rgba(35, 58, 45, .3); }
+@media (min-width: 761px) { button.pulsante-fisso { right: 2rem; bottom: 2rem; } }
+/* spazio in fondo, così il + non copre l'ultimo oggetto; e il riquadro «… aggiunto all'armadio» sale sopra il + */
+.con-pulsante-fisso main { padding-bottom: 6rem; }
+.con-pulsante-fisso .annulla { bottom: calc(164px + env(safe-area-inset-bottom)); }
+@media (min-width: 761px) { .con-pulsante-fisso .annulla { bottom: 6rem; } }
+
+/* Mappa: «Sentieri / Più breve» (due segmenti invece dei tre dei filtri) e la riga del dislivello negativo */
+.segmenti.scelta-profilo { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 15rem; max-width: 18rem; }
+.riga-discesa { margin: -.25rem 0 .75rem; }

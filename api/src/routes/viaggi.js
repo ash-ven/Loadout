@@ -54,7 +54,10 @@ function controlliPercorso(req, res, next) {
 
 // La traccia: { tappe: [[lat, lon], …] (2–30), linea: [[lat, lon, quota?], …] (al massimo 5000 punti),
 //               origini: { campo: "mappa" | "luogo" } (facoltativo, A1: quali valori sono stati compilati in automatico;
-//                         i campi non elencati li ha scritti l'utente) }
+//                         i campi non elencati li ha scritti l'utente),
+//               profilo: "sentieri" | "breve" (facoltativo: come è stato calcolato il percorso),
+//               discesa_m: intero 0–9000 (facoltativo: il dislivello negativo calcolato dalla mappa) }
+// Profilo e D− stanno nella traccia perché esistono solo quando c'è una mappa: niente colonne nuove nel database.
 const CAMPI_CON_ORIGINE = ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m",
                            "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
 export function tracciaValida(t) {
@@ -64,7 +67,9 @@ export function tracciaValida(t) {
     && Object.entries(t.origini).every(([campo, da]) => CAMPI_CON_ORIGINE.includes(campo) && ["mappa", "luogo"].includes(da)));
   return Array.isArray(t.tappe) && t.tappe.length >= 2 && t.tappe.length <= 30 && t.tappe.every(latLon)
     && Array.isArray(t.linea) && t.linea.length >= 2 && t.linea.length <= 5000 && t.linea.every(latLon)
-    && originiValide;
+    && originiValide
+    && (t.profilo === undefined || ["sentieri", "breve"].includes(t.profilo))
+    && (t.discesa_m === undefined || t.discesa_m === null || (Number.isInteger(t.discesa_m) && t.discesa_m >= 0 && t.discesa_m <= 9000));
 }
 
 // === Middleware "guardiano": il viaggio :id esiste ed è mio? ===
