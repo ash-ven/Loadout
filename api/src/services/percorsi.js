@@ -13,14 +13,20 @@ export class NessunPercorso extends Error {}
 
 export const PROFILI = { sentieri: "hiking-mountain", breve: "shortest" };
 
-// Ferrate e alpinismo: il profilo dei sentieri, di serie, VIETA i passaggi sopra T3 della scala SAC
-// (T1 sentiero facile … T6 alpinismo difficile), e le ferrate su OpenStreetMap sono quasi sempre T4–T6:
-// BRouter le aggirava. Per queste attività gli chiediamo di accettare fino a T6 e di preferire T4.
-// BRouter permette di cambiare i parametri del profilo nella richiesta: &profile:NOME=VALORE
+// Ferrate e alpinismo. BRouter permette di cambiare i parametri del profilo nella richiesta: &profile:NOME=VALORE
+// - SAC_scale_limit=6: di serie il profilo dei sentieri VIETA i sentieri sopra T3 della scala SAC
+//   (T1 sentiero facile … T6 alpinismo difficile); per queste attività li permettiamo (ma non li preferiamo).
+// - cost_of_unknown=1: le ferrate su OpenStreetMap sono "highway=via_ferrata", un tipo che il profilo NON nomina:
+//   finiscono tra le strade "sconosciute", che costano il doppio di un sentiero. Con 1 costano come un sentiero.
+// Prova vera del 3/11 alla Pietra di Bismantova (Ferrata dell'Ultimo Sole, attacco → uscita):
+//   di serie 177 m dentro la ferrata; con SAC_scale_preferred=4 (la versione di lunedì) 324 m e 0 m in ferrata
+//   (la AGGIRAVA: "preferire T4" rende più economici i sentieri facili, la ferrata no); con questi parametri 177 m dentro.
+//   Sui percorsi normali (Lago Santo → Monte Giovo, Cavone → Corno alle Scale) il risultato è uguale a quello di serie:
+//   preferred=3 o 4 invece sceglievano 660 m di T3 in più sul Corno alle Scale.
 export const ATTIVITA_IMPEGNATIVE = ["ferrata", "alpinismo"];
 export function parametriDifficolta(profilo, attivita) {
   if (profilo !== "sentieri" || !ATTIVITA_IMPEGNATIVE.includes(attivita)) return "";
-  return "&profile:SAC_scale_limit=6&profile:SAC_scale_preferred=4";
+  return "&profile:SAC_scale_limit=6&profile:cost_of_unknown=1";
 }
 
 // punti: [[lat, lon], [lat, lon], ...] (per l'anello il browser rimette la partenza in fondo)
@@ -102,8 +108,11 @@ export function semplifica(punti, minimoMetri = 20, indiceDaTenere = -1) {
 //  BRouter, insieme al percorso, dà la tabella "messages": la riga 0 è l'intestazione
 //  (Longitude, Latitude, Elevation, Distance, …, WayTags, …), poi una riga per ogni tratto,
 //  con la sua lunghezza (Distance, in metri) e le etichette OSM della strada (WayTags, "chiave=valore" separate da spazi).
-//  Verificato con una richiesta vera (3/11): sac_scale e surface ci sono; cai_scale NO (BRouter non lo passa):
-//  usiamo la scala SAC, quasi equivalente (T3 ≈ EE, T4 e oltre ≈ EEA e alpinismo).
+//  BRouter passa SOLO le etichette della sua lista (lookups.dat): verificato il 3/11 su risposte vere e sulla lista.
+//  Arrivano: highway (anche via_ferrata), sac_scale, surface, trail_visibility.
+//  NON arrivano: cai_scale, via_ferrata_scale (il grado della ferrata, che su OSM c'è), assisted_trail, safety_rope;
+//  e surface=bare_rock o scree (la lista conosce solo "rock"). Usiamo la scala SAC, quasi equivalente alla CAI
+//  (T3 ≈ EE, T4 e oltre ≈ EEA e alpinismo), e highway=via_ferrata per i tratti attrezzati.
 // =====================================================================
 
 // L'ordine conta: è quello in cui li mostriamo (prima i più seri)
@@ -116,10 +125,8 @@ function tipiDelTratto(etichette) {
   if (sac === "demanding_mountain_hiking") tipi.push("t3");
   if (sac === "alpine_hiking") tipi.push("t4");
   if (sac === "demanding_alpine_hiking" || sac === "difficult_alpine_hiking") tipi.push("t56");
-  if (["rock", "bare_rock", "scree"].includes(etichette.get("surface"))) tipi.push("roccia");
-  if (etichette.get("highway") === "via_ferrata" || etichette.has("via_ferrata_scale")
-      || (etichette.has("assisted_trail") && etichette.get("assisted_trail") !== "no")
-      || (etichette.has("safety_rope") && etichette.get("safety_rope") !== "no")) tipi.push("attrezzato");
+  if (etichette.get("surface") === "rock") tipi.push("roccia");          // BRouter scrive "rock" anche per rocks e rocky
+  if (etichette.get("highway") === "via_ferrata") tipi.push("attrezzato"); // l'unico segno di "attrezzato" che arriva
   if (["bad", "horrible", "no"].includes(etichette.get("trail_visibility"))) tipi.push("traccia");
   return tipi;
 }
@@ -142,7 +149,7 @@ export function avvisiDalPercorso(messages) {
     }));
     const da = totale;
     totale += d;
-    if (etichette.has("sac_scale")) segnato += d;
+    if (etichette.has("sac_scale") || etichette.get("highway") === "via_ferrata") segnato += d; // la ferrata è "segnata" anche senza SAC
     for (const tipo of tipiDelTratto(etichette)) {
       const t = perTipo.get(tipo) ?? { metri: 0, tratti: [] };
       t.metri += d;

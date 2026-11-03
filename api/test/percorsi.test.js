@@ -49,10 +49,12 @@ test("BRouter: una risposta senza percorso diventa NessunPercorso (la rotta risp
   assert.throws(() => daBRouter({ features: [] }), NessunPercorso);
 });
 
-// Ferrate e alpinismo: sul profilo dei sentieri si accettano i passaggi fino a T6 (gli altri casi non cambiano)
-test("BRouter: per ferrata e alpinismo i passaggi difficili sono permessi", () => {
-  assert.equal(parametriDifficolta("sentieri", "ferrata"), "&profile:SAC_scale_limit=6&profile:SAC_scale_preferred=4");
-  assert.equal(parametriDifficolta("sentieri", "alpinismo"), "&profile:SAC_scale_limit=6&profile:SAC_scale_preferred=4");
+// Ferrate e alpinismo: sul profilo dei sentieri si PERMETTONO i passaggi fino a T6 (senza preferirli)
+// e la ferrata costa come un sentiero (gli altri casi non cambiano). Vedi la prova del 3/11 in percorsi.js.
+test("BRouter: per ferrata e alpinismo i passaggi difficili sono permessi e la ferrata non costa il doppio", () => {
+  assert.equal(parametriDifficolta("sentieri", "ferrata"), "&profile:SAC_scale_limit=6&profile:cost_of_unknown=1");
+  assert.equal(parametriDifficolta("sentieri", "alpinismo"), "&profile:SAC_scale_limit=6&profile:cost_of_unknown=1");
+  assert.doesNotMatch(parametriDifficolta("sentieri", "ferrata"), /SAC_scale_preferred/); // "preferire T4" faceva aggirare la ferrata
   assert.equal(parametriDifficolta("sentieri", "escursione"), "");
   assert.equal(parametriDifficolta("breve", "ferrata"), ""); // il più breve non guarda la scala SAC
   assert.equal(parametriDifficolta("sentieri", null), "");
@@ -79,8 +81,25 @@ test("avvisi: T4, T5–T6, ferrata e traccia poco visibile; senza tabella null",
   const a = avvisiDalPercorso([testa,
     riga(100, "highway=via_ferrata sac_scale=difficult_alpine_hiking"),
     riga(100, "highway=path sac_scale=alpine_hiking trail_visibility=bad"),
-    riga(100, "highway=path assisted_trail=no")]);              // "no" non è un tratto attrezzato
+    riga(100, "highway=path")]);                                // un sentiero qualsiasi: nessun avviso
   assert.deepEqual(a.avvisi.map((v) => v.tipo), ["t56", "t4", "attrezzato", "traccia"]);
   assert.equal(avvisiDalPercorso(undefined), null);
   assert.equal(avvisiDalPercorso([testa]), null);
+});
+
+// Righe copiate dalle risposte vere di BRouter del 3/11 (Pietra di Bismantova)
+test("avvisi: le ferrate vere di Bismantova, con e senza scala SAC, contano come difficoltà segnata", () => {
+  const ultimoSole = avvisiDalPercorso([testa, riga(177, "highway=via_ferrata sac_scale=demanding_mountain_hiking")]);
+  assert.deepEqual(ultimoSole.avvisi.map((v) => v.tipo), ["attrezzato", "t3"]);
+  assert.equal(ultimoSole.copertura, 100);
+  const alpini = avvisiDalPercorso([testa, riga(89, "highway=via_ferrata"), riga(89, "highway=path")]); // senza sac_scale
+  assert.deepEqual(alpini.avvisi.map((v) => v.tipo), ["attrezzato"]);
+  assert.equal(alpini.avvisi[0].metri, 89);
+  assert.equal(alpini.copertura, 50); // la ferrata sì, il sentiero senza SAC no
+});
+
+test("avvisi: roccia solo con surface=rock (bare_rock e scree BRouter non li passa)", () => {
+  const a = avvisiDalPercorso([testa, riga(100, "highway=path surface=rock sac_scale=mountain_hiking"), riga(100, "highway=path surface=gravel")]);
+  assert.deepEqual(a.avvisi.map((v) => v.tipo), ["roccia"]);
+  assert.equal(a.avvisi[0].metri, 100);
 });
