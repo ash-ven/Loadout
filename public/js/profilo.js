@@ -1,5 +1,6 @@
 import { api } from "./api.js";
 import { esci } from "./menu.js"; // importare menu.js collega anche il link "Esci" della barra
+import { statoInstallazione, suCambioInstallazione, installa } from "./pwa.js";
 
 const elNome = document.querySelector("#nome");
 const elEmail = document.querySelector("#email");
@@ -271,3 +272,22 @@ formElimina.addEventListener("submit", async (e) => {
     erroreElimina.hidden = false;
   }
 });
+
+// =====================================================================
+//  PWA (3/11): «Loadout sul telefono». Il testo cambia con lo stato (pwa.js, statoInstallazione)
+// =====================================================================
+const testoApp = document.querySelector("#app-testo");
+const bottoneInstalla = document.querySelector("#installa-app");
+const TESTI_APP = {
+  installata: "✓ Stai usando Loadout come app installata.",
+  installabile: "Installa Loadout come un'app: un'icona nella schermata Home e la pagina a tutto schermo, senza la barra del browser.",
+  iphone: "Su iPhone: apri Loadout in Safari, tocca Condividi (il quadrato con la freccia) e poi «Aggiungi alla schermata Home».",
+  altro: "Per installarla apri Loadout con Chrome sul telefono: dal menu ⋮ scegli «Installa app» (o «Aggiungi a schermata Home»).",
+};
+function mostraApp(stato) {
+  testoApp.textContent = TESTI_APP[stato];
+  bottoneInstalla.hidden = stato !== "installabile";
+}
+mostraApp(statoInstallazione());
+suCambioInstallazione(mostraApp);   // l'evento del browser può arrivare dopo che la pagina è già pronta
+bottoneInstalla.addEventListener("click", () => installa());

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Senza rete</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#31503f">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- PWA (3/11): la mostra il service worker quando non c'è rete e la pagina chiesta non è mai stata salvata.
+       Niente JavaScript: deve funzionare da sola. «Riprova» è un link alla Home (con la rete si riparte da lì). -->
+  <header class="topbar">
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="38" height="38"><span>Load<span class="out">out</span></span></a>
+  </header>
+  <main>
+    <section class="card centrato">
+      <img class="benvenuto" src="/img/zaino-pieno-chiaro.svg" alt="" width="96" height="96">
+      <h1>Sei senza rete</h1>
+      <p class="muto">Questa pagina non è salvata sul telefono. Le mappe dei viaggi che hai già aperto funzionano anche così:
+        trovi il percorso e la tua posizione GPS.</p>
+      <p><a class="btn" href="/">Riprova</a></p>
+    </section>
+  </main>
+</body>
+</html>

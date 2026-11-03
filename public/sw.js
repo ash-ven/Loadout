@@ -11,7 +11,7 @@
 //  Con la rete si usa sempre la versione nuova (prima la rete, poi la copia): così le modifiche si vedono subito.
 //  All'uscita dall'account i dati dei viaggi salvati qui si cancellano (menu.js).
 // =====================================================================
-const VERSIONE = "v2"; // v2: + avvisi-percorso.js
+const VERSIONE = "v3"; // v2: + avvisi-percorso.js · v3: PWA (pagina senza rete, icone, manifest, pwa.js)
 const CACHE_APP = `loadout-app-${VERSIONE}`;
 const CACHE_DATI = "loadout-dati";
 const CACHE_TESSERE = "loadout-tessere";
@@ -19,6 +19,7 @@ const MAX_TESSERE = 3000; // circa 60–100 MB al massimo: poi si buttano le pi�
 
 const LEAFLET = "https://unpkg.com/leaflet@1.9.4/dist/leaflet";
 const DA_SALVARE_SUBITO = [
+  "/offline.html", "/manifest.webmanifest", "/img/app/icona-192.png", "/img/zaino-pieno-chiaro.svg", "/js/pwa.js",
   "/mappa.html", "/css/style.css", "/img/favicon.svg", "/img/logo-topbar.svg", "/img/icone/mappe.svg",
   "/js/api.js", "/js/menu.js", "/js/mappa.js", "/js/mappa-disegno.js", "/js/mappa-base.js", "/js/post-it.js",
   "/js/controlli.js", "/js/errori-campi.js", "/js/gpx.js", "/js/navigazione.js", "/js/navigazione-calcoli.js", "/js/profilo-altimetrico.js", "/js/gpx-lettura.js", "/js/avvisi-percorso.js",
@@ -72,6 +73,11 @@ async function prima_la_rete(richiesta, nomeCache) {
     // per le pagine ignoriamo "?id=…": mappa.html?id=7 usa la stessa copia di mappa.html (l'id lo legge il JavaScript)
     const copia = await cache.match(richiesta, { ignoreSearch: richiesta.mode === "navigate" });
     if (copia) return copia;
+    // PWA: una PAGINA mai salvata → la nostra pagina «Sei senza rete», invece dell'errore del browser
+    if (richiesta.mode === "navigate") {
+      const senzaRete = await caches.match("/offline.html");
+      if (senzaRete) return senzaRete;
+    }
     throw errore;
   }
 }

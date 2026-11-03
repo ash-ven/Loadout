@@ -46,8 +46,10 @@ services:
         condition: service_healthy   # parte solo quando il database risponde
     # L'ingresso "vero" è Caddy (https). La porta 3000 resta aperta SOLO per questo PC
     # (127.0.0.1 = nessun altro computer della rete può usarla): serve all'inoltro porta di VS Code.
+    # PORTA_PC (facoltativa, nel file .env): se sul PC la 3000 è già occupata da un altro programma,
+    # scrivi per esempio PORTA_PC=3001 e l'API sarà su http://localhost:3001 (dentro il compose resta 3000)
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${PORTA_PC:-3000}:3000"
     healthcheck:
       # nell'immagine slim non c'è curl: usiamo fetch di Node per chiamare /api/health
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]

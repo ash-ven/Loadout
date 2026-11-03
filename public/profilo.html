@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Loadout – Profilo</title>
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <!-- PWA (3/11): l'app installabile. Il manifest dice nome, icone e colori; theme-color colora la barra di stato del telefono -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#31503f">
+  <link rel="apple-touch-icon" href="/img/app/icona-180.png"><!-- iPhone: l'icona della schermata Home -->
+  <meta name="apple-mobile-web-app-title" content="Loadout">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -109,6 +114,13 @@
       </form>
       <p class="avviso" id="profilo-info" hidden></p>
       <p class="errore" id="profilo-errore" hidden></p>
+    </section>
+
+    <!-- PWA (3/11, scelta di Asiha: il pulsante sta nel Profilo). Il testo lo sceglie pwa-profilo in profilo.js -->
+    <section class="card" id="app-telefono">
+      <h2><img class="icona-app" src="/img/app/icona-192.png" alt="" width="28" height="28">Loadout sul telefono</h2>
+      <p id="app-testo">Installa Loadout come un'app: un'icona nella schermata Home e la pagina a tutto schermo, senza la barra del browser.</p>
+      <button type="button" id="installa-app" hidden>Installa l'app</button>
     </section>
 
     <!-- B7: account e privacy (GDPR): password, i miei dati, eliminazione -->

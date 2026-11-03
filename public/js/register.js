@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import "./pwa.js"; // PWA: il service worker anche da questa pagina
 
 const form = document.querySelector("#form-register");
 const errore = document.querySelector("#errore");

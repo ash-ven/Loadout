@@ -1,0 +1,17 @@
+{
+  "name": "Loadout",
+  "short_name": "Loadout",
+  "description": "Lo zaino giusto per ogni uscita in montagna: armadio, viaggi, mappe e consigli.",
+  "lang": "it",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#ece3cf",
+  "theme_color": "#31503f",
+  "icons": [
+    { "src": "/img/app/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/app/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/app/icona-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

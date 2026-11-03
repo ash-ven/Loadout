@@ -22,11 +22,8 @@ linkEsci?.addEventListener("click", async (e) => {
   await esci();
 });
 
-// Mappa senza rete: registra il service worker (public/sw.js). Funziona solo su https:// o localhost;
-// se il browser non lo sa fare, l'app funziona lo stesso, semplicemente solo con la rete.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("Service worker non registrato:", err.message));
-}
+// Il service worker (mappa senza rete, app installata) ora lo registra pwa.js: lo importano anche le pagine senza menu
+import "./pwa.js";
 
 // Collaudo 3/11, A2: quando lo schermo è medio il menu mostra solo le icone; il nome compare al passaggio del mouse
 for (const voce of document.querySelectorAll(".menu a")) {
