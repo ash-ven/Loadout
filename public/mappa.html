@@ -61,7 +61,7 @@
         <p class="muto stato-navigazione" id="stato-navigazione" role="status"></p>
         <div class="azioni">
           <button type="button" class="secondario btn-piccolo" id="centra" hidden>Centra su di me</button>
-          <button type="button" class="pericolo btn-piccolo" id="termina-navigazione">Termina</button>
+          <button type="button" class="secondario btn-piccolo" id="termina-navigazione">Termina</button><!-- C10: contorno, non rosa: non cancella niente -->
         </div>
         <p class="muto nota-navigazione">La tua posizione resta sul telefono: Loadout non la salva e non la manda a nessuno.
           Tieni lo schermo acceso: con lo schermo spento il browser smette di leggere il GPS.</p>
@@ -84,8 +84,9 @@
       <div class="strumenti">
         <!-- Come cercare il percorso (scelta di Asiha: parte su Sentieri). Il pulsante scelto ha aria-pressed="true" -->
         <div class="segmenti scelta-profilo" id="scelta-profilo" role="group" aria-label="Come cercare il percorso">
-          <button type="button" data-profilo="sentieri" aria-pressed="true" title="Preferisce i sentieri ed evita l'asfalto, anche se a volte allunga">Sentieri</button>
-          <button type="button" data-profilo="breve" aria-pressed="false" title="La strada più corta, anche se passa da strade e carrozzabili">Più breve</button>
+          <!-- Collaudo 3/11, B2: niente title (diventava il nome per i comandi vocali): la spiegazione è nella riga sotto, collegata con aria-describedby -->
+          <button type="button" data-profilo="sentieri" aria-pressed="true" aria-describedby="nota-profilo">Sentieri</button>
+          <button type="button" data-profilo="breve" aria-pressed="false" aria-describedby="nota-profilo">Più breve</button>
         </div>
         <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
         <div class="azioni">
@@ -97,7 +98,9 @@
         </div>
       </div>
       <!-- I punti in ordine, con ↑ ↓ per cambiarlo e ✕ per toglierne uno (lo riempie mappa-disegno.js) -->
-      <ol class="elenco-tappe" id="elenco-tappe" aria-label="Ordine dei punti del percorso" hidden></ol>
+      <ol class="elenco-tappe" id="elenco-tappe" aria-label="Ordine dei punti del percorso" tabindex="-1" hidden></ol>
+      <!-- B3: qui i lettori di schermo sentono cosa è cambiato ("Tappa 1 è ora la partenza") -->
+      <p class="solo-lettori" id="annuncio-tappe" aria-live="polite"></p>
       <!-- Una tappa da coordinate (richiesta di Asiha): si apre con un tocco; incollando «44.1934, 10.7012» nel primo campo
            si riempiono tutti e due. La tappa va dove allunga meno il percorso (mappa-disegno.js, aggiungiTappa) -->
       <details class="tappa-coordinate" id="tappa-coordinate">
@@ -110,7 +113,17 @@
         <p class="muto">Puoi incollare le due coordinate insieme nel primo campo (es. «44.1934, 10.7012» copiate da Google Maps).
           La tappa va nel punto del percorso dove lo allunga di meno; partenza e arrivo restano gli stessi.</p>
         <p class="errore" id="errore-tappa" hidden></p>
+        <!-- B4: tappa molto lontana: chiediamo conferma (niente finestra del browser) -->
+        <div class="conferma-tappa" id="conferma-tappa" hidden>
+          <p class="avviso"><span id="testo-conferma-tappa"></span></p>
+          <div class="azioni">
+            <button type="button" class="btn-piccolo" id="conferma-si">Aggiungi lo stesso</button>
+            <button type="button" class="secondario btn-piccolo" id="conferma-no">Annulla</button>
+          </div>
+        </div>
       </details>
+      <!-- B2: cosa fanno Sentieri e Più breve (o che la traccia viene da un file): la scrive mappa-disegno.js -->
+      <p class="muto nota-profilo" id="nota-profilo"></p>
       <p class="muto nota-anello" id="nota-anello" hidden>Con una sola tappa si torna indietro dalla stessa strada: aggiungi un'altra tappa per fare un anello.</p>
       <p id="stato-mappa" class="stato" hidden></p>
       <p class="avviso" id="avviso-importata" hidden><span><strong>Hai modificato la traccia importata:</strong> ora il percorso è

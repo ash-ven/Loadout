@@ -59,7 +59,8 @@ async function caricaKit() {
   try {
     const voci = await api(`/api/viaggi/${id}/kit`);
     // A6 (revisione UX 2): prima quello che manca nello zaino (da procurare o da prendere nell'armadio), poi il resto
-    const mancano = voci.filter((v) => v.stato === "manca");
+    // A1 (collaudo 3/11): uno zaino troppo piccolo è "da sistemare", insieme a quello che manca
+    const mancano = voci.filter((v) => v.stato === "manca" || v.stato === "da_cambiare");
     const nellArmadio = voci.filter((v) => v.stato === "nell_armadio");
     const gia = voci.filter((v) => v.stato === "nello_zaino");
     const daFare = mancano.length + nellArmadio.length;
@@ -96,6 +97,14 @@ function rigaKit(v) {
     return `<li class="kit-ok"><span class="kit-segno" aria-hidden="true">✓</span>
       <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nello zaino: ${esc(v.oggetto.nome)}${perche}</span></li>`;
   }
+  if (v.stato === "da_cambiare") {
+    // A1: lo zaino del viaggio è troppo piccolo. "Usa …" lo scambia con il più grande che hai
+    const azione = v.sostituto
+      ? `<button type="button" class="btn-piccolo" data-cambia-zaino="${v.oggetto.id}" data-con="${v.sostituto.id}">Usa «${esc(v.sostituto.nome)}»</button>`
+      : `<a class="btn-piccolo btn secondario" href="/armadio.html?nuovo=${encodeURIComponent("Zaino")}&categoria=zaini&uscita=${id}">Aggiungi all'armadio</a>`;
+    return `<li class="kit-manca"><span class="kit-segno" aria-hidden="true">!</span>
+      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · da cambiare${perche}</span>${azione}</li>`;
+  }
   if (v.stato === "nell_armadio") {
     return `<li><span class="kit-segno" aria-hidden="true">○</span>
       <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nell'armadio: ${esc(v.oggetto.nome)}${perche}</span>
@@ -110,6 +119,21 @@ function rigaKit(v) {
 
 // "Aggiungi": l'oggetto dell'armadio entra nello zaino (stessa API di "Aggiungi dall'armadio")
 elKit.addEventListener("click", async (e) => {
+  // A1: cambio dello zaino: tolgo quello piccolo e metto quello grande (due richieste, una dopo l'altra)
+  const cambia = e.target.closest("[data-cambia-zaino]");
+  if (cambia) {
+    cambia.disabled = true;
+    nascondiErrore();
+    try {
+      await api(`/api/viaggi/${id}/zaino/${cambia.dataset.cambiaZaino}`, { method: "DELETE" });
+      await api(`/api/viaggi/${id}/zaino`, { method: "POST", body: { oggetto_id: Number(cambia.dataset.con), quantita: 1 } });
+      await caricaZaino();
+    } catch (err) {
+      mostraErrore(err.message);
+      cambia.disabled = false;
+    }
+    return;
+  }
   const bottone = e.target.closest("[data-aggiungi]");
   if (!bottone) return;
   bottone.disabled = true;
@@ -231,7 +255,7 @@ bottoneGenera.addEventListener("click", async () => {
     // B3: "Aggiunto 1 oggetto: 1 indispensabile o preferito." / "Aggiunti 5 oggetti: 3 indispensabili o preferiti e 2 …"
     if (base > 0) parti.push(plurale(base, "indispensabile o preferito", "indispensabili o preferiti"));
     if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questo viaggio`);
-    if (zainoScelto) parti.push(`lo zaino «${zainoScelto.nome}»${zainoScelto.litri ? ` (${zainoScelto.litri} L)` : ""}`);
+    if (zainoScelto?.aggiunto) parti.push(`lo zaino «${zainoScelto.nome}»${zainoScelto.litri ? ` (${zainoScelto.litri} L)` : ""}`);
     let messaggio = aggiunti > 0
       ? `${aggiunti === 1 ? "Aggiunto" : "Aggiunti"} ${plurale(aggiunti, "oggetto", "oggetti")}: ${parti.join(" e ")}.`
       : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
@@ -239,7 +263,7 @@ bottoneGenera.addEventListener("click", async () => {
     // B5 (revisione UX 2)
     if (esclusiRifugio > 0) messaggio += " In rifugio, con le temperature previste, ho lasciato fuori il sacco a pelo: basta il sacco lenzuolo.";
     if (doppioni > 0) messaggio += ` Ho lasciato fuori ${doppioni === 1 ? "un oggetto doppio" : `${doppioni} oggetti doppi`} (ne basta uno per tipo, es. una frontale).`;
-    if (zainoScelto?.avviso) messaggio += ` ${zainoScelto.avviso}.`; // zaino troppo piccolo per questo viaggio
+    if (zainoScelto?.avviso) messaggio += ` ${zainoScelto.avviso}.`; // zaino troppo piccolo per questo viaggio (A1: anche quello che c'era già)
     mostraInfo(messaggio);
   } catch (err) {
     mostraErrore(err.message);

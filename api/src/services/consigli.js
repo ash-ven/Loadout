@@ -100,6 +100,7 @@ export async function avvisoPeso(utenteId, pesoZainoKg, pernotto) {
   };
 }
 
+const DISLIVELLO_MINIMO_VETTA = 100; // A4: sotto i 100 m di differenza, partenza e vetta sono "lo stesso posto"
 const memoriaMeteo = new Map(); // indirizzo della richiesta → { quando, json }
 
 // 6. Meteo da Open-Meteo: in PARTENZA (coordinate di partenza) e IN VETTA (parametro elevation = quota massima,
@@ -119,15 +120,22 @@ export async function meteo(viaggio, sensibilita = null, oreGiorno = null) {
   if (giorniMancanti > 15) return { disponibile: false, motivo: "previsioni disponibili solo nei 16 giorni prima della partenza" };
 
   const giorno = `&timezone=Europe%2FRome&start_date=${data}&end_date=${data}`;
+  // Collaudo 3/11, A4: la quota della partenza la prendiamo dalla TRACCIA (primo punto), se c'è: è quella vera.
+  // Prima usavamo quella del modello meteo, che in montagna può sbagliare di decine di metri
+  // (e la "partenza" risultava più alta della "vetta"). La passiamo anche a Open-Meteo (elevation), che la usa per i calcoli.
+  const quotaDallaTraccia = Number.isFinite(viaggio.traccia?.linea?.[0]?.[2]) ? Math.round(viaggio.traccia.linea[0][2]) : null;
   const urlPartenza = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-    `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max${giorno}`;
+    (quotaDallaTraccia != null ? `&elevation=${quotaDallaTraccia}` : "") +
+    `&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_min,apparent_temperature_max,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max${giorno}`;
 
   // La vetta: il punto più alto della traccia (se c'è la mappa), altrimenti la partenza con la quota scritta a mano
   const quota = viaggio.quota_max_m;
   // A1: la traccia vale solo se arriva davvero alla quota massima scritta (altrimenti dice un punto e un'ora sbagliati)
   const alto = vettaDallaTraccia(viaggio.traccia, quota);
   const [latV, lonV] = alto ? [alto.lat, alto.lon] : [lat, lon];
-  const urlVetta = quota == null ? null : `https://api.open-meteo.com/v1/forecast?latitude=${latV}&longitude=${lonV}&elevation=${quota}` +
+  // A4: se la vetta è a meno di 100 m sopra la partenza, una "vetta" a parte non ha senso: una colonna sola
+  const vettaVicina = (q) => quota != null && q != null && quota - q < DISLIVELLO_MINIMO_VETTA;
+  const urlVetta = quota == null || vettaVicina(quotaDallaTraccia) ? null : `https://api.open-meteo.com/v1/forecast?latitude=${latV}&longitude=${lonV}&elevation=${quota}` +
     `&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_min,wind_gusts_10m_max,weather_code` +
     `&hourly=temperature_2m,apparent_temperature,wind_gusts_10m,weather_code,freezing_level_height${giorno}`;
 
@@ -143,7 +151,8 @@ export async function meteo(viaggio, sensibilita = null, oreGiorno = null) {
     const pioggia = daily.precipitation_probability_max[0];
     const vento = daily.wind_speed_10m_max?.[0] ?? null;    // km/h
     const raffiche = daily.wind_gusts_10m_max?.[0] ?? null; // km/h
-    const quotaPartenza = elevation != null ? Math.round(elevation) : null;
+    const quotaPartenza = quotaDallaTraccia ?? (elevation != null ? Math.round(elevation) : null);
+    const unaQuota = vettaVicina(quotaPartenza); // A4: percorso quasi in piano → niente colonna "vetta"
 
     // A che ora arrivi in vetta: ora di partenza (8:00 se non l'hai scritta) + tempo stimato fino al punto più alto
     const ore = oreFinoAllaVetta(alto ? viaggio.traccia : null, oreGiorno); // senza traccia affidabile: metà delle ore del giorno
@@ -151,7 +160,9 @@ export async function meteo(viaggio, sensibilita = null, oreGiorno = null) {
     const oraArrivo = Math.min(Math.round(arrivo / 60), 23); // l'ora intera più vicina, per i dati "ora per ora"
 
     let vetta = null;
-    if (quota != null && jsonVetta) {
+    if (unaQuota) {
+      vetta = null;
+    } else if (quota != null && jsonVetta) {
       vetta = daMeteoVetta(jsonVetta, quota, oraArrivo, alto ? "traccia" : "quota_scritta");
     } else if (quota != null && quotaPartenza != null) {
       const stima = stimaInCima(tMin, tMax, quotaPartenza, quota); // riserva: la stima di prima
@@ -165,6 +176,10 @@ export async function meteo(viaggio, sensibilita = null, oreGiorno = null) {
       temp_min: tMin,
       prob_pioggia: pioggia,
       quota_partenza_m: quotaPartenza,
+      // Collaudo 3/11, C3: la percepita anche in partenza (prima c'era solo in vetta)
+      percepita_min: daily.apparent_temperature_min?.[0] ?? null,
+      percepita_max: daily.apparent_temperature_max?.[0] ?? null,
+      una_quota: unaQuota, // A4: true = la vetta è a meno di 100 m sopra la partenza (la scheda mostra "Sul percorso")
       vento_kmh: vento,
       raffiche_kmh: raffiche,
       vetta, // { quota_m, fonte, ora_arrivo_stimata, temp, percepita, raffiche_kmh, temp_min, temp_max, percepita_min, raffiche_max_kmh, zero_termico_m, temporali } oppure null

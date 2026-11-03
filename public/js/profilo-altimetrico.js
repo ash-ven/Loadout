@@ -19,7 +19,10 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
   let posizioneM = null;  // in navigazione: i metri fatti (pallino blu sul profilo)
 
   // Nuova traccia (o nessuna): prepara i numeri e ridisegna
-  function mostra(traccia) {
+  // kmCampo (facoltativo): i km del campo Lunghezza (calcolati da BRouter). Collaudo 3/11, C2: il profilo mostra
+  // gli stessi km del campo; le distanze lungo il grafico si scalano in proporzione (la linea semplificata è un po' più corta)
+  let scalaKm = 1;
+  function mostra(traccia, kmCampo = null) {
     const linea = traccia?.linea;
     const conQuote = linea?.filter((p) => p[2] != null) ?? [];
     if (!linea || linea.length < 2 || conQuote.length < 2) { dati = null; sezione.hidden = true; return; }
@@ -28,6 +31,7 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     // le tappe (le tue puntine) sul profilo: dove cadono lungo la linea
     const tappeM = (traccia.tappe ?? []).map(([lat, lon]) => aggancia(prep, [lat, lon]).metri_fatti);
     dati = { prep, quote, tappeM, min: Math.min(...quote), max: Math.max(...quote) };
+    scalaKm = kmCampo > 0 && prep.totale > 0 ? (kmCampo * 1000) / prep.totale : 1;
     sezione.hidden = false;
     disegna();
     scriviRiepilogo();
@@ -50,7 +54,7 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     const iMax = quote.indexOf(max);
     contenitore.innerHTML = `
       <svg width="${largo}" height="${ALTO}" viewBox="0 0 ${largo} ${ALTO}" role="img"
-           aria-label="Profilo altimetrico: da ${nf(quote[0])} m a ${nf(quote.at(-1))} m, punto più alto ${nf(max)} m, ${kmTesto(prep.totale)}">
+           aria-label="Profilo altimetrico: da ${nf(quote[0])} m a ${nf(quote.at(-1))} m, punto più alto ${nf(max)} m, ${kmTesto(prep.totale * scalaKm)}">
         <defs>
           <linearGradient id="profilo-colore" x1="0" y1="${y(max)}" x2="0" y2="${base}" gradientUnits="userSpaceOnUse">
             <stop offset="0" class="profilo-colore-alto"/>
@@ -64,7 +68,7 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
         ${pallini}
         <text x="4" y="${y(max) - 6}" class="profilo-testo">${nf(max)} m</text>
         <text x="4" y="${ALTO - 6}" class="profilo-testo">${nf(min)} m</text>
-        <text x="${largo - 4}" y="${ALTO - 6}" text-anchor="end" class="profilo-testo profilo-km">${kmTesto(prep.totale)}</text>
+        <text x="${largo - 4}" y="${ALTO - 6}" text-anchor="end" class="profilo-testo profilo-km">${kmTesto(prep.totale * scalaKm)}</text>
         <circle cx="${x(prep.cum[iMax]).toFixed(1)}" cy="${y(max).toFixed(1)}" r="3.5" class="profilo-vetta"/>
         <g class="profilo-cursore" visibility="hidden">
           <line y1="${SOPRA - 6}" y2="${base}" class="profilo-cursore-linea"/>
@@ -116,7 +120,7 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     cursore.querySelector("circle").setAttribute("cx", px);
     cursore.querySelector("circle").setAttribute("cy", y(q));
     const testo = cursore.querySelector("text");
-    testo.textContent = `${kmTesto(metri)} · ${nf(q)} m`;
+    testo.textContent = `${kmTesto(metri * scalaKm)} · ${nf(q)} m`;
     testo.setAttribute("x", px);
     testo.setAttribute("text-anchor", px < largo * 0.15 ? "start" : px > largo * 0.85 ? "end" : "middle");
     suPunto(puntoA(metri));

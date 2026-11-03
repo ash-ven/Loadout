@@ -1,5 +1,9 @@
 import { api } from "./api.js";
 
+// Collaudo 3/11, C9: se sei già collegata, la pagina di accesso non serve: si va alla Home.
+// fetch "a mano" e non api(): api() con una risposta 401 porterebbe di nuovo qui (un giro infinito)
+fetch("/api/auth/me").then((r) => { if (r.ok) location.replace("/"); }).catch(() => {});
+
 const form = document.querySelector("#form-login");
 const errore = document.querySelector("#errore");
 

@@ -34,3 +34,9 @@ test("traccia: profilo sentieri/breve e discesa_m intera tra 0 e 9000", () => {
   assert.equal(tracciaValida({ ...buona, discesa_m: -5 }), false);      // negativa
   assert.equal(tracciaValida({ ...buona, discesa_m: 12.5 }), false);    // non intera
 });
+
+// Collaudo 3/11, B2: una traccia importata da un file GPX lo ricorda (origine: "gpx"), nient'altro
+test("traccia: origine «gpx» accettata, altri valori no", () => {
+  assert.equal(tracciaValida({ ...buona, origine: "gpx" }), true);
+  assert.equal(tracciaValida({ ...buona, origine: "komoot" }), false);
+});

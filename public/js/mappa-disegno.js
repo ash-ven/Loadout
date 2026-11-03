@@ -7,7 +7,7 @@
 //  quando il contenitore è già visibile.
 // =====================================================================
 import { api } from "./api.js";
-import { discesaDellaTraccia } from "./navigazione-calcoli.js";
+import { discesaDellaTraccia, preparaTraccia, aggancia } from "./navigazione-calcoli.js";
 import { proponi } from "./post-it.js";
 import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, disegnaFrecce, eUnAnello, metriTra, scriviStato } from "./mappa-base.js";
 
@@ -20,8 +20,11 @@ const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 // sceltaProfilo (facoltativo): il gruppo di pulsanti «Sentieri / Più breve» (data-profilo="sentieri" | "breve")
 // elencoTappe (facoltativo): la lista <ol> dove mostrare i punti in ordine, con ↑ ↓ per cambiarlo e ✕ per toglierne uno
 // avvisoImportata (facoltativo): il riquadro ocra "hai modificato la traccia importata" (B8)
+// messaggioImport (facoltativo): il messaggio "Traccia importata: …", da togliere quando la traccia viene modificata
+// notaProfilo (facoltativo): la riga sotto «Sentieri / Più breve» che spiega cosa fanno (o che la traccia viene da un file)
+// annuncio (facoltativo): una zona aria-live, per dire ai lettori di schermo cosa è cambiato nell'elenco dei punti
 export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttoreAnello, bottoneTogli, bottoneRicomincia, campi, coordinate,
-                                     legenda = null, notaAnello = null, sceltaProfilo = null, elencoTappe = null, avvisoImportata = null, suModifica = () => {}, suCalcolo = () => {} }) {
+                                     legenda = null, notaAnello = null, sceltaProfilo = null, elencoTappe = null, avvisoImportata = null, messaggioImport = null, notaProfilo = null, annuncio = null, suModifica = () => {}, suCalcolo = () => {} }) {
   let mappa = null;            // nasce con apri()
   let livelloPercorso = null;  // le linee: si svuota e si ridisegna
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
@@ -31,7 +34,10 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   let attivita = null;         // l'attività del viaggio: con ferrata e alpinismo il server accetta i passaggi difficili
   let discesaRiaperta = null;  // D− ricavato dalla pagina per le mappe salvate senza (vedi carica)
   let bloccata = false;
-  let importata = false;       // B8: la linea viene da un file GPX (non da BRouter)        // durante la navigazione col GPS la mappa non si modifica (niente tappe nuove, puntine ferme)
+  let importata = false;       // B8: la linea viene da un file GPX (non da BRouter)
+  let ultimiKm = null;         // i km dell'ultimo percorso calcolato (per dire cosa cambia con «Più breve», collaudo B2)
+  let confronto = null;        // B2: { da: profilo di prima, km: km di prima } dopo un cambio di profilo
+  let inquadraDopo = false;    // B4: dopo il prossimo calcolo, inquadra tutto il percorso        // durante la navigazione col GPS la mappa non si modifica (niente tappe nuove, puntine ferme)
   let daRipristinare = null;   // in modifica: la traccia salvata, da rimettere quando la mappa nasce
   let centro = null;           // dove aprire la mappa (il luogo scelto, o la partenza)
   let ultimaRichiesta = 0;     // se tocchi in fretta partono più richieste: vale solo la risposta dell'ultima
@@ -138,6 +144,8 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     if (importata) {
       importata = false;
       if (avvisoImportata) avvisoImportata.hidden = false;
+      if (messaggioImport) messaggioImport.hidden = true; // collaudo B6: niente due messaggi che si contraddicono
+      aggiornaSelettore();
     }
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     aggiornaConteggio();
@@ -212,17 +220,28 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     const b = e.target.closest("button[data-azione]");
     if (!b || bloccata) return;
     const i = Number(b.closest("li").dataset.indice);
-    if (b.dataset.azione === "togli") {
+    const azione = b.dataset.azione;
+    const nomePrima = nomePunto(i);
+    let destinazione;
+    if (azione === "togli") {
       mappa.removeLayer(punti[i]);
       punti.splice(i, 1);
+      destinazione = Math.min(i, punti.length - 1);
+      inquadraDopo = true; // B4: tolto un punto (magari lontano), si torna a vedere tutto il percorso
     } else {
-      const j = b.dataset.azione === "su" ? i - 1 : i + 1;
-      [punti[i], punti[j]] = [punti[j], punti[i]]; // scambio
+      destinazione = azione === "su" ? i - 1 : i + 1;
+      [punti[i], punti[destinazione]] = [punti[destinazione], punti[i]]; // scambio
     }
     ridisegna(); // icone, coordinate di partenza e arrivo, percorso: tutto rifatto con il nuovo ordine
-    // il cursore resta sullo stesso pulsante della riga spostata (comodo da tastiera)
-    const nuovo = b.dataset.azione === "su" ? i - 1 : b.dataset.azione === "giu" ? i + 1 : null;
-    if (nuovo != null) elencoTappe.querySelector(`li[data-indice="${nuovo}"] [data-azione="${b.dataset.azione}"]`)?.focus();
+    // B3 (collaudo 3/11): il cursore resta sulla riga spostata. Se il suo pulsante ora è spento
+    // (es. ↑ su chi è diventato la partenza), va sull'altra freccia o sulla ✕; senza righe, sulla lista
+    const riga = elencoTappe.querySelector(`li[data-indice="${destinazione}"]`);
+    const ordine = azione === "togli" ? ["togli"] : [azione, azione === "su" ? "giu" : "su", "togli"];
+    const prossimo = ordine.map((a) => riga?.querySelector(`[data-azione="${a}"]`)).find((x) => x && !x.disabled);
+    (prossimo ?? elencoTappe).focus();
+    if (annuncio) annuncio.textContent = azione === "togli"
+      ? `${nomePrima} tolto. Ora: ${conteggio.textContent}.`
+      : `${nomePrima} è ora ${nomePunto(destinazione).toLowerCase()}.`;
   });
 
   // Le coordinate di partenza e arrivo le propone la mappa (post-it "mappa"): con l'anello, arrivo = partenza.
@@ -267,7 +286,21 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       discesa = dati.discesa_m ?? null;
       aggiornaLegenda();
       compilaDati(dati);
-      scriviStato(stato, "");
+      // B2 (collaudo 3/11): dopo un cambio Sentieri ↔ Più breve diciamo cosa è cambiato (anche "niente")
+      if (confronto) {
+        const NOMI_PROFILO = { sentieri: "Sentieri", breve: "Più breve" };
+        const km1 = (n) => n.toLocaleString("it-IT", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const prima = confronto.km;
+        scriviStato(stato, prima == null ? `${NOMI_PROFILO[profilo]}: ${km1(dati.distanza_km)} km.`
+          : Math.abs(dati.distanza_km - prima) < 0.05
+            ? `${NOMI_PROFILO[profilo]}: ${km1(dati.distanza_km)} km, lo stesso percorso di «${NOMI_PROFILO[confronto.da]}» (qui non c'è una strada diversa).`
+            : `${NOMI_PROFILO[profilo]}: ${km1(dati.distanza_km)} km (con «${NOMI_PROFILO[confronto.da]}» erano ${km1(prima)} km).`);
+        confronto = null;
+      } else {
+        scriviStato(stato, "");
+      }
+      ultimiKm = dati.distanza_km;
+      if (inquadraDopo) { inquadraDopo = false; inquadraTutto(); } // B4: dopo una tappa lontana o tolta, si vede tutto
     } catch (err) {
       if (numero !== ultimaRichiesta) return;
       // 404: un punto lontano dai sentieri; 502: BRouter non risponde. Il messaggio in italiano arriva dal server
@@ -319,10 +352,31 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   }
   sceltaProfilo?.addEventListener("click", (e) => {
     const bottone = e.target.closest("button[data-profilo]");
-    if (!bottone || bottone.dataset.profilo === profilo) return;
+    if (!bottone || bottone.disabled || bottone.dataset.profilo === profilo) return;
+    const da = profilo;
     mostraProfilo(bottone.dataset.profilo);
-    if (mappa && daRipristinare === null && punti.length >= 2) ridisegna();
+    if (mappa && daRipristinare === null && punti.length >= 2) {
+      confronto = { da, km: ultimiKm }; // B2: dopo il calcolo diciamo cosa è cambiato
+      ridisegna();
+    }
   });
+
+  // B2 (collaudo 3/11): con una traccia da file il selettore non vale (la linea è quella del file): spento, e la nota lo dice
+  const NOTA_PROFILO = "Sentieri preferisce i sentieri ed evita l'asfalto; Più breve cerca la strada più corta. " +
+    "Cambiando, il percorso si ricalcola.";
+  function aggiornaSelettore() {
+    sceltaProfilo?.querySelectorAll("button[data-profilo]").forEach((b) => { b.disabled = importata; });
+    if (notaProfilo) notaProfilo.textContent = importata
+      ? "Traccia da file GPX: la linea è quella del file. Se sposti o aggiungi un punto, viene ricalcolata con «Sentieri» o «Più breve»."
+      : NOTA_PROFILO;
+  }
+  aggiornaSelettore();
+
+  // Il nome di un punto nell'elenco, come lo vedi: «Partenza», «Tappa 2», «Arrivo»…
+  function nomePunto(i) {
+    const tipo = tipoDelPunto(i, punti.length, interruttoreAnello.checked);
+    return NOMI[tipo] ?? `Tappa ${i}`;
+  }
 
   // --- Pulsanti ---
   interruttoreAnello.addEventListener("change", () => { if (mappa) ridisegna(); else aggiornaConteggio(); });
@@ -346,24 +400,35 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     //   allungamento = A→tappa + tappa→B − A→B
     // e scegliamo il più piccolo. Partenza e arrivo restano dove sono (nell'anello si può andare anche dopo l'ultima tappa).
     // Con 0 o 1 punti la tappa diventa la partenza o il secondo punto. → null se va bene, altrimenti il motivo
-    aggiungiTappa(lat, lon) {
+    // B4 (collaudo 3/11): una tappa molto lontana (più di 5 km dal percorso, o che allunga il giro di più della metà)
+    // non entra subito: torna { domanda } e la pagina chiede conferma; confermata = true la aggiunge comunque.
+    aggiungiTappa(lat, lon, confermata = false) {
       if (!mappa) return "La mappa non è ancora pronta";
       if (bloccata) return "Durante la navigazione il percorso non si modifica";
       const nuova = L.latLng(lat, lon);
       const giro = puntiDelGiro().map((p) => [p.lat, p.lng]);
       const qui = [lat, lon];
       let posto = punti.length;                          // 0 o 1 punti: in fondo
+      let minimo = Infinity;
       if (punti.length >= 2) {
         const ultimoPosto = interruttoreAnello.checked ? punti.length : punti.length - 1; // senza anello l'arrivo resta ultimo
-        let minimo = Infinity;
         for (let i = 1; i <= ultimoPosto; i++) {
           const a = giro[i - 1], b = giro[i];
           const allungamento = metriTra(a, qui) + metriTra(qui, b) - metriTra(a, b);
           if (allungamento < minimo) { minimo = allungamento; posto = i; }
         }
       }
+      if (!confermata && giro.length >= 2) {
+        const lontananza = linea?.length >= 2 ? aggancia(preparaTraccia(linea), qui).distanza_m
+          : Math.min(...giro.map((p) => metriTra(p, qui)));
+        const lungo = giro.slice(1).reduce((somma, p, i) => somma + metriTra(giro[i], p), 0);
+        if (lontananza > 5000 || (lungo > 0 && minimo > lungo * 0.5)) {
+          const km = (lontananza / 1000).toLocaleString("it-IT", { maximumFractionDigits: 1 });
+          return { domanda: `Questa tappa è a circa ${km} km dal percorso: il giro si allungherebbe di molto. La aggiungo lo stesso?` };
+        }
+      }
       punti.splice(posto, 0, nuovaPuntina(nuova));
-      mappa.panTo(nuova);
+      inquadraDopo = true; // dopo il calcolo si vede tutto il percorso, nuova tappa compresa
       ridisegna();
       return null;
     },
@@ -390,6 +455,8 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       compilaDati(dati);
       inquadraTutto();
       importata = true;
+      ultimiKm = dati.distanza_km;
+      aggiornaSelettore();
       if (avvisoImportata) avvisoImportata.hidden = true;
       scriviStato(stato, "");
       return null;
@@ -409,6 +476,9 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       daRipristinare = null;
       centro = null;
       mostraProfilo("sentieri");
+      importata = false;
+      ultimiKm = null;
+      aggiornaSelettore();
       livelloPercorso?.clearLayers();
       interruttoreAnello.checked = false;
       aggiornaConteggio();
@@ -422,6 +492,9 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       if (viaggio.lat_partenza != null && viaggio.lon_partenza != null) centro = [viaggio.lat_partenza, viaggio.lon_partenza];
       if (!viaggio.traccia?.tappe?.length || !viaggio.traccia?.linea?.length) return;
       mostraProfilo(viaggio.traccia.profilo ?? "sentieri"); // le mappe di prima non lo dicono: erano tutte "sentieri"
+      importata = viaggio.traccia.origine === "gpx";            // B2: una traccia da file resta "da file" anche riaprendo
+      ultimiKm = viaggio.distanza_km ?? null;
+      aggiornaSelettore();
       if (mappa) ripristina(viaggio.traccia);
       else {
         daRipristinare = viaggio.traccia;
@@ -435,7 +508,8 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       if (daRipristinare) return daRipristinare;           // la mappa non è mai stata aperta: resta quella salvata
       if (punti.length < 2 || !linea) return null;
       return { tappe: punti.map((p) => [arrotonda(p.getLatLng().lat), arrotonda(p.getLatLng().lng)]), linea, profilo,
-               ...(discesa != null ? { discesa_m: discesa } : {}) };
+               ...(discesa != null ? { discesa_m: discesa } : {}),
+               ...(importata ? { origine: "gpx" } : {}) };          // B2: si ricorda che la linea viene da un file
     },
   };
 }

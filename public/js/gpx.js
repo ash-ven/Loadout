@@ -21,6 +21,11 @@ export function creaGpx(nome, traccia) {
   const arrivo = linea.at(-1);
   const anello = Math.abs(partenza[0] - arrivo[0]) < 0.0005 && Math.abs(partenza[1] - arrivo[1]) < 0.0005;
   const segnaposti = [punto("wpt", partenza, `<name>${anello ? "Partenza e arrivo" : "Partenza"}</name>`)];
+  // Collaudo 3/11, C11: anche le tappe hanno il loro punto con il nome ("Tappa 1", "Tappa 2"…), come nell'elenco della mappa.
+  // Nelle tappe salvate la prima è la partenza e (senza anello) l'ultima è l'arrivo: quelle le abbiamo già
+  const tappe = traccia.tappe ?? [];
+  const intermedie = anello ? tappe.slice(1) : tappe.slice(1, -1);
+  intermedie.forEach(([lat, lon], i) => segnaposti.push(punto("wpt", [lat, lon], `<name>Tappa ${i + 1}</name>`)));
   if (!anello) segnaposti.push(punto("wpt", arrivo, "<name>Arrivo</name>"));
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Loadout" xmlns="http://www.topografix.com/GPX/1/1">

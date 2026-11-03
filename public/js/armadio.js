@@ -71,16 +71,29 @@ function render() {
   const pesoTotale = tutti.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
   const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   riepilogo.innerHTML = `<strong>${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
-  // B2: sopra la lista, solo mentre cerchi: "1 di 23 oggetti"
-  const conteggioRicerca = document.querySelector("#conteggio-ricerca");
-  conteggioRicerca.hidden = !q.value.trim();
-  conteggioRicerca.textContent = `${oggetti.length} di ${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}`;
-  segmenti.querySelector('[data-filtro="tutti"]').textContent = `Tutti · ${oggetti.length}`;
-
   // Filtro dei segmenti: si applica qui, senza richiamare l'API (i dati li abbiamo già)
   const visibili = oggetti.filter((o) =>
     filtro === "tutti" ? true : filtro === "indispensabili" ? o.is_indispensabile : o.is_preferito
   );
+
+  // B2: sopra la lista, mentre cerchi o filtri: "1 di 55 oggetti". Collaudo 3/11, C1: conta quelli che VEDI
+  // (ricerca + filtro), e il numero c'è su ogni filtro, non solo su "Tutti"
+  const conteggioRicerca = document.querySelector("#conteggio-ricerca");
+  conteggioRicerca.hidden = !q.value.trim() && filtro === "tutti";
+  conteggioRicerca.textContent = `${visibili.length} di ${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}`;
+  const conte = { tutti: oggetti.length, indispensabili: oggetti.filter((o) => o.is_indispensabile).length,
+                  preferiti: oggetti.filter((o) => o.is_preferito).length };
+  for (const [nome, n] of Object.entries(conte)) {
+    const bottone = segmenti.querySelector(`[data-filtro="${nome}"]`);
+    // il numero sta in uno <span> suo: così l'icona accanto al nome (segni.js) resta
+    let numero = bottone.querySelector(".conta-filtro");
+    if (!numero) {
+      numero = document.createElement("span");
+      numero.className = "conta-filtro";
+      bottone.append(numero);
+    }
+    numero.textContent = ` · ${n}`;
+  }
 
   if (visibili.length === 0) {
     const cercato = q.value.trim();

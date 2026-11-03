@@ -56,7 +56,8 @@ function controlliPercorso(req, res, next) {
 //               origini: { campo: "mappa" | "luogo" } (facoltativo, A1: quali valori sono stati compilati in automatico;
 //                         i campi non elencati li ha scritti l'utente),
 //               profilo: "sentieri" | "breve" (facoltativo: come è stato calcolato il percorso),
-//               discesa_m: intero 0–9000 (facoltativo: il dislivello negativo calcolato dalla mappa) }
+//               discesa_m: intero 0–9000 (facoltativo: il dislivello negativo calcolato dalla mappa),
+//               origine: "gpx" (facoltativo: la linea è quella di un file importato, non di BRouter) }
 // Profilo e D− stanno nella traccia perché esistono solo quando c'è una mappa: niente colonne nuove nel database.
 const CAMPI_CON_ORIGINE = ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m",
                            "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
@@ -69,6 +70,7 @@ export function tracciaValida(t) {
     && Array.isArray(t.linea) && t.linea.length >= 2 && t.linea.length <= 5000 && t.linea.every(latLon)
     && originiValide
     && (t.profilo === undefined || ["sentieri", "breve"].includes(t.profilo))
+    && (t.origine === undefined || t.origine === "gpx")   // collaudo 3/11, B2: la linea viene da un file GPX
     && (t.discesa_m === undefined || t.discesa_m === null || (Number.isInteger(t.discesa_m) && t.discesa_m >= 0 && t.discesa_m <= 9000));
 }
 

@@ -1,7 +1,7 @@
 // Test dello zaino intelligente: le liste del kit e il riconoscimento degli oggetti (niente database)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { corrisponde, vociPerUscita, migliorOggetto, doppioni, litriConsigliati, scegliZaino, avvisoZainoPiccolo } from "../src/services/kit.js";
+import { corrisponde, vociPerUscita, migliorOggetto, doppioni, litriConsigliati, scegliZaino, avvisoZainoPiccolo, avvisoZainoNelViaggio } from "../src/services/kit.js";
 
 const uscita = (altro) => ({ attivita: "escursione", pernotto: "nessuno", serve_cucina: false, freddo: false, neve: false, ...altro });
 const ids = (voci) => voci.map((v) => v.id);
@@ -123,4 +123,14 @@ test("zaini: a parità di litri il più leggero; senza litri conta prima il pref
   assert.equal(scegliZaino([z(1, 30, 1100), z(2, 30, 800)], rifugio).zaino.id, 2);
   assert.equal(scegliZaino([z(1, null, 700), z(2, null, 1200, { is_preferito: true })], giornata).zaino.id, 2);
   assert.equal(scegliZaino([], giornata).zaino, null); // nessuno zaino nell'armadio
+});
+
+// Collaudo 3/11, A1: lo zaino già nel viaggio è troppo piccolo per il viaggio di adesso
+test("zaini: zaino nel viaggio troppo piccolo, con e senza uno più grande nell'armadio", () => {
+  const piccolo = { nome: "UX 25", litri: 25 };
+  const tenda = { min: 50, max: 70 };
+  assert.match(avvisoZainoNelViaggio(piccolo, { nome: "Zaino 35L", litri: 35 }, tenda),
+    /Hai messo «UX 25» \(25 L\): per questo viaggio ne servono 50–70\. Il più grande che hai è «Zaino 35L» \(35 L\), stretto anche lui/);
+  assert.match(avvisoZainoNelViaggio(piccolo, { nome: "Grande", litri: 60 }, tenda), /«Grande» \(60 L\)$/);
+  assert.match(avvisoZainoNelViaggio(piccolo, null, tenda), /non hai uno zaino più grande/);
 });

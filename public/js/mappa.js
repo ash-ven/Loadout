@@ -35,10 +35,13 @@ const disegno = attivaDisegnoMappa({
   sceltaProfilo: document.querySelector("#scelta-profilo"), // «Sentieri / Più breve»
   elencoTappe: document.querySelector("#elenco-tappe"),     // l'ordine dei punti, con ↑ ↓ ✕
   avvisoImportata: document.querySelector("#avviso-importata"), // B8
+  messaggioImport: document.querySelector("#messaggio-gpx"),      // collaudo B6
+  notaProfilo: document.querySelector("#nota-profilo"),           // collaudo B2
+  annuncio: document.querySelector("#annuncio-tappe"),            // collaudo B3
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },
-  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); mostraDiscesa(dati?.discesa_m); profilo.mostra(dati ? disegno.traccia() : null); },
+  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); mostraDiscesa(dati?.discesa_m); profilo.mostra(dati ? disegno.traccia() : null, dati?.distanza_km); },
 });
 
 // =====================================================================
@@ -69,6 +72,7 @@ function mostraCalcoli() {
       bottone.addEventListener("click", () => {
         campo.value = nome === "distanza_km" ? dellaMappa : Math.round(dellaMappa);
         campo.dataset.auto = "mappa"; // torna "dalla mappa": la mappa lo aggiornerà di nuovo
+        aggiornaDiscesa(); // A3: con il D+ della mappa torna anche il D− della mappa
         daSalvare = true;
         mostraCalcoli();
       });
@@ -76,17 +80,30 @@ function mostraCalcoli() {
     }
   }
 }
-// Il dislivello negativo: solo dalla mappa, nella sua casella accanto al D+ (null = vuota)
+// Il dislivello negativo: non si scrive a mano, sta nella sua casella accanto al D+ (null = vuota).
+// Collaudo 3/11, A3: se il D+ l'hai scritto TU, il D− della mappa non c'entra più con il tuo D+:
+// lo stimiamo con la stessa regola (D− = D+ − (quota d'arrivo − quota di partenza)) e la casella dice «stimato».
 const campoDiscesa = document.querySelector("#campo-discesa");
+let discesaMappa = null; // quello che ha calcolato la mappa (o che era salvato)
 function mostraDiscesa(metri) {
-  campoDiscesa.value = metri == null ? "" : Math.round(metri);
-  // con un valore ha il post-it "dalla mappa", come i campi compilati dalla mappa
-  if (metri == null) delete campoDiscesa.dataset.auto;
-  else campoDiscesa.dataset.auto = "mappa";
+  discesaMappa = metri ?? null;
+  aggiornaDiscesa();
+}
+// → il D− da mostrare e da salvare
+function aggiornaDiscesa() {
+  const dPiu = campi.dislivello_m;
+  const tuo = dPiu.value !== "" && dPiu.dataset.auto === undefined;
+  const linea = disegno.traccia()?.linea;
+  const stima = tuo && linea ? discesaDellaTraccia({ linea }, Number(dPiu.value)) : null;
+  const valore = stima ?? discesaMappa;
+  campoDiscesa.value = valore == null ? "" : Math.round(valore);
+  if (valore == null) delete campoDiscesa.dataset.auto;
+  else campoDiscesa.dataset.auto = stima != null ? "stima" : "mappa"; // post-it «stimato» oppure «dalla mappa»
+  return valore == null ? null : Math.round(valore);
 }
 
-// Se scrivi in un campo, il confronto si aggiorna subito
-QUATTRO.forEach((nome) => campi[nome].addEventListener("input", mostraCalcoli));
+// Se scrivi in un campo, il confronto si aggiorna subito (e il D−, se cambi il D+: A3)
+QUATTRO.forEach((nome) => campi[nome].addEventListener("input", () => { mostraCalcoli(); aggiornaDiscesa(); }));
 
 // Scrivendo a mano il post-it si stacca (e la pagina ha modifiche da salvare)
 staccaPostItScrivendo(CAMPI.map((nome) => campi[nome]));
@@ -133,6 +150,12 @@ form.addEventListener("submit", async (e) => {
   const traccia = disegno.traccia(); // { tappe, linea } oppure null
   // A1: con la traccia si salva anche chi ha scritto ogni valore, così alla riapertura i post-it tornano giusti
   dati.traccia = traccia ? { ...traccia, origini: originiAttuali() } : null;
+  // A3: si salva il D− che vedi (stimato, se il D+ è tuo), così la scheda mostra gli stessi numeri
+  const discesa = aggiornaDiscesa();
+  if (dati.traccia) {
+    if (discesa != null) dati.traccia.discesa_m = discesa;
+    else delete dati.traccia.discesa_m;
+  }
   // A3 + B1: coordinate e quote controllate prima di salvare, con il messaggio sotto il campo sbagliato
   if (mostraErroriCampi(form, [...erroriCoordinate(dati), ...erroriQuote(dati)])) return;
   const bottone = document.querySelector("#salva-percorso");
@@ -196,16 +219,40 @@ tappaLat.addEventListener("paste", (e) => {
   e.preventDefault();
   [tappaLat.value, tappaLon.value] = numeri;
 });
+const confermaTappa = document.querySelector("#conferma-tappa");
+let inAttesa = null; // B4: la tappa lontana in attesa di conferma: [lat, lon]
+function provaTappa(lat, lon, confermata = false) {
+  const esito = disegno.aggiungiTappa(lat, lon, confermata);
+  if (esito?.domanda) { // B4: troppo lontana → chiediamo conferma
+    inAttesa = [lat, lon];
+    document.querySelector("#testo-conferma-tappa").textContent = esito.domanda;
+    confermaTappa.hidden = false;
+    document.querySelector("#conferma-si").focus();
+    return;
+  }
+  confermaTappa.hidden = true;
+  inAttesa = null;
+  erroreTappa.hidden = !esito;
+  if (esito) { erroreTappa.textContent = esito; return; }
+  tappaLat.value = "";
+  tappaLon.value = "";
+}
 document.querySelector("#aggiungi-tappa").addEventListener("click", () => {
   const lat = tappaLat.value === "" ? NaN : Number(tappaLat.value);
   const lon = tappaLon.value === "" ? NaN : Number(tappaLon.value);
   const problema = !Number.isFinite(lat) || lat < -90 || lat > 90 ? "La latitudine va da −90 a 90 (in Italia circa 36–47, es. 44,19)"
     : !Number.isFinite(lon) || lon < -180 || lon > 180 ? "La longitudine va da −180 a 180 (in Italia circa 6–19, es. 10,70)"
-    : disegno.aggiungiTappa(lat, lon);
+    : null;
   erroreTappa.hidden = !problema;
+  confermaTappa.hidden = true;
   if (problema) { erroreTappa.textContent = problema; return; }
-  tappaLat.value = "";
-  tappaLon.value = "";
+  provaTappa(lat, lon);
+});
+document.querySelector("#conferma-si").addEventListener("click", () => { if (inAttesa) provaTappa(...inAttesa, true); });
+document.querySelector("#conferma-no").addEventListener("click", () => {
+  confermaTappa.hidden = true;
+  inAttesa = null;
+  document.querySelector("#aggiungi-tappa").focus();
 });
 
 // --- B8: Importa GPX. Il file lo legge il browser (file.text()), non va al server ---
@@ -221,12 +268,17 @@ fileGpx.addEventListener("change", async () => {
     if (file.size > 20 * 1024 * 1024) throw new Error("Il file è troppo grande (più di 20 MB)");
     const { nome, punti } = leggiGpx(await file.text());
     const importo = preparaImport(punti);
+    const eraAnello = document.querySelector("#anello").checked;
     const problema = disegno.importa(importo);
     if (problema) throw new Error(problema);
     const d = importo.dati;
+    // B6 (collaudo 3/11): se l'import cambia "Percorso ad anello", lo diciamo
+    const anello = importo.anello === eraAnello ? ""
+      : importo.anello ? " La traccia torna alla partenza: ho acceso «Percorso ad anello»."
+      : " La traccia del file non è un anello: ho spento «Percorso ad anello».";
     messaggioGpx.textContent = `Traccia importata${nome ? ` («${nome}»)` : ""}: ${d.distanza_km.toLocaleString("it-IT")} km` +
       (d.dislivello_m != null ? `, D+ ${d.dislivello_m} m, D− ${d.discesa_m} m` : ", senza quote nel file") +
-      ". Controlla e premi «Salva il percorso».";
+      `.${anello} Controlla e premi «Salva il percorso».`;
   } catch (err) {
     messaggioGpx.textContent = err.message;
     messaggioGpx.classList.add("errore");
@@ -269,10 +321,11 @@ if (!Number.isInteger(id) || id <= 0) {
     document.querySelector("#corpo-mappa").hidden = false; // prima visibile, poi la mappa (Leaflet misura il contenitore)
     riempi(v);
     mostraDiscesa(discesaDellaTraccia(v.traccia, v.dislivello_m)); // anche per le mappe salvate prima del D−
-    profilo.mostra(v.traccia);
+    profilo.mostra(v.traccia, v.distanza_km); // C2: gli stessi km del campo Lunghezza
     disegno.carica(v);
     await disegno.apri();
     if (disegno.mappaLeaflet()) navigazione.collegaMappa(disegno.mappaLeaflet());
+    aggiornaDiscesa(); // ora la traccia c'è: se il D+ salvato era tuo, il D− è la stima (A3)
   } catch (err) {
     document.querySelector("#intestazione").hidden = false;
     titolo.textContent = err.status === 404 ? "Questo viaggio non esiste più o è stato eliminato" : err.message;

@@ -1,7 +1,7 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
-import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
+import { plurale, ore, unaSola } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 import { discesaDellaTraccia } from "./navigazione-calcoli.js"; // D− anche per le mappe salvate prima che esistesse
 
@@ -116,7 +116,9 @@ function renderConsigli() {
     elAcquaPersona.hidden = false;
 
     // Da cosa dipende il calcolo: un pezzo di frase per ogni fattore usato
-    const fattori = [`${ore(c.ore_cammino_giorno)} di cammino al giorno (${c.fonte_ore === "utente" ? "inserite da te" : "stimate dal percorso"})`];
+    // C4 (collaudo 3/11): "1 ora … (stimata)", "2 ore … (stimate)"
+    const finale = unaSola(c.ore_cammino_giorno) ? "a" : "e";
+    const fattori = [`${ore(c.ore_cammino_giorno)} di cammino al giorno (${c.fonte_ore === "utente" ? `inserit${finale} da te` : `stimat${finale} dal percorso`})`];
     if (c.acqua_con_dislivello) fattori.push(`${num(Math.round(v.dislivello_m / v.n_giorni))} m di dislivello positivo al giorno`);
     if (c.acqua_con_temperatura) fattori.push(`la temperatura prevista (${num(c.meteo.temp_max)} °C)`);
     if (c.acqua_con_cucina) fattori.push("l'acqua per cucinare");
@@ -167,18 +169,22 @@ function renderConsigli() {
     const metri = (q) => (q != null ? ` (${n0(q)} m)` : "");
     const vt = m.vetta;
     const stima = vt?.fonte === "stima"; // Open-Meteo non ha risposto per la vetta: resta la stima (−6 °C ogni 1000 m)
+    // Collaudo 3/11, C3: stesso formato nelle due colonne ("min 0 · max 2 °C"); in vetta, prima, il valore all'ora di arrivo
+    const minMax = (a, b) => (a == null && b == null ? '<span class="muto">non disponibile</span>' : `min ${n0(a)} · max ${n0(b)} °C`);
+    const allArrivo = (n) => (n == null ? "" : `${n0(n)} °C all'arrivo<br>`);
     const colonnaVetta = vt ? {
       titolo: `Vetta${metri(vt.quota_m)}${!stima && vt.ora_arrivo_stimata ? ` · verso le ${esc(vt.ora_arrivo_stimata)}` : ""}${stima ? " · stima" : ""}`,
-      temperatura: !stima && vt.temp != null ? `${n0(vt.temp)} °C <span class="muto">(min ${n0(vt.temp_min)} / max ${n0(vt.temp_max)})</span>`
-                                              : `${n0(vt.temp_min)} / ${n0(vt.temp_max)} °C`,
-      percepita: !stima && vt.percepita != null ? `${n0(vt.percepita)} °C` : "–",
+      temperatura: `${stima ? "" : allArrivo(vt.temp)}<span class="${stima ? "" : "muto"}">${minMax(vt.temp_min, vt.temp_max)}</span>`,
+      percepita: stima || (vt.percepita == null && vt.percepita_min == null) ? '<span class="muto">non disponibile</span>'
+        : `${allArrivo(vt.percepita)}${vt.percepita_min != null ? `<span class="muto">min ${n0(vt.percepita_min)} °C</span>` : ""}`,
       raffiche: !stima && vt.raffiche_kmh != null ? `${n0(vt.raffiche_kmh)} km/h` : "–",
       pioggia: "–",
     } : null;
     const colonnaPartenza = {
-      titolo: `Partenza${m.quota_partenza_m != null ? ` (circa ${n0(m.quota_partenza_m)} m)` : ""}`,
-      temperatura: `${n0(m.temp_min)} / ${n0(m.temp_max)} °C`,
-      percepita: "–",
+      // A4 (collaudo 3/11): se la vetta è a meno di 100 m sopra la partenza, una colonna sola "Sul percorso"
+      titolo: `${m.una_quota ? "Sul percorso" : "Partenza"}${m.quota_partenza_m != null ? ` (circa ${n0(m.quota_partenza_m)} m)` : ""}`,
+      temperatura: minMax(m.temp_min, m.temp_max),
+      percepita: minMax(m.percepita_min, m.percepita_max),
       raffiche: m.raffiche_kmh != null ? `${n0(m.raffiche_kmh)} km/h` : "–",
       pioggia: `${n0(m.prob_pioggia)}%`,
     };
@@ -215,8 +221,10 @@ function renderConsigli() {
   if (viaggio.dislivello_m != null) parti.push(`${num(viaggio.dislivello_m)} m di dislivello positivo`);
   const discesa = discesaDellaTraccia(viaggio.traccia, viaggio.dislivello_m); // D−: dalla mappa (anche quelle salvate prima)
   if (discesa != null) parti.push(`${num(discesa)} m di dislivello negativo`);
-  elPercorso.textContent = parti.length
-    ? parti.join(" · ")
+  // C6 (collaudo 3/11): accanto al dislivello il «?» del glossario. Ora la riga è HTML: il luogo (scritto dall'utente) passa da esc()
+  const conDislivello = viaggio.dislivello_m != null || discesa != null;
+  elPercorso.innerHTML = parti.length
+    ? `${parti.map(esc).join(" · ")}${conDislivello ? ` ${aiuto("dislivello", "dislivello positivo e negativo")}` : ""}`
     : "Aggiungi km, dislivello e coordinate per avere più consigli.";
 }
 
@@ -273,14 +281,26 @@ async function proponiAggiornamento(subito = false) {
   const daIndirizzo = new URLSearchParams(location.search).has("aggiorna");
   if ((!subito && !daIndirizzo) || !(viaggio.peso.n_oggetti > 0)) return;
   if (daIndirizzo) history.replaceState(null, "", `?id=${id}`); // ricaricando la pagina non riappare
-  let daAggiungere = [];
+  // B8 (collaudo 3/11): un oggetto può servire per due voci (es. «Fornello a gas» per fornello e gas): una volta sola.
+  // E separiamo quello che si prende dall'armadio da quello che non hai (e lo zaino da cambiare, A1)
+  let dallArmadio = [], mancano = [], zainoPiccolo = null;
   try {
-    daAggiungere = (await api(`/api/viaggi/${id}/kit`)).filter((v) => v.stato === "nell_armadio").map((v) => v.oggetto.nome);
+    const voci = await api(`/api/viaggi/${id}/kit`);
+    const visti = new Set();
+    for (const v of voci) {
+      if (v.stato === "nell_armadio" && !visti.has(v.oggetto.id)) { visti.add(v.oggetto.id); dallArmadio.push(v.oggetto.nome); }
+      if (v.stato === "manca") mancano.push(v.voce.toLowerCase());
+      if (v.stato === "da_cambiare") zainoPiccolo = v.avviso;
+    }
   } catch { /* l'elenco è un aiuto in più: senza, il riquadro resta utile */ }
   const titolo = document.createElement("strong");
   titolo.textContent = "Lo zaino è da aggiornare. ";
-  const testo = daAggiungere.length
-    ? `Con le modifiche servono anche: ${elenco(daAggiungere)} (nell'armadio). `
+  const pezzi = [];
+  if (dallArmadio.length) pezzi.push(`Dall'armadio servono anche: ${elenco(dallArmadio)}.`);
+  if (mancano.length) pezzi.push(`Ti mancano: ${elenco(mancano)}.`);
+  if (zainoPiccolo) pezzi.push(`${zainoPiccolo}.`);
+  const testo = pezzi.length
+    ? `${pezzi.join(" ")} `
     : "Con le modifiche potrebbero servire altre cose: «Aggiorna lo zaino» aggiunge solo quello che manca. ";
   const link = document.createElement("a");
   link.className = "btn btn-piccolo";

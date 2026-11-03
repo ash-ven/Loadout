@@ -158,6 +158,14 @@ export function scegliZaino(zaini, u) {
   return { zaino: piuGrande, troppo_piccolo: true, consigliati };
 }
 
+// Lo zaino già nel viaggio è più piccolo del minimo consigliato: cosa dire (e cosa proporre)
+export function avvisoZainoNelViaggio(dentro, sostituto, { min, max }) {
+  const base = `Hai messo «${dentro.nome}» (${dentro.litri} L): per questo viaggio ne servono ${min}–${max}`;
+  if (!sostituto) return `${base}, e nell'armadio non hai uno zaino più grande`;
+  return `${base}. Il più grande che hai è «${sostituto.nome}» (${sostituto.litri} L)` +
+    (sostituto.litri < min ? ", stretto anche lui ma meglio" : "");
+}
+
 // Il testo dell'avviso se lo zaino scelto è troppo piccolo (lo mostrano "Genera zaino" e il riquadro "Per questo viaggio")
 export function avvisoZainoPiccolo(scelta) {
   if (!scelta.troppo_piccolo) return null;
@@ -281,18 +289,28 @@ export async function generaIntelligente(db, utenteId, viaggio, uscita) {
   // Lo zaino: se nello zaino del viaggio non ce n'è già uno (messo a mano), l'app sceglie quello giusto per i litri
   let zaino = null;
   const zainiArmadio = oggetti.filter((o) => o.categoria === "zaini");
-  const giaUnoZaino = zainiArmadio.some((z) => nelloZaino.has(z.id));
+  const giaUnoZaino = zainiArmadio.find((z) => nelloZaino.has(z.id));
+  // A1: lo zaino che c'era (messo a mano o da un "Genera" di prima) non si cambia da soli,
+  // ma se è troppo piccolo per il viaggio di ADESSO lo diciamo anche nel messaggio di "Genera"
+  if (giaUnoZaino?.litri != null) {
+    const scelta = scegliZaino(zainiArmadio, uscita);
+    if (giaUnoZaino.litri < scelta.consigliati.min) {
+      const sostituto = scelta.zaino.id !== giaUnoZaino.id && scelta.zaino.litri > giaUnoZaino.litri ? scelta.zaino : null;
+      zaino = { id: giaUnoZaino.id, nome: giaUnoZaino.nome, litri: giaUnoZaino.litri, aggiunto: false,
+                avviso: avvisoZainoNelViaggio(giaUnoZaino, sostituto, scelta.consigliati) };
+    }
+  }
   if (!giaUnoZaino && zainiArmadio.length) {
     const scelta = scegliZaino(zainiArmadio, uscita);
     await db.query(
       "INSERT INTO viaggio_oggetto (viaggio_id, oggetto_id, quantita) VALUES ($1, $2, 1) ON CONFLICT DO NOTHING",
       [viaggio.id, scelta.zaino.id]
     );
-    zaino = { id: scelta.zaino.id, nome: scelta.zaino.nome, litri: scelta.zaino.litri, avviso: avvisoZainoPiccolo(scelta) };
+    zaino = { id: scelta.zaino.id, nome: scelta.zaino.nome, litri: scelta.zaino.litri, aggiunto: true, avviso: avvisoZainoPiccolo(scelta) };
   }
 
   const base = rows[0].aggiunti - esclusi - esclusiRifugio - doppi.length;
-  return { aggiunti: base + dalKit + (zaino ? 1 : 0), base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio,
+  return { aggiunti: base + dalKit + (zaino?.aggiunto ? 1 : 0), base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio,
            doppioni: doppi.length, zaino };
 }
 
@@ -320,8 +338,13 @@ function statoZaino(oggetti, nelloZaino, uscita) {
   const dentro = zaini.find((z) => nelloZaino.has(z.id));
   if (dentro) {
     const stretto = dentro.litri != null && dentro.litri < min;
-    return { ...riga, stato: "nello_zaino", oggetto: { id: dentro.id, nome: dentro.nome },
-             avviso: stretto ? `«${dentro.nome}» è da ${dentro.litri} L: per questo viaggio potrebbe stare stretto` : null };
+    if (!stretto) return { ...riga, stato: "nello_zaino", oggetto: { id: dentro.id, nome: dentro.nome }, avviso: null };
+    // Collaudo 3/11, A1: lo zaino nel viaggio è troppo piccolo (es. il viaggio è passato da 1 giorno a 3 in tenda).
+    // Non resta tra le cose "a posto": diventa da cambiare, con il più grande che hai (se è più grande di questo)
+    const sostituto = scelta.zaino && scelta.zaino.id !== dentro.id && scelta.zaino.litri > dentro.litri ? scelta.zaino : null;
+    return { ...riga, stato: "da_cambiare", oggetto: { id: dentro.id, nome: dentro.nome },
+             sostituto: sostituto ? { id: sostituto.id, nome: sostituto.nome, litri: sostituto.litri } : null,
+             avviso: avvisoZainoNelViaggio(dentro, sostituto, scelta.consigliati) };
   }
   if (scelta.zaino) {
     return { ...riga, stato: "nell_armadio", oggetto: { id: scelta.zaino.id, nome: scelta.zaino.nome }, avviso: avvisoZainoPiccolo(scelta) };

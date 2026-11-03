@@ -22,3 +22,8 @@ linkEsci?.addEventListener("click", async (e) => {
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("Service worker non registrato:", err.message));
 }
+
+// Collaudo 3/11, A2: quando lo schermo è medio il menu mostra solo le icone; il nome compare al passaggio del mouse
+for (const voce of document.querySelectorAll(".menu a")) {
+  if (!voce.title) voce.title = voce.textContent.trim();
+}

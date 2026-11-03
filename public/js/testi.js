@@ -10,5 +10,8 @@ export function plurale(n, singolare, plurale) {
   return `${numero(n)} ${Number(n) === 1 ? singolare : plurale}`;
 }
 
-// Le ore di cammino: "1 ora", "1,5 ore", "4 ore"
-export const ore = (n) => plurale(n, "ora", "ore");
+// Le ore di cammino: "mezz'ora", "1 ora", "1,5 ore", "4 ore" (collaudo 3/11, C4: "mezz'ora" invece di "0,5 ore")
+export const ore = (n) => (Number(n) === 0.5 ? "mezz'ora" : plurale(n, "ora", "ore"));
+
+// Singolare o plurale per le parole che si accordano con le ore: "1 ora stimata", "mezz'ora stimata", "2 ore stimate"
+export const unaSola = (n) => Number(n) === 1 || Number(n) === 0.5;

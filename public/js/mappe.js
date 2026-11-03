@@ -2,6 +2,7 @@ import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
 import { gruppiPerData, htmlGruppi } from "./elenco-uscite.js";
+import { discesaDellaTraccia } from "./navigazione-calcoli.js";
 
 // Pagina Mappe: le uscite che hanno una mappa (ha_mappa arriva da GET /api/viaggi).
 // La mappa si disegna nel form dell'uscita, in «Percorso e coordinate».
@@ -16,6 +17,8 @@ function rigaMappa(v) {
   const parti = [];
   if (v.distanza_km != null) parti.push(`${num(v.distanza_km)} km`);
   if (v.dislivello_m != null) parti.push(`D+ ${num(v.dislivello_m)} m`);
+  const discesa = discesaDellaTraccia(v.traccia, v.dislivello_m); // collaudo 3/11, C6: D− anche qui, come nella scheda
+  if (discesa != null) parti.push(`D− ${num(discesa)} m`);
   return `
     <a class="riga" href="/mappa.html?id=${v.id}">
       <span class="riquadro-icona"><img src="/img/icone/mappe.svg" alt="" width="22" height="22"></span>

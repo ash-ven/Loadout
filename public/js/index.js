@@ -114,8 +114,12 @@ try {
   mappa.on("baselayerchange", (e) => elMappa.classList.toggle("senza-filtro", e.name === "Satellite"));
   const livello = L.featureGroup().addTo(mappa);
   for (const v of fattiSullaMappa) {
-    L.marker(partenza(v), { icon: icona("partenza"), title: v.nome, alt: v.nome, riseOnHover: true })
+    const segnaposto = L.marker(partenza(v), { icon: icona("partenza"), title: v.nome, riseOnHover: true })
       .bindPopup(fumetto(v)).addTo(livello);
+    // Collaudo 3/11, B9: un nome che i lettori di schermo leggono (l'icona è un disegno, l'"alt" di Leaflet qui non vale)
+    const quando = data(v) ? `, ${formattaData(data(v))}` : "";
+    segnaposto.getElement()?.setAttribute("aria-label", `${v.nome}${quando}: apri il fumetto`);
+    segnaposto.getElement()?.setAttribute("role", "button");
   }
   // Inquadra tutti i segnaposto (con margine). Uno solo: zoom fisso, se no Leaflet ingrandirebbe al massimo
   if (fattiSullaMappa.length === 1) mappa.setView(partenza(fattiSullaMappa[0]), 10);
@@ -135,7 +139,7 @@ if (fatti.length > 0) {
   const metri = fatti.reduce((somma, v) => somma + Number(v.dislivello_m ?? 0), 0);
   const parti = [`<strong>${fatti.length} ${fatti.length === 1 ? "viaggio fatto" : "viaggi fatti"}</strong>`];
   if (km > 0) parti.push(`${num(km)} km`);
-  if (metri > 0) parti.push(`${num(metri)} m di dislivello`);
+  if (metri > 0) parti.push(`${num(metri)} m di salita (D+)`); // C7: è solo la salita
   elTotali.innerHTML = `In tutto: ${parti.join(" · ")}`;
   elTotali.hidden = false;
 }
