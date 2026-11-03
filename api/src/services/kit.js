@@ -32,13 +32,14 @@ const VOCI = [
     quando: () => true, perche: "sempre: pesa pochi grammi e in emergenza ti tiene caldo" },
   // --- ferrata e alpinismo ---
   { id: "casco", nome: "Casco", categoria: "sicurezza", parole: ["casco", "caschetto", "elmetto", "helmet"],
-    quando: (u) => u.attivita === "ferrata" || u.attivita === "alpinismo", perche: "per la ferrata e l'alpinismo" },
+    quando: (u) => u.attivita === "ferrata" || u.attivita === "alpinismo" || u.attrezzato || u.alpinistico,
+    perche: "per la ferrata, l'alpinismo e i tratti attrezzati o alpinistici" },
   { id: "imbrago", nome: "Imbrago", categoria: "sicurezza",
     parole: ["imbrago", "imbraco", "imbracatura", "imbragatura", "harness"],
     quando: (u) => u.attivita === "ferrata" || u.attivita === "alpinismo", perche: "per la ferrata e l'alpinismo" },
   { id: "set-ferrata", nome: "Set da ferrata (longe con dissipatore)", categoria: "sicurezza",
     parole: ["set da ferrata", "set ferrata", "kit da ferrata", "kit ferrata", "longe", "longes", "dissipatore", "via ferrata set"],
-    quando: (u) => u.attivita === "ferrata", perche: "per la ferrata" },
+    quando: (u) => u.attivita === "ferrata" || u.attrezzato, perche: "per la ferrata e i tratti attrezzati (catene, cavi)" },
   { id: "ramponi", nome: "Ramponi", categoria: "attrezzatura", parole: ["ramponi", "rampone", "crampons"],
     quando: (u) => u.attivita === "alpinismo", perche: "per l'alpinismo" },
   { id: "piccozza", nome: "Piccozza", categoria: "attrezzatura", parole: ["piccozza", "picozza", "piolet", "ice axe"],
@@ -56,7 +57,7 @@ const VOCI = [
     quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata (autosoccorso in valanga)" },
   { id: "bastoncini", nome: "Bastoncini", categoria: "attrezzatura",
     parole: ["bastoncini", "bastoncino", "bastoni da trekking", "bastoncini da trekking", "trekking poles", "poles"],
-    quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata" },
+    quando: (u) => u.attivita === "ciaspolata" || u.impegnativo, perche: "per la ciaspolata e i tratti impegnativi (T3 e oltre)" },
   // --- pernotto (in giornata NON servono: vedi SOLO_PERNOTTO) ---
   { id: "sacco-lenzuolo", nome: "Sacco lenzuolo", categoria: "attrezzatura",
     parole: ["sacco lenzuolo", "sacco lenzuola", "sacco letto", "sacco da rifugio", "lenzuolo da rifugio", "sacco a pelo leggero", "liner"],
@@ -195,7 +196,13 @@ export async function condizioni(viaggio) {
   const notteFredda = minima != null ? minima < 10 : mese != null && (mese >= 10 || mese <= 5);
   const quotaAlta = viaggio.quota_max_m != null && viaggio.quota_max_m >= 2000; // C1: occhiali e crema solare in quota
   const caldo = meteo.disponibile && meteo.temp_max > 25;                        // C1: cappello e crema con il caldo
+  // Avvisi sul percorso (dai dati dei sentieri, salvati con la mappa): T3+ = impegnativo, T4+ = alpinistico, catene/cavi = attrezzato
+  const tipi = new Set((viaggio.traccia?.avvisi_percorso?.avvisi ?? []).map((a) => a.tipo));
+  const impegnativo = tipi.has("t3") || tipi.has("t4") || tipi.has("t56");
+  const alpinistico = tipi.has("t4") || tipi.has("t56");
+  const attrezzato = tipi.has("attrezzato");
   return { attivita: viaggio.attivita, pernotto: viaggio.pernotto, serve_cucina: viaggio.serve_cucina, n_giorni: viaggio.n_giorni,
+           impegnativo, alpinistico, attrezzato,
            freddo, notte_fredda: notteFredda, neve, quota_alta: quotaAlta, caldo };
 }
 

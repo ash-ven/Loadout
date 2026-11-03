@@ -4,6 +4,7 @@ import * as zaino from "../services/zaino.js";
 import * as consigli from "../services/consigli.js";
 import * as kit from "../services/kit.js";
 import { validate } from "../middleware/validate.js";
+import { TIPI_AVVISO } from "../services/percorsi.js";
 
 export const router = Router();
 
@@ -57,7 +58,8 @@ function controlliPercorso(req, res, next) {
 //                         i campi non elencati li ha scritti l'utente),
 //               profilo: "sentieri" | "breve" (facoltativo: come è stato calcolato il percorso),
 //               discesa_m: intero 0–9000 (facoltativo: il dislivello negativo calcolato dalla mappa),
-//               origine: "gpx" (facoltativo: la linea è quella di un file importato, non di BRouter) }
+//               origine: "gpx" (facoltativo: la linea è quella di un file importato, non di BRouter),
+//               avvisi_percorso: { copertura, avvisi: [{ tipo, metri, tratti }] } (facoltativo: difficoltà dei sentieri) }
 // Profilo e D− stanno nella traccia perché esistono solo quando c'è una mappa: niente colonne nuove nel database.
 const CAMPI_CON_ORIGINE = ["distanza_km", "dislivello_m", "quota_min_m", "quota_max_m",
                            "lat_partenza", "lon_partenza", "lat_arrivo", "lon_arrivo"];
@@ -71,7 +73,19 @@ export function tracciaValida(t) {
     && originiValide
     && (t.profilo === undefined || ["sentieri", "breve"].includes(t.profilo))
     && (t.origine === undefined || t.origine === "gpx")   // collaudo 3/11, B2: la linea viene da un file GPX
+    && avvisiValidi(t.avvisi_percorso)
     && (t.discesa_m === undefined || t.discesa_m === null || (Number.isInteger(t.discesa_m) && t.discesa_m >= 0 && t.discesa_m <= 9000));
+}
+
+// Gli avvisi sul percorso salvati con la traccia (li calcola il server da BRouter: qui controlliamo solo la forma)
+function avvisiValidi(a) {
+  if (a === undefined || a === null) return true;
+  const frazione = (n) => typeof n === "number" && n >= 0 && n <= 1;
+  return typeof a === "object" && Number.isInteger(a.copertura) && a.copertura >= 0 && a.copertura <= 100
+    && Array.isArray(a.avvisi) && a.avvisi.length <= TIPI_AVVISO.length
+    && a.avvisi.every((v) => TIPI_AVVISO.includes(v.tipo) && typeof v.metri === "number" && v.metri >= 0
+      && Array.isArray(v.tratti) && v.tratti.length <= 200
+      && v.tratti.every((t) => Array.isArray(t) && t.length === 2 && frazione(t[0]) && frazione(t[1])));
 }
 
 // === Middleware "guardiano": il viaggio :id esiste ed è mio? ===

@@ -2,7 +2,7 @@
 // non serve internet e il risultato è sempre lo stesso.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { daBRouter, semplifica, discesa, parametriDifficolta, NessunPercorso } from "../src/services/percorsi.js";
+import { daBRouter, semplifica, discesa, parametriDifficolta, avvisiDalPercorso, NessunPercorso } from "../src/services/percorsi.js";
 
 // Una risposta come quella di BRouter: coordinate [lon, lat, quota], lunghezza e salita come TESTO
 const finta = {
@@ -56,4 +56,31 @@ test("BRouter: per ferrata e alpinismo i passaggi difficili sono permessi", () =
   assert.equal(parametriDifficolta("sentieri", "escursione"), "");
   assert.equal(parametriDifficolta("breve", "ferrata"), ""); // il più breve non guarda la scala SAC
   assert.equal(parametriDifficolta("sentieri", null), "");
+});
+
+// Avvisi sul percorso: la tabella "messages" di BRouter (riga 0 = intestazione, come nella risposta vera del 3/11)
+const testa = ["Longitude", "Latitude", "Elevation", "Distance", "CostPerKm", "ElevCost", "TurnCost", "NodeCost", "InitialCost", "WayTags", "NodeTags", "Time", "Energy"];
+const riga = (metri, tag) => [0, 0, 0, String(metri), 0, 0, 0, 0, 0, tag, "", 0, 0];
+
+test("avvisi: metri e tratti per tipo, copertura della scala SAC, tratti attaccati uniti", () => {
+  const a = avvisiDalPercorso([testa,
+    riga(500, "highway=track"),                                                  // 0–500: niente sac_scale
+    riga(300, "highway=path sac_scale=demanding_mountain_hiking surface=rock"),  // 500–800: T3 e roccia
+    riga(200, "highway=path sac_scale=demanding_mountain_hiking"),               // 800–1000: T3 (attaccato al precedente)
+    riga(1000, "highway=path sac_scale=mountain_hiking")]);                      // 1000–2000: T2, nessun avviso
+  assert.equal(a.copertura, 75);                                // 1500 m su 2000 con sac_scale
+  assert.deepEqual(a.avvisi.map((v) => v.tipo), ["t3", "roccia"]); // nell'ordine: prima i più seri
+  assert.equal(a.avvisi[0].metri, 500);
+  assert.deepEqual(a.avvisi[0].tratti, [[0.25, 0.5]]);         // un tratto solo, da 500 a 1000 m
+  assert.deepEqual(a.avvisi[1].tratti, [[0.25, 0.4]]);
+});
+
+test("avvisi: T4, T5–T6, ferrata e traccia poco visibile; senza tabella null", () => {
+  const a = avvisiDalPercorso([testa,
+    riga(100, "highway=via_ferrata sac_scale=difficult_alpine_hiking"),
+    riga(100, "highway=path sac_scale=alpine_hiking trail_visibility=bad"),
+    riga(100, "highway=path assisted_trail=no")]);              // "no" non è un tratto attrezzato
+  assert.deepEqual(a.avvisi.map((v) => v.tipo), ["t56", "t4", "attrezzato", "traccia"]);
+  assert.equal(avvisiDalPercorso(undefined), null);
+  assert.equal(avvisiDalPercorso([testa]), null);
 });

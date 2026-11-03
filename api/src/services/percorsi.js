@@ -63,6 +63,7 @@ export function daBRouter(geojson) {
     quota_max_m: quote.length ? Math.max(...quote) : null,
     punto_piu_alto: indiceAlto >= 0 ? punti[indiceAlto].slice(0, 2) : null,      // per il meteo in vetta
     traccia: semplifica(punti, 20, indiceAlto),
+    avvisi_percorso: avvisiDalPercorso(linea.properties?.messages), // sassaie, esposizione, tratti attrezzati…
   };
 }
 
@@ -94,4 +95,71 @@ export function semplifica(punti, minimoMetri = 20, indiceDaTenere = -1) {
   }
   tenuti.push(punti.at(-1));
   return tenuti;
+}
+
+// =====================================================================
+//  AVVISI SUL PERCORSO (sassaie, esposizione, tratti attrezzati…), dai dati dei sentieri di OpenStreetMap.
+//  BRouter, insieme al percorso, dà la tabella "messages": la riga 0 è l'intestazione
+//  (Longitude, Latitude, Elevation, Distance, …, WayTags, …), poi una riga per ogni tratto,
+//  con la sua lunghezza (Distance, in metri) e le etichette OSM della strada (WayTags, "chiave=valore" separate da spazi).
+//  Verificato con una richiesta vera (3/11): sac_scale e surface ci sono; cai_scale NO (BRouter non lo passa):
+//  usiamo la scala SAC, quasi equivalente (T3 ≈ EE, T4 e oltre ≈ EEA e alpinismo).
+// =====================================================================
+
+// L'ordine conta: è quello in cui li mostriamo (prima i più seri)
+export const TIPI_AVVISO = ["t56", "t4", "attrezzato", "t3", "roccia", "traccia"];
+
+// Le etichette di UN tratto → i tipi di avviso che lo riguardano
+function tipiDelTratto(etichette) {
+  const tipi = [];
+  const sac = etichette.get("sac_scale");
+  if (sac === "demanding_mountain_hiking") tipi.push("t3");
+  if (sac === "alpine_hiking") tipi.push("t4");
+  if (sac === "demanding_alpine_hiking" || sac === "difficult_alpine_hiking") tipi.push("t56");
+  if (["rock", "bare_rock", "scree"].includes(etichette.get("surface"))) tipi.push("roccia");
+  if (etichette.get("highway") === "via_ferrata" || etichette.has("via_ferrata_scale")
+      || (etichette.has("assisted_trail") && etichette.get("assisted_trail") !== "no")
+      || (etichette.has("safety_rope") && etichette.get("safety_rope") !== "no")) tipi.push("attrezzato");
+  if (["bad", "horrible", "no"].includes(etichette.get("trail_visibility"))) tipi.push("traccia");
+  return tipi;
+}
+
+// messages → { copertura (% del percorso con la difficoltà segnata), avvisi: [{ tipo, metri, tratti: [[da, a], …] }] }
+// I tratti sono FRAZIONI del percorso (0 = partenza, 1 = arrivo): la mappa li ritrova sulla sua linea
+// anche se è semplificata. null se la tabella non c'è.
+export function avvisiDalPercorso(messages) {
+  if (!Array.isArray(messages) || messages.length < 2) return null;
+  const iTag = messages[0].indexOf("WayTags");
+  const iDist = messages[0].indexOf("Distance");
+  if (iTag < 0 || iDist < 0) return null;
+  let totale = 0, segnato = 0;
+  const perTipo = new Map(); // tipo → { metri, tratti in metri }
+  for (const riga of messages.slice(1)) {
+    const d = Number(riga[iDist]) || 0;
+    const etichette = new Map(String(riga[iTag] ?? "").split(" ").filter(Boolean).map((t) => {
+      const i = t.indexOf("=");
+      return i < 0 ? [t, ""] : [t.slice(0, i), t.slice(i + 1)];
+    }));
+    const da = totale;
+    totale += d;
+    if (etichette.has("sac_scale")) segnato += d;
+    for (const tipo of tipiDelTratto(etichette)) {
+      const t = perTipo.get(tipo) ?? { metri: 0, tratti: [] };
+      t.metri += d;
+      const ultimo = t.tratti.at(-1);
+      if (ultimo && ultimo[1] === da) ultimo[1] = totale; // tratti attaccati: uno solo
+      else t.tratti.push([da, totale]);
+      perTipo.set(tipo, t);
+    }
+  }
+  if (totale <= 0) return null;
+  const frazione = (m) => Math.round((m / totale) * 10000) / 10000;
+  return {
+    copertura: Math.round((segnato / totale) * 100),
+    avvisi: TIPI_AVVISO.filter((tipo) => perTipo.has(tipo)).map((tipo) => ({
+      tipo,
+      metri: Math.round(perTipo.get(tipo).metri),
+      tratti: perTipo.get(tipo).tratti.slice(0, 200).map(([a, b]) => [frazione(a), frazione(b)]),
+    })),
+  };
 }

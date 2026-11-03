@@ -40,3 +40,13 @@ test("traccia: origine «gpx» accettata, altri valori no", () => {
   assert.equal(tracciaValida({ ...buona, origine: "gpx" }), true);
   assert.equal(tracciaValida({ ...buona, origine: "komoot" }), false);
 });
+
+// Avvisi sul percorso salvati con la traccia: solo la forma giusta
+test("traccia: avvisi sul percorso con tipi conosciuti e tratti tra 0 e 1", () => {
+  const avvisi = { copertura: 79, avvisi: [{ tipo: "t3", metri: 400, tratti: [[0.1, 0.18]] }] };
+  assert.equal(tracciaValida({ ...buona, avvisi_percorso: avvisi }), true);
+  assert.equal(tracciaValida({ ...buona, avvisi_percorso: null }), true);
+  assert.equal(tracciaValida({ ...buona, avvisi_percorso: { ...avvisi, copertura: 150 } }), false);
+  assert.equal(tracciaValida({ ...buona, avvisi_percorso: { copertura: 79, avvisi: [{ tipo: "facile", metri: 1, tratti: [] }] } }), false);
+  assert.equal(tracciaValida({ ...buona, avvisi_percorso: { copertura: 79, avvisi: [{ tipo: "t3", metri: 1, tratti: [[0.5, 2]] }] } }), false);
+});

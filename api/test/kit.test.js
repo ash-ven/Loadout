@@ -134,3 +134,13 @@ test("zaini: zaino nel viaggio troppo piccolo, con e senza uno più grande nell'
   assert.match(avvisoZainoNelViaggio(piccolo, { nome: "Grande", litri: 60 }, tenda), /«Grande» \(60 L\)$/);
   assert.match(avvisoZainoNelViaggio(piccolo, null, tenda), /non hai uno zaino più grande/);
 });
+
+// Avvisi sul percorso → zaino: T3+ bastoncini, T4+ casco, tratti attrezzati casco e set da ferrata
+test("kit: i tratti difficili del percorso aggiungono bastoncini, casco e set da ferrata", () => {
+  const voci = (u) => ids(vociPerUscita(uscita(u)));
+  assert.ok(voci({ impegnativo: true }).includes("bastoncini"));
+  assert.ok(!voci({ impegnativo: true }).includes("casco"));
+  assert.ok(voci({ impegnativo: true, alpinistico: true }).includes("casco"));
+  assert.ok(voci({ attrezzato: true }).includes("set-ferrata"));
+  assert.ok(!voci({}).includes("bastoncini")); // escursione normale: niente
+});
