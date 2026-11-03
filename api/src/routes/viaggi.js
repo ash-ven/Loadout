@@ -147,6 +147,7 @@ router.get("/:id", caricaViaggio, async (req, res, next) => {
     res.json({
       ...v,
       peso,
+      fatto: zaino.eFatto(v.data_partenza), // punto 6: la scheda mostra il diario solo dopo il viaggio
       consigli: {
         ore_cammino_giorno: ore,
         fonte_ore: fonteOre,
@@ -201,6 +202,20 @@ router.put("/:id", validate(schemaViaggio), controlliPercorso, async (req, res, 
 router.put("/:id/percorso", caricaViaggio, validate(schemaPercorso), controlliPercorso, async (req, res, next) => {
   try {
     res.json(await svc.aggiornaPercorso(req.user.sub, req.viaggio.id, req.validated));
+  } catch (err) { next(err); }
+});
+
+// === PUT /api/viaggi/:id/diario (punto 6: nota e voto, solo per i viaggi già fatti) ===
+const schemaDiario = {
+  nota: { etichetta: "la nota", type: "string", nullable: true, maxLength: 1000 },
+  voto: { etichetta: "il voto", type: "number", nullable: true, integer: true, min: 1, max: 5 },
+};
+router.put("/:id/diario", caricaViaggio, validate(schemaDiario), async (req, res, next) => {
+  try {
+    if (!zaino.eFatto(req.viaggio.data_partenza)) {
+      return res.status(400).json({ error: "VIAGGIO_NON_FATTO", message: "Il diario si scrive dopo il viaggio" });
+    }
+    res.json(await svc.aggiornaDiario(req.user.sub, req.viaggio.id, req.validated));
   } catch (err) { next(err); }
 });
 

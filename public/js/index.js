@@ -1,6 +1,7 @@
 import { api, esc, formattaData, oggiISO, giorniTra } from "./api.js";
 import "./menu.js";
 import { creaMappa, icona } from "./mappa-base.js";
+import { scarponcini } from "./diario.js"; // punto 6: il voto piccolo nel fumetto
 
 // =====================================================================
 //  HOME
@@ -89,8 +90,15 @@ function fumetto(v) {
   const dettagli = [data(v) ? formattaData(data(v)) : "data da decidere"];
   if (v.distanza_km != null) dettagli.push(`${num(v.distanza_km, 1)} km`);
   if (v.dislivello_m != null) dettagli.push(`D+ ${num(v.dislivello_m)} m`);
+  // Punto 6: i segnaposto diventano ricordi. Il voto e l'inizio della nota (al massimo 80 caratteri, tagliata su una parola)
+  let ricordo = "";
+  if (v.diario_voto || v.diario_nota) {
+    const nota = v.diario_nota ?? "";
+    const corta = nota.length > 80 ? `${nota.slice(0, 80).replace(/\s+\S*$/, "")}…` : nota;
+    ricordo = `${scarponcini(v.diario_voto)}${corta ? `<span class="fumetto-nota">«${esc(corta)}»</span>` : ""}`;
+  }
   return `<strong>${esc(v.nome)}</strong><br><span class="muto">${dettagli.join(" · ")}</span><br>
-    <a href="/scheda-viaggio.html?id=${v.id}">Apri il viaggio →</a>`;
+    ${ricordo ? `${ricordo}` : ""}<a href="/scheda-viaggio.html?id=${v.id}">Apri il viaggio →</a>`;
 }
 
 const elMappa = document.querySelector("#mappa-home");
@@ -137,9 +145,33 @@ const fatti = viaggi.filter(eFatto);
 if (fatti.length > 0) {
   const km = fatti.reduce((somma, v) => somma + Number(v.distanza_km ?? 0), 0);
   const metri = fatti.reduce((somma, v) => somma + Number(v.dislivello_m ?? 0), 0);
-  const parti = [`<strong>${fatti.length} ${fatti.length === 1 ? "viaggio fatto" : "viaggi fatti"}</strong>`];
-  if (km > 0) parti.push(`${num(km)} km`);
-  if (metri > 0) parti.push(`${num(metri)} m di salita (D+)`); // C7: è solo la salita
-  elTotali.innerHTML = `In tutto: ${parti.join(" · ")}`;
+  // Punto 7 (3/11): i riquadrini. Ognuno è { numero, cosa, dettaglio? }; quelli a zero non si mostrano
+  const piu = (campo) => fatti.filter((v) => v[campo] != null).reduce((max, v) => (!max || v[campo] > max[campo] ? v : max), null);
+  const vetta = piu("quota_max_m");      // il viaggio con la quota più alta
+  const lungo = piu("distanza_km");      // e quello più lungo
+  const riquadri = [
+    { numero: num(fatti.length), cosa: fatti.length === 1 ? "viaggio fatto" : "viaggi fatti" },
+    km > 0 && { numero: num(km), cosa: "km" },
+    metri > 0 && { numero: num(metri), cosa: "m di salita (D+)" }, // C7: è solo la salita
+    vetta && { numero: `${num(vetta.quota_max_m)} m`, cosa: "la vetta più alta", dettaglio: vetta.nome },
+    lungo && fatti.length > 1 && { numero: `${num(lungo.distanza_km, 1)} km`, cosa: "il viaggio più lungo", dettaglio: lungo.nome },
+  ].filter(Boolean);
+  // createElement + textContent: il nome del viaggio l'ha scritto l'utente, niente innerHTML
+  elTotali.replaceChildren(...riquadri.map(({ numero, cosa, dettaglio }) => {
+    const box = document.createElement("div");
+    box.className = "riquadro-numero";
+    const dd = document.createElement("dd");
+    dd.textContent = numero;
+    const dt = document.createElement("dt");
+    dt.textContent = cosa;
+    box.append(dt, dd);                  // in una <dl> il <dt> va prima; il CSS mostra sopra il numero (order)
+    if (dettaglio) {
+      const nome = document.createElement("dd");
+      nome.className = "riquadro-dettaglio";
+      nome.textContent = dettaglio;
+      box.append(nome);
+    }
+    return box;
+  }));
   elTotali.hidden = false;
 }

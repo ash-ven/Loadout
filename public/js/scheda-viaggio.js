@@ -4,7 +4,8 @@ import { ATTIVITA } from "./categorie.js";
 import { plurale, ore, unaSola } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 import { discesaDellaTraccia } from "./navigazione-calcoli.js"; // D− anche per le mappe salvate prima che esistesse
-import { mostraAvvisi } from "./avvisi-percorso.js";             // i tratti difficili del percorso (dalla mappa)
+import { mostraAvvisi } from "./avvisi-percorso.js";
+import { mostraDiario } from "./diario.js";                       // punto 6: nota e voto, dopo il viaggio             // i tratti difficili del percorso (dalla mappa)
 
 // C10 (revisione UX 2): un piccolo «?» accanto alle parole difficili, porta alla spiegazione nel glossario dei Consigli
 const aiuto = (id, cosa) =>
@@ -51,6 +52,7 @@ async function caricaViaggio(ore) {
   viaggio = await api(url);
   renderIntestazione();
   renderConsigli();
+  mostraDiario(viaggio);
 }
 
 function renderIntestazione() {

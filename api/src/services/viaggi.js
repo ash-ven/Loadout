@@ -85,6 +85,18 @@ export async function createConZaino(utenteId, dati) {
   }
 }
 
+// Punto 6 (3/11): il diario (nota e voto). Come il percorso, si sostituisce per intero:
+// mandare la nota vuota la cancella. Il resto del viaggio non si tocca.
+export async function aggiornaDiario(utenteId, id, { nota, voto }) {
+  const { rows } = await query(
+    `UPDATE viaggio SET diario_nota = $3, diario_voto = $4
+     WHERE id = $1 AND utente_id = $2
+     RETURNING id, diario_nota, diario_voto`,
+    [id, utenteId, nota || null, voto ?? null]
+  );
+  return rows[0] ?? null;
+}
+
 // Solo il percorso (pagina della mappa): traccia, km, dislivello positivo, quote e coordinate.
 // I campi non mandati diventano null: il percorso si sostituisce per intero.
 export async function aggiornaPercorso(utenteId, id, d) {

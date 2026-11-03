@@ -66,6 +66,25 @@
     <p class="avviso" id="proponi-zaino" hidden></p>
 
     <div class="griglia" id="corpo-scheda" hidden>
+      <!-- Punto 6 (3/11): il diario, solo per i viaggi già fatti (js/diario.js). In cima: dopo il viaggio conta più dei consigli -->
+      <section class="card diario" id="diario" hidden aria-labelledby="titolo-diario">
+        <div class="intestazione-sezione">
+          <h2 id="titolo-diario"><img class="icona" src="/img/icone/scarpone.svg" alt="" width="24" height="24">Diario</h2>
+          <span class="stato-salvato" id="diario-stato" role="status" aria-live="polite"></span>
+        </div>
+        <form id="form-diario">
+          <fieldset class="voto-scarponi">
+            <legend>Il tuo voto al percorso</legend>
+            <div class="scarponi" id="scarponi"></div>
+            <button type="button" class="link-bottone" id="togli-voto" hidden>Togli il voto</button>
+          </fieldset>
+          <label>La tua nota
+            <textarea name="nota" rows="4" maxlength="1000" placeholder="Com'è andata? Cosa ricordarti la prossima volta…"></textarea>
+          </label>
+          <p class="errore" id="errore-diario" hidden></p>
+          <button type="submit">Salva il diario</button>
+        </form>
+      </section>
       <!-- I consigli (lo zaino ora ha una pagina sua: zaino.html) -->
       <section class="card">
         <h2><img class="icona" src="/img/icone/consigli.svg" alt="" width="24" height="24">Consigli per il viaggio</h2>

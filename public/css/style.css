@@ -740,7 +740,14 @@ textarea:disabled { background: var(--crema); cursor: not-allowed; }
 .mappa-vuota { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: .75rem;
                padding: 1rem; text-align: center; background: rgba(246, 239, 223, .82); }
 .mappa-vuota p { margin: 0; max-width: 22rem; font-weight: 600; color: var(--testo); }
-.totali-home { margin: .75rem 0 0; text-align: center; color: var(--terra); }
+/* Punto 7 (3/11): i numeri dei viaggi fatti in riquadrini (scelta di Asiha) */
+.totali-home { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)); gap: .75rem; margin: 1rem 0 0; }
+.riquadro-numero { display: flex; flex-direction: column; padding: .7rem .8rem; background: var(--lana); border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); text-align: center; }
+.riquadro-numero dd { margin: 0; font-family: var(--font-titoli); font-size: 1.5rem; font-weight: 600; color: var(--muschio); line-height: 1.15; }
+.riquadro-numero dt { font-size: .82rem; color: var(--terra); }
+.riquadro-numero dd:not(.riquadro-dettaglio) { order: -1; }   /* il numero sopra, anche se nell'HTML viene dopo il <dt> */
+.riquadro-numero dd.riquadro-dettaglio { margin-top: .15rem; font-family: var(--font); font-size: .82rem; font-weight: 600; color: var(--testo);
+                                          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .leaflet-popup-content { font: inherit; font-size: .92rem; line-height: 1.45; }
 .leaflet-popup-content a { font-weight: 700; color: var(--muschio); }
 @media (max-width: 860px) { .mappa-home-testa { padding-right: 100px; } }
@@ -853,3 +860,16 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 .pallino-avviso.attenzione { background: var(--senape); }
 .pallino-avviso.grave { background: var(--rosso); }
 .avvisi-nota { margin: .5rem 0 0; font-size: .88rem; }
+
+/* Punto 6 (3/11): il diario. Il voto con gli scarponi (scelta di Asiha: versione «Senape») */
+.diario form { display: grid; gap: .9rem; margin-top: .4rem; }
+.diario form > button[type="submit"] { justify-self: start; }                   /* il pulsante non si allarga a tutta la scheda */
+.voto-scarponi { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: .3rem 1rem; }
+.voto-scarponi legend { padding: 0; margin-bottom: .3rem; font-weight: 600; }
+.scarponi { display: flex; gap: .15rem; }
+.scarponi input { position: absolute; opacity: 0; pointer-events: none; }        /* il pallino non si vede: si vede lo scarpone */
+.scarponi label { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--raggio-piccolo); cursor: pointer; }
+.scarponi label:hover { background: var(--salvia-chiaro); }
+.scarponi input:focus-visible + label { outline: 3px solid var(--salvia); outline-offset: 1px; }
+.scarponcini { display: inline-flex; gap: 1px; vertical-align: -.25em; }       /* il voto piccolo, nel fumetto della Home */
+.fumetto-nota { display: block; margin-top: .2rem; font-style: italic; }
