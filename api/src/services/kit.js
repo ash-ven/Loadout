@@ -123,6 +123,15 @@ export function corrisponde(oggetto, voce) {
   return voce.parole.some((parola) => new RegExp(`(^|[^a-z0-9])${normalizza(parola)}`).test(testo));
 }
 
+// Punto 5 (3/11): l'attrezzatura di SICUREZZA non riceve mai la nota «non usato»: non averla usata
+// vuol dire che è andato tutto bene, non che si possa lasciare a casa. Conta la categoria «sicurezza»
+// e, in qualunque categoria, gli oggetti che corrispondono a queste voci del kit (es. la frontale è in «elettronica»).
+const VOCI_SICUREZZA = VOCI.filter((v) => ["frontale", "pronto-soccorso", "guscio", "telo-termico", "casco", "imbrago",
+  "set-ferrata", "ramponi", "piccozza", "ramponcini", "artva", "pala", "sonda"].includes(v.id));
+export function diSicurezza(oggetto) {
+  return oggetto.categoria === "sicurezza" || VOCI_SICUREZZA.some((voce) => corrisponde(oggetto, voce));
+}
+
 // Le voci che servono per questa uscita
 export function vociPerUscita(uscita) {
   return VOCI.filter((v) => v.quando(uscita));

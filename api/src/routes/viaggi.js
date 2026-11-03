@@ -238,7 +238,11 @@ router.get("/:id/zaino", caricaViaggio, async (req, res, next) => {
   try {
     const peso = await zaino.peso(req.viaggio.id);
     const oggetti = await zaino.dettaglio(req.viaggio.id);
-    res.json({ peso, oggetti });
+    // Punto 5: per ogni oggetto, se non l'hai usato le ultime 2 volte (stessa attività) → { viaggio, data }, altrimenti null
+    const nonUsati = await zaino.nonUsatiPrima(req.user.sub, req.viaggio);
+    for (const o of oggetti) o.non_usato_prima = nonUsati.get(o.oggetto_id) ?? null;
+    // fatto = il viaggio è passato: la pagina mostra «Com'è andata?» per segnare cosa non hai usato
+    res.json({ peso, oggetti, fatto: zaino.eFatto(req.viaggio.data_partenza) });
   } catch (err) { next(err); }
 });
 
@@ -252,6 +256,7 @@ const schemaModifica = {
   inserito:  { etichetta: "la spunta", type: "boolean" },
   quantita:  { etichetta: "la quantità", type: "number", integer: true, min: 1, max: 99 },
   indossato: { etichetta: "«lo indosso»", type: "boolean" }, // B3: lo porto addosso, non pesa nello zaino
+  non_usato: { etichetta: "«non usato»", type: "boolean" },  // punto 5: al rientro, non ti è servito
 };
 
 // B2: la risposta quando chiedi più pezzi di quanti ne possiedi
@@ -288,7 +293,11 @@ router.patch("/:id/zaino/:oggettoId", caricaViaggio, validate(schemaModifica), a
     const oggettoId = leggiOggettoId(req);
     if (!oggettoId) return res.status(400).json({ error: "BAD_ID", message: "oggettoId deve essere un intero positivo" });
     if (Object.keys(req.validated).length === 0) {
-      return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito', 'quantita' o 'indossato'" });
+      return res.status(400).json({ error: "VALIDATION_ERROR", message: "Indica almeno 'inserito', 'quantita', 'indossato' o 'non_usato'" });
+    }
+    // Punto 5: «non usato» ha senso solo dopo il viaggio
+    if (req.validated.non_usato !== undefined && !zaino.eFatto(req.viaggio.data_partenza)) {
+      return res.status(400).json({ error: "VIAGGIO_NON_FATTO", message: "Cosa non hai usato lo puoi segnare dopo il viaggio" });
     }
     // Controlli sull'oggetto (il frontend aiuta, ma decide il server):
     // B3 si può indossare solo l'abbigliamento; B2 non più pezzi di quanti ne possiedi

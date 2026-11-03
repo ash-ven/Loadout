@@ -1,4 +1,4 @@
-import { api, esc } from "./api.js";
+import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { CATEGORIE } from "./categorie.js";
 import { plurale } from "./testi.js"; // B3: numeri e parole accordati
@@ -199,6 +199,7 @@ function renderZaino() {
   }
 
   renderSelettore();
+  renderRientro();
 }
 
 // Una riga della checklist. Qui la riga NON è un pulsante: dentro ci sono già dei controlli
@@ -214,6 +215,7 @@ function rigaZaino(o) {
         <span class="riga-testo">
           <span class="riga-nome">${esc(o.nome)}</span>
           <span class="riga-nota">${o.marchio ? `${esc(o.marchio)} · ` : ""}${num(o.peso_riga_g)}&nbsp;g${o.quantita > 1 ? ` (${num(o.peso_g)}&nbsp;g l'uno)` : ""}${o.indossato ? " · addosso" : ""}</span>
+          ${notaNonUsato(o)}
         </span>
       </label>
       ${o.categoria === "abbigliamento" ? pulsanteIndosso(o) : '<span class="indosso-vuoto"></span>'}
@@ -520,3 +522,40 @@ function piuPesanti(oggetti) {
     .slice(0, 3);
   return tre.length ? ` I più pesanti: ${tre.map((o) => `${o.nome} ${peso(o.peso_riga_g)}`).join(" · ")}.` : "";
 }
+
+// =====================================================================
+//  Punto 5 (3/11): «cosa non hai usato»
+// =====================================================================
+// La nota sotto il nome, se non l'hai usato le ultime 2 volte (stessa attività). La calcola il server
+// (non_usato_prima = { viaggio, data } o null) e non la mette mai all'attrezzatura di sicurezza.
+// Solo la nota: decidi tu se togliere l'oggetto, con la ✕ di sempre (scelta di Asiha).
+function notaNonUsato(o) {
+  if (!o.non_usato_prima) return "";
+  const { viaggio, data } = o.non_usato_prima;
+  const quando = data ? `, ${formattaData(data).slice(0, 5)}` : ""; // "12/10/2026" → "12/10"
+  return `<span class="riga-nota nota-non-usato">Non usato le ultime 2 volte (${esc(viaggio)}${quando})</span>`;
+}
+
+// «Com'è andata?»: solo per i viaggi già fatti (fatto arriva dal server). Una casella per oggetto, spuntata = NON usato.
+const elRientro = document.querySelector("#rientro");
+const elRientroElenco = document.querySelector("#rientro-elenco");
+function renderRientro() {
+  elRientro.hidden = !zaino.fatto || zaino.oggetti.length === 0;
+  if (elRientro.hidden) return;
+  elRientroElenco.innerHTML = zaino.oggetti.map((o) => `
+    <label class="check"><input type="checkbox" data-id="${o.oggetto_id}" ${o.non_usato ? "checked" : ""}> ${esc(o.nome)}</label>`).join("");
+}
+
+// Ogni spunta si salva subito (PATCH), come la checklist. Se il server dice di no, la casella torna com'era
+elRientroElenco.addEventListener("change", async (e) => {
+  const casella = e.target.closest("input[data-id]");
+  if (!casella) return;
+  const oggetto = zaino.oggetti.find((o) => String(o.oggetto_id) === casella.dataset.id);
+  try {
+    await api(`/api/viaggi/${id}/zaino/${casella.dataset.id}`, { method: "PATCH", body: { non_usato: casella.checked } });
+    if (oggetto) oggetto.non_usato = casella.checked;
+  } catch (err) {
+    casella.checked = !casella.checked;
+    mostraErrore(err.message);
+  }
+});

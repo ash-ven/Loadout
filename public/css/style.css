@@ -404,6 +404,10 @@ button.indosso { flex-shrink: 0; display: grid; place-items: center; width: 36px
                  border-radius: 50%; background: transparent; color: var(--terra); border: 1.5px dashed var(--bordo); }
 button.indosso:hover { background: var(--salvia-chiaro); color: var(--muschio); }
 button.indosso[aria-pressed="true"] { background: var(--salvia-chiaro); color: var(--muschio); border: 1.5px solid var(--salvia); }
+.riga-nota.nota-non-usato { font-style: italic; }   /* punto 5: «Non usato le ultime 2 volte (…)» */
+.rientro h2 { margin-top: 0; }
+.rientro-elenco { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr)); gap: .5rem 1rem; margin-top: .6rem; }
+.rientro-elenco label.check { min-height: 44px; }                                 /* tocchi da 44 px, come nel collaudo B5 */
 .riga-zaino.addosso .riga-nota { color: var(--salvia); font-weight: 600; }
 /* Al posto del pulsante "lo indosso" sulle righe non di abbigliamento: stesso spazio, così le colonne restano allineate */
 .indosso-vuoto { flex-shrink: 0; width: 36px; }

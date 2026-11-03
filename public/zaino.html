@@ -71,6 +71,14 @@
           </form>
         </section>
 
+        <!-- Punto 5 (3/11): solo per i viaggi già fatti. Di base è tutto usato: spunti solo quello che non ti è servito
+             (scelta di Asiha). Due volte di fila nella stessa attività → la prossima volta lo zaino te lo ricorda -->
+        <section class="card rientro" id="rientro" hidden aria-labelledby="titolo-rientro">
+          <h2 id="titolo-rientro">Com'è andata?</h2>
+          <p class="muto">Spunta quello che <strong>non</strong> hai usato. Se succede due volte di fila, la prossima volta te lo ricordo.</p>
+          <div class="rientro-elenco" id="rientro-elenco"></div>
+        </section>
+
         <!-- La checklist, divisa per categoria come l'armadio: la riempie zaino.js.
              A6 (revisione UX 2): subito dopo la scheda dello zaino, così sul telefono non si scorrono quattro schermate -->
         <div class="gruppi una-colonna" id="checklist"></div>
