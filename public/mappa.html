@@ -72,6 +72,11 @@
         <div class="profilo-grafico" id="profilo-grafico"></div>
         <p class="muto profilo-riepilogo" id="profilo-riepilogo"></p>
       </section>
+      <!-- Avvisi sul percorso (js/avvisi-percorso.js): i tratti difficili secondo i sentieri di OpenStreetMap -->
+      <section class="avvisi-percorso" id="sezione-avvisi" aria-labelledby="titolo-avvisi" hidden>
+        <h3 id="titolo-avvisi">Difficoltà del percorso</h3>
+        <div id="avvisi-percorso"></div>
+      </section>
       <ul class="legenda" aria-label="Legenda">
         <!-- B11 (revisione UX 2): data-tipo = la legenda mostra solo quello che c'è sulla mappa (mappa-disegno.js) -->
         <li data-tipo="partenza"><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Partenza</li>
@@ -80,6 +85,8 @@
         <li data-tipo="arrivo"><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#c8962b"/></svg>Arrivo</li>
         <li data-tipo="sentieri"><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#31503f" stroke-width="3.5" stroke-linecap="round"/></svg>Sui sentieri</li>
         <li data-tipo="verso"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><g transform="rotate(90 8 8)"><path d="M8 2.5 13 12.5 8 10 3 12.5Z" fill="#f6efdf" stroke="#31503f" stroke-width="1.6" stroke-linejoin="round"/></g></svg>Verso di percorrenza</li>
+        <li data-tipo="attenzione" hidden><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#c8962b" stroke-width="3.5" stroke-linecap="round"/></svg>Tratto impegnativo</li>
+        <li data-tipo="difficile" hidden><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#a3312a" stroke-width="3.5" stroke-linecap="round"/></svg>Tratto difficile</li>
       </ul>
       <div class="strumenti">
         <!-- Come cercare il percorso (scelta di Asiha: parte su Sentieri). Il pulsante scelto ha aria-pressed="true" -->

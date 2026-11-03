@@ -4,6 +4,7 @@ import { ATTIVITA } from "./categorie.js";
 import { plurale, ore, unaSola } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 import { discesaDellaTraccia } from "./navigazione-calcoli.js"; // D− anche per le mappe salvate prima che esistesse
+import { mostraAvvisi } from "./avvisi-percorso.js";             // i tratti difficili del percorso (dalla mappa)
 
 // C10 (revisione UX 2): un piccolo «?» accanto alle parole difficili, porta alla spiegazione nel glossario dei Consigli
 const aiuto = (id, cosa) =>
@@ -226,6 +227,8 @@ function renderConsigli() {
   elPercorso.innerHTML = parti.length
     ? `${parti.map(esc).join(" · ")}${conDislivello ? ` ${aiuto("dislivello", "dislivello positivo e negativo")}` : ""}`
     : "Aggiungi km, dislivello e coordinate per avere più consigli.";
+  const elAvvisi = document.querySelector("#avvisi-percorso");
+  elAvvisi.hidden = !mostraAvvisi(elAvvisi, viaggio.traccia);
 }
 
 // Ricalcolo dell'acqua con le ore inserite dall'utente (US6 CA1)

@@ -832,3 +832,13 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
   .leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 1.3rem; }
   .leaflet-touch .leaflet-control-layers-toggle { width: 44px; height: 44px; }
 }
+
+/* Avvisi sul percorso (js/avvisi-percorso.js): sotto la mappa e nella scheda. Senape = attenzione, rosso = difficile (scelta di Asiha) */
+.avvisi-percorso { margin-top: 1rem; }
+.avvisi-percorso h3 { margin: 0 0 .4rem; font-size: 1rem; }
+.avvisi-percorso-elenco { display: grid; gap: .45rem; margin: .3rem 0 0; padding: 0; list-style: none; }
+.avvisi-percorso-elenco li { display: flex; align-items: center; gap: .5rem; }
+.pallino-avviso { flex-shrink: 0; width: .8rem; height: .8rem; border-radius: 50%; }
+.pallino-avviso.attenzione { background: var(--senape); }
+.pallino-avviso.grave { background: var(--rosso); }
+.avvisi-nota { margin: .5rem 0 0; font-size: .88rem; }

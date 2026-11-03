@@ -4,6 +4,7 @@
 //  Leaflet arriva da unpkg come script "classico" e crea la variabile globale L:
 //  per questo nella pagina il suo <script> sta PRIMA dei moduli.
 // =====================================================================
+import { coloreAvviso } from "./avvisi-percorso.js";
 
 const FONTE = '<a href="https://www.maptiler.com/copyright/" target="_blank" rel="noopener">© MapTiler</a> ' +
               '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · ' +
@@ -151,6 +152,34 @@ export function disegnaCollegamenti(livello, giro, linea) {
   for (const [puntina, sentiero] of coppie) {
     if (metriTra(puntina, sentiero) > 30) {
       L.polyline([puntina, sentiero.slice(0, 2)], { color: "#6d6553", weight: 2, dashArray: "4 6", opacity: .9, interactive: false }).addTo(livello);
+    }
+  }
+}
+
+// Avvisi sul percorso: i tratti difficili colorati SOPRA la linea verde (senape = attenzione, rosso = difficile).
+// Il server li dà come frazioni del percorso (0 = partenza, 1 = arrivo): qui le trasformiamo in metri lungo la linea
+// e ritagliamo i pezzi. Così funziona anche con la linea semplificata (meno punti di quella di BRouter).
+export function disegnaDifficolta(livello, linea, avvisiPercorso) {
+  if (!avvisiPercorso?.avvisi?.length || !linea || linea.length < 2) return;
+  const cumulati = [0];                       // cumulati[i] = metri dalla partenza al punto i
+  for (let i = 1; i < linea.length; i++) cumulati.push(cumulati[i - 1] + metriTra(linea[i - 1], linea[i]));
+  const totale = cumulati.at(-1);
+  if (!totale) return;
+  // Il punto che sta a "m" metri dalla partenza (a metà strada tra due punti della linea, se serve)
+  const puntoA = (m) => {
+    let i = 1;
+    while (i < linea.length - 1 && cumulati[i] < m) i++;
+    const lungo = cumulati[i] - cumulati[i - 1];
+    const f = lungo ? (m - cumulati[i - 1]) / lungo : 0;
+    return [linea[i - 1][0] + (linea[i][0] - linea[i - 1][0]) * f, linea[i - 1][1] + (linea[i][1] - linea[i - 1][1]) * f];
+  };
+  // Dal meno serio al più serio: dove due avvisi si sovrappongono, il rosso resta sopra il senape
+  for (const avviso of [...avvisiPercorso.avvisi].reverse()) {
+    for (const [da, a] of avviso.tratti) {
+      const mDa = da * totale, mA = a * totale;
+      const dentro = linea.filter((_, i) => cumulati[i] > mDa && cumulati[i] < mA).map(([lat, lon]) => [lat, lon]);
+      L.polyline([puntoA(mDa), ...dentro, puntoA(mA)], { color: coloreAvviso(avviso.tipo), weight: 5, opacity: 1,
+        lineCap: "round", lineJoin: "round", interactive: false }).addTo(livello);
     }
   }
 }

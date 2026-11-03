@@ -9,7 +9,7 @@
 import { api } from "./api.js";
 import { discesaDellaTraccia, preparaTraccia, aggancia } from "./navigazione-calcoli.js";
 import { proponi } from "./post-it.js";
-import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, disegnaFrecce, eUnAnello, metriTra, scriviStato } from "./mappa-base.js";
+import { creaMappa, icona, tipoDelPunto, disegnaTracciato, disegnaProvvisoria, disegnaCollegamenti, disegnaFrecce, disegnaDifficolta, eUnAnello, metriTra, scriviStato } from "./mappa-base.js";
 
 const arrotonda = (n) => Math.round(n * 1e5) / 1e5; // 5 decimali ≈ 1 metro
 
@@ -30,6 +30,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   let punti = [];              // le puntine (L.marker trascinabili), nell'ordine in cui le hai messe
   let linea = null;            // la traccia dell'ultimo percorso calcolato: [[lat, lon, quota], ...]
   let discesa = null;          // il dislivello negativo dell'ultimo percorso calcolato (metri), o null
+  let avvisi = null;           // gli avvisi sul percorso (tratti T3, attrezzati…) dell'ultimo calcolo, o null
   let profilo = "sentieri";    // come chiedere il percorso: "sentieri" (preferisce i sentieri) o "breve" (il più corto)
   let attivita = null;         // l'attività del viaggio: con ferrata e alpinismo il server accetta i passaggi difficili
   let discesaRiaperta = null;  // D− ricavato dalla pagina per le mappe salvate senza (vedi carica)
@@ -175,6 +176,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     if (!legenda) return;
     const presenti = new Set(punti.map((p, i) => tipoDelPunto(i, punti.length, interruttoreAnello.checked)));
     if (linea) { presenti.add("sentieri"); presenti.add("verso"); }
+    for (const a of avvisi?.avvisi ?? []) presenti.add(a.tipo === "t3" || a.tipo === "roccia" || a.tipo === "traccia" ? "attenzione" : "difficile");
     legenda.querySelectorAll("[data-tipo]").forEach((voce) => {
       voce.hidden = punti.length === 0 ? voce.dataset.tipo === "anello" : !presenti.has(voce.dataset.tipo);
     });
@@ -262,6 +264,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     livelloPercorso.clearLayers();
     linea = null;
     discesa = null;
+    avvisi = null;
     if (giro.length < 2) {
       ultimaRichiesta++;            // un'eventuale risposta in arrivo non serve più
       compilaDati(null);            // niente percorso: i valori della mappa si svuotano (i tuoi restano)
@@ -280,10 +283,12 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       if (numero !== ultimaRichiesta) return;           // nel frattempo è partita una richiesta più nuova
       livelloPercorso.clearLayers();
       disegnaTracciato(livelloPercorso, dati.traccia.map(([lat, lon]) => [lat, lon]));
+      disegnaDifficolta(livelloPercorso, dati.traccia, dati.avvisi_percorso); // i tratti difficili, sopra la linea verde
       disegnaCollegamenti(livelloPercorso, giro.map((p) => [p.lat, p.lng]), dati.traccia); // B11
       disegnaFrecce(livelloPercorso, dati.traccia); // il verso di percorrenza
       linea = dati.traccia;
       discesa = dati.discesa_m ?? null;
+      avvisi = dati.avvisi_percorso ?? null;
       aggiornaLegenda();
       compilaDati(dati);
       // B2 (collaudo 3/11): dopo un cambio Sentieri ↔ Più breve diciamo cosa è cambiato (anche "niente")
@@ -326,7 +331,9 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     linea = traccia.linea;
     discesa = traccia.discesa_m ?? discesaRiaperta; // le mappe vecchie non l'hanno salvato: lo ricava la pagina
+    avvisi = traccia.avvisi_percorso ?? null;       // le mappe salvate prima degli avvisi non li hanno
     disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
+    disegnaDifficolta(livelloPercorso, linea, avvisi);
     const tappe = traccia.tappe.map(([lat, lon]) => [lat, lon]);
     disegnaCollegamenti(livelloPercorso, interruttoreAnello.checked ? [...tappe, tappe[0]] : tappe, linea); // B11
     disegnaFrecce(livelloPercorso, linea); // il verso di percorrenza
@@ -446,6 +453,8 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       daRipristinare = null;
       linea = lineaFile;
       discesa = dati.discesa_m;
+      avvisi = null;                                       // un file GPX non ha le etichette dei sentieri
+      importata = true;                                    // prima di compilaDati: la pagina legge subito traccia()
       livelloPercorso.clearLayers();
       disegnaTracciato(livelloPercorso, linea.map(([lat, lon]) => [lat, lon]));
       disegnaFrecce(livelloPercorso, linea);
@@ -473,6 +482,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       punti = [];
       linea = null;
       discesa = null;
+      avvisi = null;
       daRipristinare = null;
       centro = null;
       mostraProfilo("sentieri");
@@ -509,6 +519,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       if (punti.length < 2 || !linea) return null;
       return { tappe: punti.map((p) => [arrotonda(p.getLatLng().lat), arrotonda(p.getLatLng().lng)]), linea, profilo,
                ...(discesa != null ? { discesa_m: discesa } : {}),
+               ...(avvisi ? { avvisi_percorso: avvisi } : {}),
                ...(importata ? { origine: "gpx" } : {}) };          // B2: si ricorda che la linea viene da un file
     },
   };

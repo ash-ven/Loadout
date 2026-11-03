@@ -9,6 +9,7 @@ import { leggiGpx, preparaImport } from "./gpx-lettura.js";
 import { attivaNavigazione } from "./navigazione.js";
 import { attivaProfilo } from "./profilo-altimetrico.js";
 import { discesaDellaTraccia } from "./navigazione-calcoli.js";
+import { mostraAvvisi } from "./avvisi-percorso.js";
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
 // Qui si disegna il percorso; «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate
@@ -41,8 +42,15 @@ const disegno = attivaDisegnoMappa({
   campi: { km: campi.distanza_km, dislivello: campi.dislivello_m, quotaMax: campi.quota_max_m, quotaMin: campi.quota_min_m },
   coordinate: { latPartenza: campi.lat_partenza, lonPartenza: campi.lon_partenza, latArrivo: campi.lat_arrivo, lonArrivo: campi.lon_arrivo },
   suModifica: () => { daSalvare = true; messaggioEl.hidden = true; },
-  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); mostraDiscesa(dati?.discesa_m); profilo.mostra(dati ? disegno.traccia() : null, dati?.distanza_km); },
+  suCalcolo: (dati) => { calcolati = dati; mostraCalcoli(); mostraDiscesa(dati?.discesa_m); profilo.mostra(dati ? disegno.traccia() : null, dati?.distanza_km);
+                         aggiornaAvvisi(dati ? disegno.traccia() : null); },
 });
+
+// Avvisi sul percorso: la sezione sotto il profilo si vede solo se c'è qualcosa da dire
+const sezioneAvvisi = document.querySelector("#sezione-avvisi");
+function aggiornaAvvisi(traccia) {
+  sezioneAvvisi.hidden = !mostraAvvisi(document.querySelector("#avvisi-percorso"), traccia);
+}
 
 // =====================================================================
 //  A2 (revisione UX 2): sotto un valore scritto a mano, quanto calcola la mappa (se è diverso) e "Usa questo"
@@ -322,6 +330,7 @@ if (!Number.isInteger(id) || id <= 0) {
     riempi(v);
     mostraDiscesa(discesaDellaTraccia(v.traccia, v.dislivello_m)); // anche per le mappe salvate prima del D−
     profilo.mostra(v.traccia, v.distanza_km); // C2: gli stessi km del campo Lunghezza
+    aggiornaAvvisi(v.traccia);
     disegno.carica(v);
     await disegno.apri();
     if (disegno.mappaLeaflet()) navigazione.collegaMappa(disegno.mappaLeaflet());
