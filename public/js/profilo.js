@@ -282,6 +282,7 @@ const TESTI_APP = {
   installata: "✓ Stai usando Loadout come app installata.",
   installabile: "Installa Loadout come un'app: un'icona nella schermata Home e la pagina a tutto schermo, senza la barra del browser.",
   iphone: "Su iPhone: apri Loadout in Safari, tocca Condividi (il quadrato con la freccia) e poi «Aggiungi alla schermata Home».",
+  android: "Il browser che stai usando non sa installare le app web: apri Loadout con Chrome e torna qui (oppure dal menu ⋮ scegli «Installa app»).",
   altro: "Per installarla apri Loadout con Chrome sul telefono: dal menu ⋮ scegli «Installa app» (o «Aggiungi a schermata Home»).",
 };
 function mostraApp(stato) {

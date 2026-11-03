@@ -876,3 +876,7 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 
 /* PWA (3/11): l'icona dell'app nel titolo della scheda «Loadout sul telefono» */
 .icona-app { width: 28px; height: 28px; margin-right: .5rem; vertical-align: -.35em; border-radius: 8px; }
+.riga-installa { display: flex; justify-content: center; align-items: center; gap: .5rem; margin: 1rem auto 0; max-width: 28rem;
+                 padding: 0 1rem; text-align: center; font-size: .9rem; color: var(--terra); }
+.riga-installa img { flex-shrink: 0; border-radius: 6px; }
+.riga-installa .link-bottone { min-height: 44px; }   /* tocco da 44 px */

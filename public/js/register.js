@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import "./pwa.js"; // PWA: il service worker anche da questa pagina
+import { collegaRigaInstalla } from "./pwa.js"; // PWA: service worker + la riga «Installa Loadout sul telefono»
 
 const form = document.querySelector("#form-register");
 const errore = document.querySelector("#errore");
@@ -32,3 +32,4 @@ function mostraErrore(testo) {
   errore.textContent = testo;
   errore.hidden = false;
 }
+collegaRigaInstalla(document.querySelector("#riga-installa"));

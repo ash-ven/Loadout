@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import "./pwa.js"; // PWA: anche aprendo l'app dalla pagina di accesso il service worker c'è
+import { collegaRigaInstalla } from "./pwa.js"; // PWA: service worker + la riga «Installa Loadout sul telefono»
 
 // Collaudo 3/11, C9: se sei già collegata, la pagina di accesso non serve: si va alla Home.
 // fetch "a mano" e non api(): api() con una risposta 401 porterebbe di nuovo qui (un giro infinito)
@@ -46,3 +46,4 @@ function mostraErrore(testo) {
   errore.textContent = testo;
   errore.hidden = false;
 }
+collegaRigaInstalla(document.querySelector("#riga-installa"));
