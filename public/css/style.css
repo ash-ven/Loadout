@@ -461,7 +461,8 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 .suggerimento .muto { flex-shrink: 0; font-size: .8rem; }
 .suggerimento-info { padding: .55rem .7rem; font-size: .88rem; color: var(--terra); }
 .nota-luogo { margin: 0; font-size: .8rem; }
-.riga-acqua { margin: -.25rem 0 .5rem; font-size: .85rem; }   /* B4: il promemoria sull'acqua sotto il peso */
+.riga-acqua { margin: -.25rem 0 .5rem; font-size: .85rem; }
+.riga-peso-corporeo { margin: .5rem 0 0; font-size: .85rem; }   /* punto 1: lo zaino rispetto al tuo peso, sotto la barra */   /* B4: il promemoria sull'acqua sotto il peso */
 
 /* --- B5: riquadro "Per questa uscita" --- */
 .kit { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .1rem; }

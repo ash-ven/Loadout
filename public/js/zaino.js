@@ -18,6 +18,7 @@ const elPesoAddosso = document.querySelector("#peso-addosso"); // B3: quello che
 const barraRiempimento = document.querySelector("#barra-riempimento");
 const elAvvisoPeso = document.querySelector("#avviso-peso");
 const elPesoAcqua = document.querySelector("#peso-acqua"); // B4
+const elPesoCorporeo = document.querySelector("#peso-corporeo"); // punto 1: lo zaino rispetto al tuo peso
 const elTestoAvvisoPeso = document.querySelector("#testo-avviso-peso"); // il testo: l'icona accanto resta fissa
 const elMessaggioZaino = document.querySelector("#messaggio-zaino");
 const elChecklist = document.querySelector("#checklist");
@@ -168,8 +169,10 @@ function renderZaino() {
   if (troppoPesante) {
     const uscita = viaggio.pernotto === "nessuno" ? "per un viaggio in giornata" : "con il pernotto";
     elTestoAvvisoPeso.textContent = `Lo zaino, senza acqua e cibo, pesa ${num2(p.peso_totale_kg)} kg: più del ${avviso.soglia_percento}% ` +
-      `del tuo peso corporeo, il limite consigliato ${uscita} (${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.`;
+      `del tuo peso corporeo, il limite consigliato ${uscita} (${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.` +
+      piuPesanti(zaino.oggetti); // punto 1: solo qui, quando serve davvero (scelta di Asiha)
   }
+  mostraPesoCorporeo(avviso, p.peso_totale_kg);
   // B4: solo un promemoria, fuori dai calcoli: l'acqua pesa 1 kg al litro
   const litri = viaggio?.consigli.acqua_persona_giorno;
   elPesoAcqua.hidden = litri == null;
@@ -485,4 +488,35 @@ if (!Number.isInteger(id) || id <= 0) {
     elCaricamento.hidden = true;
     document.querySelector("#intestazione").hidden = false;
   }
+}
+
+// =====================================================================
+//  Punto 1 (3/11): lo zaino rispetto al tuo peso corporeo
+// =====================================================================
+// La riga sotto il peso, sempre: «Il 10% del tuo peso · limite con pernotto 20% (12,4 kg)».
+// I dati arrivano già dal server nel dettaglio del viaggio (consigli.avviso_peso: peso corporeo, percentuale e soglia).
+// Senza il peso nel profilo, l'invito ad aggiungerlo (con il link). Costruita con textContent: niente innerHTML.
+function mostraPesoCorporeo(avviso, pesoZainoKg) {
+  if (!avviso) { elPesoCorporeo.hidden = true; return; }
+  elPesoCorporeo.hidden = false;
+  if (!avviso.disponibile) {
+    const link = document.createElement("a");
+    link.href = "/profilo.html";
+    link.textContent = "Aggiungi il tuo peso nel profilo";
+    elPesoCorporeo.replaceChildren(link, " per sapere quanto pesa lo zaino rispetto a te.");
+    return;
+  }
+  const percento = Math.round((pesoZainoKg / avviso.peso_corporeo_kg) * 100);
+  const uscita = viaggio.pernotto === "nessuno" ? "in giornata" : "con pernotto";
+  elPesoCorporeo.textContent = `Il ${percento}% del tuo peso · limite ${uscita} ${avviso.soglia_percento}% (${num2(avviso.soglia_kg)} kg)`;
+}
+
+// I 3 oggetti più pesanti DENTRO lo zaino (quelli addosso non contano), per capire cosa togliere:
+// « I più pesanti: tenda 1,8 kg · sacco a pelo 1,1 kg · fornello 400 g.»
+function piuPesanti(oggetti) {
+  const peso = (g) => (g >= 1000 ? `${(g / 1000).toLocaleString("it-IT", { maximumFractionDigits: 1 })} kg` : `${num(g)} g`);
+  const tre = oggetti.filter((o) => !o.indossato && o.peso_riga_g > 0)
+    .sort((a, b) => b.peso_riga_g - a.peso_riga_g)
+    .slice(0, 3);
+  return tre.length ? ` I più pesanti: ${tre.map((o) => `${o.nome} ${peso(o.peso_riga_g)}`).join(" · ")}.` : "";
 }
