@@ -335,6 +335,12 @@ button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
 /* Gruppi per categoria: due colonne sugli schermi larghi, una sul telefono */
 .gruppi { display: grid; gap: 1.25rem; align-items: start;
           grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+/* C8 (3/11, scelta di Asiha): nell'armadio le categorie scendono "a cascata" in due colonne, come i giornali.
+   Con la griglia una categoria corta accanto a una lunga lasciava un buco sotto di sé; con le colonne CSS ogni gruppo
+   si mette subito sotto il precedente. "24rem 2" = al massimo 2 colonne, larghe almeno 24rem: sul telefono una sola.
+   break-inside: avoid = un gruppo non si spezza a metà tra le due colonne. */
+.gruppi.a-cascata { display: block; columns: 24rem 2; column-gap: 1.25rem; }
+.gruppi.a-cascata > * { break-inside: avoid; margin-bottom: 1.25rem; }
 .gruppo-testa { display: flex; justify-content: space-between; align-items: baseline; padding: 0 .3rem; margin-bottom: .5rem; }
 .gruppo-testa h2 { margin: 0; font-family: var(--font); font-size: .8rem; font-weight: 700; letter-spacing: .06em;
                    text-transform: uppercase; color: var(--terra); }
