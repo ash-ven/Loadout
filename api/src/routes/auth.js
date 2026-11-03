@@ -80,7 +80,10 @@ router.post("/login", limiteLogin, validate(schemaLogin), async (req, res, next)
 
 // === POST /api/auth/logout ===
 router.post("/logout", (req, res) => {
-  res.clearCookie("token").status(204).end();
+  // Per cancellare un cookie il browser vuole le STESSE opzioni con cui è stato creato (Secure, SameSite, HttpOnly):
+  // togliamo solo maxAge, che clearCookie sostituisce con una scadenza nel passato
+  const { maxAge, ...opzioni } = COOKIE;
+  res.clearCookie("token", opzioni).status(204).end();
 });
 
 // Le colonne del profilo che restituiamo (mai il password_hash; la foto ha un indirizzo suo)
