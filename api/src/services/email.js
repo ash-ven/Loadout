@@ -38,7 +38,8 @@ export function componiEmail({ nome, titolo, frase, pulsante, link, nota }) {
   return { testo, html };
 }
 
-export async function inviaEmail({ a, oggetto, testo, html }) {
+// rispondiA (facoltativo): chi riceve la risposta; senza, l'indirizzo di assistenza. html (facoltativo): senza, solo testo
+export async function inviaEmail({ a, oggetto, testo, html, rispondiA }) {
   if (!process.env.BREVO_API_KEY) {
     // sviluppo: niente invio, solo il terminale
     console.log(`\n=== EMAIL (non inviata: manca BREVO_API_KEY) ===\nA: ${a}\nOggetto: ${oggetto}\n\n${testo}\n================================================\n`);
@@ -46,14 +47,16 @@ export async function inviaEmail({ a, oggetto, testo, html }) {
   }
   const risposta = await fetch(URL_BREVO, {
     method: "POST",
-    headers: { "api-key": process.env.BREVO_API_KEY, "content-type": "application/json", accept: "application/json" },
+    // trim(): un copia-incolla nelle impostazioni di Render può portarsi dietro uno spazio o un a capo, e Brevo risponde «Key not found»
+    headers: { "api-key": process.env.BREVO_API_KEY.trim(), "content-type": "application/json", accept: "application/json" },
     body: JSON.stringify({
-      sender: { name: "Loadout", email: process.env.EMAIL_MITTENTE },
+      sender: { name: "Loadout", email: process.env.EMAIL_MITTENTE?.trim() },
       to: [{ email: a }],
-      ...(indirizzoAssistenza() ? { replyTo: { email: indirizzoAssistenza() } } : {}), // «Rispondi a»: le risposte vanno all'assistenza
+      // «Rispondi a»: di solito l'assistenza; per un feedback firmato, chi l'ha scritto
+      ...((rispondiA || indirizzoAssistenza()) ? { replyTo: { email: rispondiA || indirizzoAssistenza() } } : {}),
       subject: oggetto,
       textContent: testo,
-      htmlContent: html,
+      ...(html ? { htmlContent: html } : {}),
     }),
     signal: AbortSignal.timeout(10_000), // se Brevo non risponde in 10 secondi, lasciamo perdere (e lo scriviamo nel log)
   });
