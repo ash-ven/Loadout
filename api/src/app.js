@@ -16,6 +16,7 @@ import { router as prodottiRouter } from "./routes/prodotti.js";
 import { router as luoghiRouter } from "./routes/luoghi.js";
 import { router as percorsiRouter } from "./routes/percorsi.js";
 import { router as mappeRouter } from "./routes/mappe.js";
+import { router as feedbackRouter } from "./routes/feedback.js";
 
 // Cartella di questo file (api/src) e cartella del frontend (loadout/public)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -92,6 +93,7 @@ app.use("/api/luoghi", requireAuth, luoghiRouter);       // protetta (B1: cerca 
 app.use("/api/prodotti", requireAuth, prodottiRouter);   // protetta (stretch 2: cerca il prodotto dal codice a barre)
 app.use("/api/percorso", requireAuth, percorsiRouter);   // protetta (mappe: percorso sui sentieri con BRouter)
 app.use("/api/mappe", requireAuth, mappeRouter);         // protetta (mappe: la chiave di MapTiler per le tessere)
+app.use("/api/feedback", requireAuth, feedbackRouter);   // protetta (4/11: «Dicci cosa ne pensi» dal Profilo)
 
 // === 4. CHIUSURA (dopo tutte le rotte) ===
 app.use(notFound);       // nessuna rotta ha risposto → 404
