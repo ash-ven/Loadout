@@ -11,13 +11,13 @@
 //  Con la rete si usa sempre la versione nuova (prima la rete, poi la copia): così le modifiche si vedono subito.
 //  All'uscita dall'account i dati dei viaggi salvati qui si cancellano (menu.js).
 // =====================================================================
-const VERSIONE = "v4"; // v2: + avvisi-percorso.js · v3: PWA (pagina senza rete, icone, manifest, pwa.js)
+const VERSIONE = "v5"; // v5: Leaflet e caratteri dal nostro sito · v2: + avvisi-percorso.js · v3: PWA (pagina senza rete, icone, manifest, pwa.js)
 const CACHE_APP = `loadout-app-${VERSIONE}`;
 const CACHE_DATI = "loadout-dati";
 const CACHE_TESSERE = "loadout-tessere";
 const MAX_TESSERE = 3000; // circa 60–100 MB al massimo: poi si buttano le più vecchie
 
-const LEAFLET = "https://unpkg.com/leaflet@1.9.4/dist/leaflet";
+const LEAFLET = "/vendor/leaflet-1.9.4/leaflet"; // 4/11: dal nostro sito (prima da unpkg)
 const DA_SALVARE_SUBITO = [
   "/offline.html", "/manifest.webmanifest", "/img/app/icona-192.png", "/img/zaino-pieno-chiaro.svg", "/js/pwa.js", "/js/glossario-finestra.js", "/consigli.html",
   "/mappa.html", "/css/style.css", "/img/favicon.svg", "/img/logo-topbar.svg", "/img/icone/mappe.svg",
@@ -28,11 +28,11 @@ const DA_SALVARE_SUBITO = [
 
 // Installazione: salva subito la pagina della mappa e i suoi file
 self.addEventListener("install", (evento) => {
-  // Un file per volta, e se uno non arriva (es. unpkg irraggiungibile) gli altri si salvano lo stesso:
+  // Un file per volta, e se uno non arriva gli altri si salvano lo stesso:
   // con addAll() basterebbe un errore per non installare niente
   evento.waitUntil(caches.open(CACHE_APP)
     .then((cache) => Promise.allSettled(DA_SALVARE_SUBITO.map((url) =>
-      cache.add(new Request(url, { mode: url.startsWith("http") ? "cors" : "same-origin" })))))
+      cache.add(new Request(url, { mode: "same-origin" })))))
     .then(() => self.skipWaiting()));
 });
 
@@ -57,7 +57,7 @@ self.addEventListener("fetch", (evento) => {
     }
     return;
   }
-  if (url.origin === self.location.origin || url.href.startsWith(LEAFLET)) {
+  if (url.origin === self.location.origin) { // anche Leaflet, ora che sta sul nostro sito
     evento.respondWith(prima_la_rete(richiesta, CACHE_APP));
   }
 });

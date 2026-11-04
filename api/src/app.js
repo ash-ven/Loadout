@@ -38,9 +38,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       "default-src": ["'self'"],                                   // di base: solo dal nostro sito
-      "script-src": ["'self'", "https://unpkg.com"],               // + le librerie da unpkg (lettore di codici a barre, Leaflet per le mappe)
-      "style-src": ["'self'", "https://fonts.googleapis.com", "https://unpkg.com"], // + il CSS di Google Fonts e quello di Leaflet
-      "font-src": ["'self'", "https://fonts.gstatic.com"],         // + i file dei font di Google
+      // 4/11 (privacy): librerie (Leaflet, lettore di codici a barre) e caratteri sono in public/vendor e public/fonts,
+      // quindi script, stili e font vengono SOLO dal nostro sito: il browser non contatta più unpkg né Google
+      "script-src": ["'self'"],
+      "style-src": ["'self'"],
+      "font-src": ["'self'"],
       "img-src": ["'self'", "data:", "https://api.maptiler.com"],  // + "data:" (la foto ridotta nel browser) + le tessere della mappa
       "connect-src": ["'self'"],                                   // fetch() solo verso la nostra API
       "object-src": ["'none'"],                                    // niente plugin (Flash e simili)
@@ -67,11 +69,11 @@ app.use("/api", cors({
 app.use(express.json({ limit: "300kb" })); // body JSON → req.body (300 kB: basta per la foto del profilo, già ridotta dal browser)
 app.use(cookieParser());                  // header Cookie → req.cookies
 app.use(logger);                          // stampa ogni richiesta nel terminale
-// Il service worker (public/sw.js, la mappa senza rete) scarica e salva le tessere di MapTiler e Leaflet da unpkg:
-// i fetch() del service worker seguono la CSP del SUO file, quindi solo per lui allarghiamo connect-src a quei due.
+// Il service worker (public/sw.js, la mappa senza rete) scarica e salva le tessere di MapTiler:
+// i fetch() del service worker seguono la CSP del SUO file, quindi solo per lui allarghiamo connect-src a MapTiler.
 // Le pagine restano con connect-src 'self'. "no-cache" = il browser controlla sempre se c'è una versione nuova.
 app.get("/sw.js", (req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' https://api.maptiler.com https://unpkg.com");
+  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' https://api.maptiler.com");
   res.setHeader("Cache-Control", "no-cache");
   next();
 });

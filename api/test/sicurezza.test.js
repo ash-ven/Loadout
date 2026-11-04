@@ -16,18 +16,22 @@ test("ogni risposta ha le intestazioni di sicurezza di helmet", async () => {
   assert.equal(risposta.headers["x-frame-options"], "SAMEORIGIN");
 });
 
-test("CSP delle mappe: tessere solo da MapTiler, CSS di Leaflet da unpkg, fetch solo verso la nostra API", async () => {
+test("CSP delle mappe: tessere solo da MapTiler, script, stili e caratteri solo dal nostro sito, fetch solo verso la nostra API", async () => {
   const csp = (await request(app).get("/index.html")).headers["content-security-policy"];
   assert.match(csp, /img-src 'self' data: https:\/\/api\.maptiler\.com/);
-  assert.match(csp, /style-src [^;]*https:\/\/unpkg\.com/);
+  // 4/11 (privacy): Leaflet, lettore di codici a barre e caratteri sono in public/: niente unpkg né Google
+  assert.match(csp, /script-src 'self'(;|$)/);
+  assert.match(csp, /style-src 'self'(;|$)/);
+  assert.match(csp, /font-src 'self'(;|$)/);
+  assert.doesNotMatch(csp, /unpkg|googleapis|gstatic/);
   assert.match(csp, /connect-src 'self'(;|$)/); // BRouter lo chiama il server: il browser non esce dal nostro sito
 });
 
-// Mappa senza rete: SOLO il service worker può scaricare tessere e Leaflet; le pagine restano chiuse
-test("CSP del service worker: connect-src aperto a MapTiler e unpkg solo per sw.js", async () => {
+// Mappa senza rete: SOLO il service worker può scaricare le tessere; le pagine restano chiuse
+test("CSP del service worker: connect-src aperto a MapTiler solo per sw.js", async () => {
   const risposta = await request(app).get("/sw.js");
   assert.equal(risposta.status, 200);
-  assert.match(risposta.headers["content-security-policy"], /connect-src 'self' https:\/\/api\.maptiler\.com https:\/\/unpkg\.com/);
+  assert.match(risposta.headers["content-security-policy"], /connect-src 'self' https:\/\/api\.maptiler\.com$/);
   assert.match(risposta.headers["cache-control"], /no-cache/);
 });
 

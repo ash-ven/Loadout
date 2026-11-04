@@ -11,8 +11,7 @@
   <link rel="apple-touch-icon" href="/img/app/icona-180.png"><!-- iPhone: l'icona della schermata Home -->
   <meta name="apple-mobile-web-app-title" content="Loadout">
   <!-- C8 (revisione UX 2): la Home è la mappa di tutti i tuoi viaggi. Leaflet: prima il suo CSS, poi il nostro (integrity: vedi mappa.html) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="/vendor/leaflet-1.9.4/leaflet.css"> <!-- 4/11: dal nostro sito, non più da unpkg -->
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -66,8 +65,7 @@
   </main>
 
   <!-- Leaflet come script "classico" (crea la variabile globale L), prima del modulo della pagina -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/vendor/leaflet-1.9.4/leaflet.js"></script>
   <script type="module" src="/js/index.js"></script>
 </body>
 </html>

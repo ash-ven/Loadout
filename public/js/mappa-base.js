@@ -1,7 +1,7 @@
 // =====================================================================
 //  MAPPA – i pezzi comuni al form (mappa-form.js) e alla pagina della mappa (mappa.js).
 //  Presi dalla pagina di prova approvata (prova-mappe-maptiler.html, sezioni 2, 3 e 5).
-//  Leaflet arriva da unpkg come script "classico" e crea la variabile globale L:
+//  Leaflet (public/vendor/leaflet-1.9.4) arriva come script "classico" e crea la variabile globale L:
 //  per questo nella pagina il suo <script> sta PRIMA dei moduli.
 // =====================================================================
 import { coloreAvviso } from "./avvisi-percorso.js";
