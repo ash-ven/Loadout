@@ -292,3 +292,5 @@ function mostraApp(stato) {
 mostraApp(statoInstallazione());
 suCambioInstallazione(mostraApp);   // l'evento del browser può arrivare dopo che la pagina è già pronta
 bottoneInstalla.addEventListener("click", () => installa());
+import { mostraAssistenza } from "./contatti.js"; // 4/11: «Problemi o suggerimenti? Scrivi a …»
+mostraAssistenza();

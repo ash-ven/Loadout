@@ -45,6 +45,7 @@ services:
       # il link compare nel terminale (docker compose logs api). APP_URL: l'indirizzo dell'app nei link
       BREVO_API_KEY: ${BREVO_API_KEY:-}
       EMAIL_MITTENTE: ${EMAIL_MITTENTE:-}
+      EMAIL_ASSISTENZA: ${EMAIL_ASSISTENZA:-}   # facoltativa: senza, l'assistenza è EMAIL_MITTENTE
       APP_URL: ${APP_URL:-https://localhost}
     depends_on:
       db:

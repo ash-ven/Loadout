@@ -81,6 +81,10 @@ app.get("/api/health", async (req, res) => {
   const { rows } = await query("SELECT 1 AS ok");
   res.json({ status: "ok", time: new Date().toISOString(), db: rows[0].ok === 1 });
 });
+// 4/11: i contatti pubblici dell'app (l'indirizzo di assistenza), per le pagine di accesso e del profilo. Libera
+app.get("/api/contatti", (req, res) => {
+  res.json({ assistenza: process.env.EMAIL_ASSISTENZA || process.env.EMAIL_MITTENTE || null });
+});
 app.use("/api/auth", authRouter);                        // libera (login, register…)
 app.use("/api/oggetti", requireAuth, oggettiRouter);     // protetta
 app.use("/api/viaggi", requireAuth, viaggiRouter);       // protetta

@@ -4,6 +4,7 @@
 //  Usiamo l'API di Brevo, che si chiama via https (porta 443, quella permessa): piano gratuito, 300 email al giorno.
 //    BREVO_API_KEY   la chiave dell'API (Brevo → SMTP & API → API Keys)
 //    EMAIL_MITTENTE  l'indirizzo da cui partono (verificato su Brevo come "sender")
+//    EMAIL_ASSISTENZA (facoltativa) dove arrivano le risposte e i messaggi degli utenti; senza, è EMAIL_MITTENTE
 //  Senza BREVO_API_KEY (sul PC, in sviluppo) le email NON partono: il testo e il link compaiono nel terminale
 //  del container (docker compose logs api). Così si prova tutto senza account esterni.
 // =====================================================================
@@ -15,9 +16,14 @@ function esc(testo) {
   return String(testo ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
+// 4/11: l'indirizzo per assistenza e suggerimenti (per ora lo stesso Gmail che spedisce: scelta di Asiha)
+export const indirizzoAssistenza = () => process.env.EMAIL_ASSISTENZA || process.env.EMAIL_MITTENTE || "";
+
 // Il modello di tutte le email: titolo, una frase, il pulsante con il link, la riga per chi non ha chiesto niente
 export function componiEmail({ nome, titolo, frase, pulsante, link, nota }) {
-  const testo = `Ciao ${nome},\n\n${frase}\n\n${pulsante}: ${link}\n\n${nota}\n\n— Loadout`;
+  const assistenza = indirizzoAssistenza();
+  const righeAssistenza = assistenza ? `\n\nProblemi o suggerimenti? Scrivi a ${assistenza}` : "";
+  const testo = `Ciao ${nome},\n\n${frase}\n\n${pulsante}: ${link}\n\n${nota}${righeAssistenza}\n\n— Loadout`;
   const html = `<!doctype html><html lang="it"><body style="margin:0;padding:24px;background:#ece3cf;font-family:Arial,sans-serif;color:#2e3a2f">
   <div style="max-width:480px;margin:0 auto;background:#f6efdf;border-radius:16px;padding:28px">
     <p style="margin:0 0 4px;font-size:20px;font-weight:bold;color:#31503f">Loadout</p>
@@ -27,6 +33,7 @@ export function componiEmail({ nome, titolo, frase, pulsante, link, nota }) {
     <p style="margin:0 0 20px"><a href="${esc(link)}" style="display:inline-block;background:#c8962b;color:#2b1f05;text-decoration:none;font-weight:bold;padding:12px 20px;border-radius:999px">${esc(pulsante)}</a></p>
     <p style="margin:0 0 8px;font-size:13px;color:#6d6553">Se il pulsante non funziona, copia questo indirizzo nel browser:<br>${esc(link)}</p>
     <p style="margin:16px 0 0;font-size:13px;color:#6d6553">${esc(nota)}</p>
+    ${assistenza ? `<p style="margin:12px 0 0;font-size:13px;color:#6d6553">Problemi o suggerimenti? Scrivi a <a href="mailto:${esc(assistenza)}" style="color:#31503f">${esc(assistenza)}</a></p>` : ""}
   </div></body></html>`;
   return { testo, html };
 }
@@ -43,6 +50,7 @@ export async function inviaEmail({ a, oggetto, testo, html }) {
     body: JSON.stringify({
       sender: { name: "Loadout", email: process.env.EMAIL_MITTENTE },
       to: [{ email: a }],
+      ...(indirizzoAssistenza() ? { replyTo: { email: indirizzoAssistenza() } } : {}), // «Rispondi a»: le risposte vanno all'assistenza
       subject: oggetto,
       textContent: testo,
       htmlContent: html,

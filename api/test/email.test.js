@@ -21,3 +21,11 @@ test("email: il nome scelto dall'utente non può infilare HTML nella email", () 
   assert.ok(html.includes("&lt;script&gt;"));
   assert.ok(testo.includes("https://loadout.example/conferma-email.html?codice=abc"));
 });
+
+test("email: con l'indirizzo di assistenza c'è la riga «Problemi o suggerimenti?»", () => {
+  process.env.EMAIL_ASSISTENZA = "loadout.noreply@gmail.com";
+  const { html, testo } = componiEmail({ nome: "A", titolo: "T", frase: "F", pulsante: "P", link: "https://x.it", nota: "N" });
+  delete process.env.EMAIL_ASSISTENZA;
+  assert.ok(testo.includes("Problemi o suggerimenti? Scrivi a loadout.noreply@gmail.com"));
+  assert.ok(html.includes('href="mailto:loadout.noreply@gmail.com"'));
+});

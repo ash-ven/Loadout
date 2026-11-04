@@ -71,3 +71,5 @@ function mostraErrore(testo) {
   errore.hidden = false;
 }
 collegaRigaInstalla(document.querySelector("#riga-installa"));
+import { mostraAssistenza } from "./contatti.js"; // 4/11: «Problemi o suggerimenti? Scrivi a …»
+mostraAssistenza();
