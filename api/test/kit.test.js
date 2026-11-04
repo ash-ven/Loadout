@@ -13,8 +13,8 @@ test("kit: la ferrata chiede casco, imbrago e set da ferrata; l'escursione in gi
   assert.ok(!ids(vociPerUscita(uscita())).includes("sacco-a-pelo"));
 });
 
-test("kit: rifugio → sacco lenzuolo; tenda con cucina e freddo → tenda, sacco a pelo, fornello, guanti, berretto", () => {
-  assert.ok(ids(vociPerUscita(uscita({ pernotto: "rifugio" }))).includes("sacco-lenzuolo"));
+test("kit: rifugio senza sacchi (4/11); tenda con cucina e freddo → tenda, sacco a pelo, fornello, guanti, berretto", () => {
+  assert.ok(!ids(vociPerUscita(uscita({ pernotto: "rifugio" }))).includes("sacco-lenzuolo"));
   const tenda = ids(vociPerUscita(uscita({ pernotto: "tenda", serve_cucina: true, freddo: true })));
   assert.ok(["tenda", "sacco-a-pelo", "fornello", "guanti", "berretto"].every((id) => tenda.includes(id)));
 });
@@ -80,12 +80,11 @@ test("doppioni: di due frontali appena aggiunte resta l'indispensabile; se ce n'
   assert.deepEqual(doppioni([piccola], [lampada]).sort(), [2]);            // la frontale c'era già (messa a mano): la nuova esce
 });
 
-test("sacco a pelo in rifugio solo se la notte è fredda (sotto 10 °C)", () => {
+test("4/11: in rifugio né sacco a pelo né sacco lenzuolo, neanche con la notte fredda", () => {
   const base = { attivita: "escursione", pernotto: "rifugio", serve_cucina: false, freddo: false, neve: false, quota_alta: false, caldo: false };
   const ids = (u) => vociPerUscita(u).map((v) => v.id);
-  assert.ok(ids({ ...base, notte_fredda: true }).includes("sacco-a-pelo-rifugio"));
-  assert.ok(!ids({ ...base, notte_fredda: false }).includes("sacco-a-pelo-rifugio"));
-  assert.ok(ids({ ...base, notte_fredda: false }).includes("sacco-lenzuolo"));          // il lenzuolo serve sempre in rifugio
+  assert.ok(!ids({ ...base, notte_fredda: true }).some((id) => id.startsWith("sacco")));
+  assert.ok(!ids({ ...base, notte_fredda: false }).some((id) => id.startsWith("sacco")));
 });
 
 // --- Zaini con i litri: quale zaino per quale viaggio ---
@@ -153,7 +152,7 @@ test("sinonimi allargati: diminutivi, plurali e scritture con trattini e apostro
   assert.ok(corrisponde({ nome: "Borraccina 0,5 L" }, voce("borraccia")));
   assert.ok(corrisponde({ nome: "Frontalino Petzl" }, voce("frontale")));
   assert.ok(corrisponde({ nome: "K-Way" }, voce("guscio")));
-  assert.ok(corrisponde({ nome: "Sacco-lenzuolo seta" }, voce("sacco-lenzuolo", { pernotto: "rifugio" })));
+  assert.ok(corrisponde({ nome: "Sacco-a-pelo Ferrino" }, voce("sacco-a-pelo", { pernotto: "tenda" })));
   assert.ok(corrisponde({ nome: "Guantini touch" }, voce("guanti", { freddo: true })));
   // e quello che NON deve corrispondere
   assert.ok(!corrisponde({ nome: "Nastro isolante" }, voce("materassino", { pernotto: "tenda" })));

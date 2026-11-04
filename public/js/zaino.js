@@ -75,6 +75,8 @@ async function caricaKit() {
       : [mancano.length ? `${mancano.length} da procurare` : "", nellArmadio.length ? `${nellArmadio.length} nell'armadio` : "",
          gia.length ? `${gia.length} già nello zaino` : ""].filter(Boolean).join(" · ");
     elKit.innerHTML = [...mancano, ...nellArmadio].map(rigaKit).join("");
+    // 4/11 (Asiha): il titolo dice già cosa c'è nella lista, così le righe non ripetono «ti manca»
+    document.querySelector("#kit-titolo").textContent = daFare === 0 ? "Per questo viaggio" : "Cose che mancano per questo viaggio";
     elKit.hidden = daFare === 0;
     // Quelle già nello zaino: dietro "Mostra anche…" (un <details> dentro il riquadro)
     elKitGia.hidden = gia.length === 0;
@@ -100,8 +102,11 @@ function rigaKit(v) {
   // 4/11 (Asiha): niente più il perché sotto ogni voce. Resta solo l'avviso dello zaino troppo piccolo
   const perche = v.avviso ? `<span class="kit-perche"><strong>${esc(v.avviso)}</strong></span>` : "";
   if (v.stato === "nello_zaino") {
+    // 4/11 (Asiha): sotto «Mostra anche le … già nello zaino» non ripetiamo «nello zaino»; il nome dell'oggetto
+    // solo se è diverso dalla voce (es. «Frontale · Petzl Tikka», ma «Zaino» e basta)
+    const diverso = v.oggetto.nome.trim().toLowerCase() !== v.voce.trim().toLowerCase();
     return `<li class="kit-ok"><span class="kit-segno" aria-hidden="true">✓</span>
-      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nello zaino: ${esc(v.oggetto.nome)}${perche}</span></li>`;
+      <span class="kit-testo"><strong>${esc(v.voce)}</strong>${diverso ? ` · ${esc(v.oggetto.nome)}` : ""}${perche}</span></li>`;
   }
   if (v.stato === "da_cambiare") {
     // A1: lo zaino del viaggio è troppo piccolo. "Usa …" lo scambia con il più grande che hai
@@ -112,14 +117,16 @@ function rigaKit(v) {
       <span class="kit-testo"><strong>${esc(v.voce)}</strong> · da cambiare${perche}</span>${azione}</li>`;
   }
   if (v.stato === "nell_armadio") {
+    // il nome dell'oggetto solo se è diverso dalla voce (niente «Sacco lenzuolo · nell'armadio: Sacco lenzuolo»)
+    const nome = v.oggetto.nome.trim().toLowerCase() !== v.voce.trim().toLowerCase() ? `: ${esc(v.oggetto.nome)}` : "";
     return `<li><span class="kit-segno" aria-hidden="true">○</span>
-      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nell'armadio: ${esc(v.oggetto.nome)}${perche}</span>
+      <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nell'armadio${nome}${perche}</span>
       <button type="button" class="btn-piccolo" data-aggiungi="${v.oggetto.id}">Aggiungi</button></li>`;
   }
   // B6 (revisione UX 2): &uscita= → dopo il salvataggio l'armadio riporta qui, con l'oggetto già nello zaino
   const link = `/armadio.html?nuovo=${encodeURIComponent(v.voce)}&categoria=${encodeURIComponent(v.categoria)}&uscita=${id}`;
   return `<li class="kit-manca"><span class="kit-segno" aria-hidden="true">!</span>
-    <span class="kit-testo"><strong>${esc(v.voce)}</strong> · ti manca${perche}</span>
+    <span class="kit-testo"><strong>${esc(v.voce)}</strong>${perche}</span>
     <a class="btn-piccolo btn secondario" href="${link}">Aggiungi all'armadio</a></li>`;
 }
 

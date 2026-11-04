@@ -982,3 +982,9 @@ button.etichetta-piu { min-height: 44px; }
 .avviso.da-confermare { flex-wrap: wrap; gap: .25rem .75rem; text-align: left; }
 .avviso.da-confermare .link-bottone { min-height: 44px; }
 .avviso.registrata { text-align: left; }
+
+/* 4/11: il glossario in una finestrella (js/glossario-finestra.js) */
+.finestra-glossario { width: min(28rem, calc(100% - 2rem)); }
+.finestra-glossario h2 { font-size: 1.3rem; }
+.glossario-testo { line-height: 1.6; }
+.glossario-tutto { margin: 1rem 0 0; font-size: .9rem; }

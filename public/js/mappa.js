@@ -10,6 +10,7 @@ import { attivaNavigazione } from "./navigazione.js";
 import { attivaProfilo } from "./profilo-altimetrico.js";
 import { discesaDellaTraccia } from "./navigazione-calcoli.js";
 import { mostraAvvisi } from "./avvisi-percorso.js";
+import "./glossario-finestra.js"; // 4/11: i «?» degli avvisi aprono la spiegazione in una finestrella
 import { attivaCampoLuogo } from "./campo-luogo.js"; // 4/11: la tappa si cerca anche per nome
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).

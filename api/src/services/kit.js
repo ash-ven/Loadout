@@ -70,12 +70,11 @@ const VOCI = [
   { id: "sacco-lenzuolo", nome: "Sacco lenzuolo", categoria: "attrezzatura",
     parole: ["sacco lenzuolo", "sacco lenzuola", "sacco letto", "sacco da rifugio", "lenzuolo da rifugio", "sacco a pelo leggero", "liner",
              "saccolenzuolo", "sacco lenzuolo da rifugio", "lenzuolino"],
-    quando: (u) => u.pernotto === "rifugio", perche: "per il rifugio (obbligatorio nei rifugi CAI)" },
+    // 4/11 (Asiha): in rifugio il kit non chiede più né il sacco lenzuolo né il sacco a pelo. La voce resta
+    // (quando: mai) perché serve a riconoscere l'oggetto: in giornata non entra (SOLO_PERNOTTO)
+    quando: () => false, perche: "per il rifugio" },
   { id: "sacco-a-pelo", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag", "sacco pelo", "sacchi a pelo"],
     quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },
-  // B5 (revisione UX 2, scelta di Asiha): in rifugio il sacco a pelo serve solo se la notte è fredda (sotto 10 °C)
-  { id: "sacco-a-pelo-rifugio", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag", "sacco pelo", "sacchi a pelo"],
-    quando: (u) => u.pernotto === "rifugio" && u.notte_fredda, perche: "per il rifugio: minima prevista sotto 10 °C" },
   { id: "materassino", nome: "Materassino", categoria: "attrezzatura",
     parole: ["materassino", "materasso", "stuoino", "tappetino", "sleeping pad", "materassini", "stuoia", "autogonfiante"],
     quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },

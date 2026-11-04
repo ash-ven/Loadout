@@ -5,7 +5,8 @@ import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 import { discesaDellaTraccia } from "./navigazione-calcoli.js"; // D− anche per le mappe salvate prima che esistesse
 import { mostraAvvisi } from "./avvisi-percorso.js";
-import { mostraDiario } from "./diario.js";                       // punto 6: nota e voto, dopo il viaggio             // i tratti difficili del percorso (dalla mappa)
+import { mostraDiario } from "./diario.js";
+import "./glossario-finestra.js";                                // 4/11: i «?» aprono la spiegazione in una finestrella                       // punto 6: nota e voto, dopo il viaggio             // i tratti difficili del percorso (dalla mappa)
 
 // C10 (revisione UX 2): un piccolo «?» accanto alle parole difficili, porta alla spiegazione nel glossario dei Consigli
 const aiuto = (id, cosa) =>
