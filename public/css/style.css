@@ -742,7 +742,8 @@ textarea:disabled { background: var(--crema); cursor: not-allowed; }
 .mappa-vuota p { margin: 0; max-width: 22rem; font-weight: 600; color: var(--testo); }
 /* Punto 7 (3/11): i numeri dei viaggi fatti in riquadrini (scelta di Asiha) */
 .totali-home { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)); gap: .75rem; margin: 1rem 0 0; }
-.riquadro-numero { display: flex; flex-direction: column; padding: .7rem .8rem; background: var(--lana); border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); text-align: center; }
+/* 4/11 (Asiha): contenuto centrato anche in altezza (justify-content), così i riquadri senza la riga in più non restano vuoti sotto */
+.riquadro-numero { display: flex; flex-direction: column; justify-content: center; padding: .7rem .8rem; background: var(--lana); border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo); text-align: center; }
 .riquadro-numero dd { margin: 0; font-family: var(--font-titoli); font-size: 1.5rem; font-weight: 600; color: var(--muschio); line-height: 1.15; }
 .riquadro-numero dt { font-size: .82rem; color: var(--terra); }
 .riquadro-numero dd:not(.riquadro-dettaglio) { order: -1; }   /* il numero sopra, anche se nell'HTML viene dopo il <dt> */
