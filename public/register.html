@@ -22,8 +22,10 @@
       <img class="benvenuto" src="/img/zaino-pieno-chiaro.svg" alt="" width="96" height="96">
       <h1>Crea il tuo account</h1>
       <form id="form-register" novalidate>
-        <label>Nome
-          <input name="nome" type="text" autocomplete="given-name" maxlength="100" required>
+        <!-- 4/11 (Asiha): «Nome utente», con l'esempio. autocomplete="nickname" e non "given-name" o "username":
+             con quelli alcuni browser riempivano il campo con l'email, e la Home salutava «Ciao, nome@gmail.com!» -->
+        <label>Nome utente
+          <input name="nome" type="text" autocomplete="nickname" maxlength="100" required placeholder="Come vuoi che ti chiamiamo?">
         </label>
         <label>Email
           <input name="email" type="email" autocomplete="email" maxlength="255" required>
