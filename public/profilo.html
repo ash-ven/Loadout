@@ -91,6 +91,8 @@
         <!-- C9: le note mediche sono dati sulla salute (GDPR, art. 9): servono un consenso esplicito e una casella spuntata da te -->
         <label class="check consenso"><input type="checkbox" id="consenso-salute">
           <span>Acconsento a salvare le note mediche (dati sulla salute), visibili solo nel riquadro Emergenza dei miei viaggi.</span></label>
+        <!-- 4/11 (privacy): cosa vuol dire il consenso. In un'altra scheda, per non perdere quello che stai scrivendo -->
+        <p class="muto nota-consenso"><a href="/privacy.html#su-che-base" target="_blank" rel="noopener">Cosa vuol dire</a></p>
         <!-- Quando hai dato il consenso (lo registra il server: consenso_salute_il) -->
         <p class="muto data-consenso" id="data-consenso" hidden></p>
         <label>Note mediche per chi ti soccorre
@@ -164,7 +166,7 @@
       </form>
 
       <h3>I tuoi dati</h3>
-      <p class="muto">Profilo, armadio, viaggi e zaini in un file.</p>
+      <p class="muto">Profilo, armadio, viaggi e zaini in un file. Come li trattiamo: <a href="/privacy.html">informativa privacy</a>.</p>
       <div class="azioni"><a class="btn secondario" href="/api/auth/me/dati" download>Scarica i miei dati</a></div>
 
       <h3>Assistenza</h3>

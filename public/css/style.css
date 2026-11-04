@@ -1016,3 +1016,14 @@ button.etichetta-piu { min-height: 44px; }
 .finestra-glossario h2 { font-size: 1.3rem; }
 .glossario-testo { line-height: 1.6; }
 .glossario-tutto { margin: 1rem 0 0; font-size: .9rem; }
+
+/* 4/11: informativa privacy (privacy.html). Le schede dei Consigli in una colonna sola, più stretta da leggere:
+   h2 = titolo della scheda, h3 = sottotitolo piccolo dentro la scheda */
+.pagina-privacy { max-width: 760px; gap: 1rem; }
+.pagina-privacy .consiglio-generale h2 { margin: 0; font-family: var(--font-titoli); font-size: 1.45rem; color: var(--muschio); }
+.pagina-consigli.pagina-privacy .consiglio-generale h3 { flex: none; margin: .4rem 0 0; font-family: var(--font); font-size: .95rem; font-weight: 700; color: var(--testo); }
+.pagina-privacy .consiglio-generale ul { margin: 0; }
+.pagina-privacy .consiglio-generale p { margin: 0; }
+.nota-privacy { margin: 0; text-align: center; }
+.nota-registrazione { margin: 0; font-size: .88rem; }
+.nota-consenso { margin: -.25rem 0 0; font-size: .88rem; }
