@@ -154,7 +154,8 @@ function renderConsigli() {
     const vt = m.vetta;
     const stima = vt?.fonte === "stima"; // Open-Meteo non ha risposto per la vetta: resta la stima (−6 °C ogni 1000 m)
     // Collaudo 3/11, C3: stesso formato nelle due colonne ("min 0 · max 2 °C"); in vetta, prima, il valore all'ora di arrivo
-    const minMax = (a, b) => (a == null && b == null ? '<span class="muto">non disponibile</span>' : `min ${n0(a)} · max ${n0(b)} °C`);
+    // 4/11 (Asiha, prova su telefono): «2 / 11 °C» al posto di «min 2 · max 11 °C», che sul telefono andava a capo
+    const minMax = (a, b) => (a == null && b == null ? '<span class="muto">non disponibile</span>' : `${n0(a)} / ${n0(b)} °C`);
     const allArrivo = (n) => (n == null ? "" : `${n0(n)} °C all'arrivo<br>`);
     const colonnaVetta = vt ? {
       titolo: `Vetta${metri(vt.quota_m)}${!stima && vt.ora_arrivo_stimata ? ` · verso le ${esc(vt.ora_arrivo_stimata)}` : ""}${stima ? " · stima" : ""}`,

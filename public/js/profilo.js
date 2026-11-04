@@ -199,11 +199,11 @@ formProfilo.addEventListener("submit", (e) => { e.preventDefault(); salvaPeso();
 // Mostra le due soglie (B4): 10% in giornata, 20% con pernotto, in formato italiano (es. "5,7")
 function mostraSoglia(peso, appenaSalvato = false) {
   if (peso == null) {
-    info.textContent = "Peso non ancora impostato: l'avviso sullo zaino è disattivato.";
+    info.textContent = "Peso non impostato: avviso sullo zaino disattivato.";
   } else {
     const kg = (percento) => (peso * percento / 100).toLocaleString("it-IT", { maximumFractionDigits: 1 });
     const prefisso = appenaSalvato ? "Peso salvato. " : "";
-    info.textContent = `${prefisso}Il tuo zaino, senza acqua e cibo, non dovrebbe superare ${kg(10)} kg in giornata e ${kg(20)} kg con il pernotto.`;
+    info.textContent = `${prefisso}Limite: ${kg(10)} kg in giornata, ${kg(20)} kg con il pernotto.`; // 4/11: più corto
   }
   info.hidden = false;
 }

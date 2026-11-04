@@ -949,3 +949,31 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 .glossario .voce-glossario dt:target, .glossario .voce-glossario dt:target + dd { background: none; padding: 0; }
 .colore-senape { color: var(--senape-scuro); }
 .colore-rosso { color: var(--rosso); }
+
+/* =====================================================================
+   4/11 – PROVA A MISURA DI TELEFONO (390 e 360 px): le correzioni
+   ===================================================================== */
+/* 1. Filtri a segmenti (armadio): il numero non va più a capo. Ogni pulsante largo quanto serve, sul telefono senza icona */
+.segmenti button { white-space: nowrap; }
+@media (max-width: 480px) {
+  .segmenti { display: flex; }
+  .segmenti button { flex: 1 1 auto; padding: .55rem .4rem; font-size: .8rem; }
+  .segmenti button svg { display: none; }
+}
+/* 2. Tocchi da 44 px: caselle, tendine, «+5 dettagli». Per «Vedi», «Togli il voto» e il nome in «Da preparare»
+      la zona da toccare si allarga senza cambiare l'aspetto (::after, come i «?» del collaudo B5) */
+label.check { min-height: 44px; }
+details:not(.kit-dettagli) > summary { min-height: 44px; padding-block: .6rem; box-sizing: border-box; }
+button.etichetta-piu { min-height: 44px; }
+#vedi-kit, #togli-voto, .preparare-nome { position: relative; }
+#vedi-kit::after, #togli-voto::after, .preparare-nome::after { content: ""; position: absolute; inset: -.7rem -.4rem; }
+/* 3. Zaino: senza il campo quantità (un pezzo solo) resta uno spazio per allineare; sul telefono via anche quello */
+.quantita-vuoto { flex-shrink: 0; width: 3.6rem; }
+@media (max-width: 600px) { .quantita-vuoto, .indosso-vuoto { display: none; } }
+/* 5. «Com'è andata?»: due colonne anche sul telefono */
+@media (max-width: 600px) { .rientro-elenco { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem .75rem; } }
+/* 7. Consigli: i due pulsanti in alto più piccoli, su una riga */
+@media (max-width: 480px) {
+  .salta-consigli { flex-wrap: nowrap; gap: .4rem; }
+  .salta-consigli a { padding: 0 .75rem; font-size: .82rem; white-space: nowrap; }
+}

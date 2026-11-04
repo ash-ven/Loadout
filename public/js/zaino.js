@@ -223,8 +223,11 @@ function rigaZaino(o) {
         </span>
       </label>
       ${o.categoria === "abbigliamento" ? pulsanteIndosso(o) : '<span class="indosso-vuoto"></span>'}
-      <!-- max = pezzi che possiedi (B2): le frecce del campo non vanno oltre -->
-      <input type="number" class="quantita" min="1" max="${o.quantita_posseduta}" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">
+      <!-- max = pezzi che possiedi (B2): le frecce del campo non vanno oltre.
+           4/11 (Asiha, prova su telefono): il campo c'è solo se ne possiedi più di uno; con un pezzo solo non serve -->
+      ${o.quantita_posseduta > 1
+        ? `<input type="number" class="quantita" min="1" max="${o.quantita_posseduta}" step="1" value="${o.quantita}" aria-label="Quantità di ${esc(o.nome)}">`
+        : '<span class="quantita-vuoto"></span>'}
       <button type="button" class="togli" aria-label="Togli ${esc(o.nome)} dallo zaino" title="Togli dallo zaino">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
@@ -514,9 +517,10 @@ function mostraPesoCorporeo(avviso, pesoZainoKg) {
 // Solo la nota: decidi tu se togliere l'oggetto, con la ✕ di sempre (scelta di Asiha).
 function notaNonUsato(o) {
   if (!o.non_usato_prima) return "";
+  // 4/11 (Asiha): più corta, sul telefono veniva tagliata. Il viaggio resta nel suggerimento (title)
   const { viaggio, data } = o.non_usato_prima;
-  const quando = data ? `, ${formattaData(data).slice(0, 5)}` : ""; // "12/10/2026" → "12/10"
-  return `<span class="riga-nota nota-non-usato">Non usato le ultime 2 volte (${esc(viaggio)}${quando})</span>`;
+  const quando = data ? ` · ${formattaData(data)}` : "";
+  return `<span class="riga-nota nota-non-usato" title="L'ultima volta: ${esc(viaggio)}${quando}">Non usato 2 volte di fila</span>`;
 }
 
 // «Com'è andata?»: solo per i viaggi già fatti (fatto arriva dal server). Una casella per oggetto, spuntata = NON usato.
