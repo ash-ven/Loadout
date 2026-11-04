@@ -76,7 +76,7 @@ async function mandaConferma(req, utente) {
 const schemaRegister = {
   email:    { etichetta: "l'email", type: "string", required: true, maxLength: 255 },
   password: { etichetta: "la password", type: "string", required: true },
-  nome:     { etichetta: "il nome", type: "string", required: true, maxLength: 100 },
+  nome:     { etichetta: "lo username", type: "string", required: true, maxLength: 100 },
 };
 
 router.post("/register", limiteRegistrazione, validate(schemaRegister), async (req, res, next) => {
@@ -221,6 +221,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
 // === PATCH /api/auth/me (modifica parziale del profilo: solo i campi inviati) ===
 // "" o null su un campo nullable = svuotalo (es. togliere la foto o il contatto di emergenza)
 const schemaProfilo = {
+  nome:               { etichetta: "lo username", type: "string", maxLength: 100 },                            // 4/11: modificabile dal Profilo
   peso_corporeo_kg:   { etichetta: "il peso corporeo", type: "number", min: 20, max: 300, nullable: true },     // stretch 5
   consenso_salute:    { etichetta: "il consenso per le note mediche", type: "boolean" },                         // GDPR art. 9
   emergenza_nome:     { etichetta: "il nome del contatto di emergenza", type: "string", maxLength: 100, nullable: true },

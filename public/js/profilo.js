@@ -24,7 +24,7 @@ campoPeso.value = utente.peso_corporeo_kg ?? "";
 mostraSoglia(utente.peso_corporeo_kg);
 mostraFoto();
 // I campi del form "Dati personali" (stessi nomi delle colonne del database)
-const CAMPI_DATI = ["sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
+const CAMPI_DATI = ["nome", "sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
 for (const nome of CAMPI_DATI) {
   formDati.elements[nome].value = utente[nome] ?? "";
 }
@@ -122,6 +122,13 @@ function mostraStato(el, testo, sparisce = false) {
 async function salvaDati() {
   infoDati.hidden = true;
   erroreDati.hidden = true;
+  // 4/11: lo username non può restare vuoto: torna quello di prima
+  if (!formDati.elements.nome.value.trim()) {
+    formDati.elements.nome.value = utente.nome;
+    erroreDati.textContent = "Lo username non può essere vuoto";
+    erroreDati.hidden = false;
+    return;
+  }
   // Mando tutti i campi: quelli vuoti ("") il server li svuota. Senza consenso le note mediche vanno sempre vuote.
   const dati = {};
   for (const nome of CAMPI_DATI) {
@@ -132,6 +139,8 @@ async function salvaDati() {
   mostraStato(statoDati, "Salvataggio…");
   try {
     utente = await api("/api/auth/me", { method: "PATCH", body: dati });
+    elNome.textContent = utente.nome; // 4/11: il nome in alto (e l'iniziale, se non c'è la foto) si aggiorna subito
+    if (!utente.ha_foto) mostraFoto();
     mostraStato(statoDati, "✓ Salvato", true);
     mostraDataConsenso();
   } catch (err) {
@@ -294,3 +303,30 @@ suCambioInstallazione(mostraApp);   // l'evento del browser può arrivare dopo c
 bottoneInstalla.addEventListener("click", () => installa());
 import { mostraAssistenza } from "./contatti.js"; // 4/11: «Problemi o suggerimenti? Scrivi a …»
 mostraAssistenza();
+
+// =====================================================================
+//  4/11: «Dicci cosa ne pensi» (POST /api/feedback). Con «anonimo» il messaggio arriva senza nome né email
+// =====================================================================
+const formFeedback = document.querySelector("#form-feedback");
+const infoFeedback = document.querySelector("#feedback-info");
+const erroreFeedback = document.querySelector("#feedback-errore");
+formFeedback.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  infoFeedback.hidden = true;
+  erroreFeedback.hidden = true;
+  const messaggio = formFeedback.elements.messaggio.value.trim();
+  if (messaggio.length < 3) { erroreFeedback.textContent = "Scrivi qualcosa prima di inviare"; erroreFeedback.hidden = false; return; }
+  const bottone = formFeedback.querySelector('button[type="submit"]');
+  bottone.disabled = true;
+  try {
+    await api("/api/feedback", { method: "POST", body: { messaggio, anonimo: formFeedback.elements.anonimo.checked } });
+    formFeedback.reset();
+    infoFeedback.textContent = "Grazie! Il messaggio è arrivato.";
+    infoFeedback.hidden = false;
+  } catch (err) {
+    erroreFeedback.textContent = err.message;
+    erroreFeedback.hidden = false;
+  } finally {
+    bottone.disabled = false;
+  }
+});

@@ -65,8 +65,12 @@
         <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Dati personali</h2>
         <span class="stato-salvato" id="dati-stato" role="status" aria-live="polite"></span>
       </div>
-      <p class="muto">Facoltativi, si salvano da soli.</p>
+      <p class="muto">Si salvano da soli. Facoltativi, tranne lo username.</p>
       <form id="form-dati" novalidate>
+        <!-- 4/11 (Asiha): lo username si cambia qui (è quello del saluto nella Home) -->
+        <label>Username
+          <input name="nome" type="text" maxlength="100" autocomplete="nickname" required placeholder="Come vuoi che ti chiamiamo?">
+        </label>
         <!-- "Esperienza in montagna" tolta (scelta di Asiha): nessuna funzione dell'app la usava (minimizzazione GDPR) -->
         <label>Come senti il freddo
           <select name="sensibilita_freddo">
@@ -117,6 +121,20 @@
     </section>
 
     <!-- PWA (3/11, scelta di Asiha: il pulsante sta nel Profilo). Il testo lo sceglie pwa-profilo in profilo.js -->
+    <!-- 4/11 (Asiha): il feedback, dal Profilo. Arriva per email all'assistenza; si può mandare in forma anonima -->
+    <section class="card" id="feedback" aria-labelledby="titolo-feedback">
+      <h2 id="titolo-feedback"><img class="icona" src="/img/icone/consigli.svg" alt="" width="24" height="24">Dicci cosa ne pensi</h2>
+      <form id="form-feedback" novalidate>
+        <label>Il tuo messaggio
+          <textarea name="messaggio" maxlength="2000" rows="4" placeholder="Un problema, un'idea, un consiglio che manca…"></textarea>
+        </label>
+        <label class="check"><input name="anonimo" type="checkbox"> Invia in forma anonima</label>
+        <p class="avviso" id="feedback-info" role="status" hidden></p>
+        <p class="errore" id="feedback-errore" hidden></p>
+        <div class="azioni"><button type="submit">Invia</button></div>
+      </form>
+    </section>
+
     <section class="card" id="app-telefono">
       <h2><img class="icona-app" src="/img/app/icona-192.png" alt="" width="28" height="28">Loadout sul telefono</h2>
       <p id="app-testo">Installa Loadout come un'app: un'icona nella schermata Home e la pagina a tutto schermo, senza la barra del browser.</p>
