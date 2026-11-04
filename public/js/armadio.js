@@ -270,10 +270,13 @@ function apriFinestra(campoIniziale = campi.nome) {
   campoIniziale.focus(); // il cursore va nel campo indicato (di solito il nome)
 }
 
-bottoneNuovo.addEventListener("click", () => {
-  svuotaForm();
-  apriFinestra();
-});
+// Il + fisso (telefono) e «Aggiungi oggetto» in testata (computer, 4/11) aprono la stessa finestra vuota
+for (const bottone of [bottoneNuovo, document.querySelector("#aggiungi-testata")]) {
+  bottone.addEventListener("click", () => {
+    svuotaForm();
+    apriFinestra();
+  });
+}
 // =====================================================================
 //  STRETCH 2: SCANSIONE DELL'ETICHETTA CON LA FOTOCAMERA
 //  La libreria html5-qrcode accende la fotocamera, guarda i fotogrammi e ci chiama
