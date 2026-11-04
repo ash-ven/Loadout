@@ -977,3 +977,8 @@ button.etichetta-piu { min-height: 44px; }
   .salta-consigli { flex-wrap: nowrap; gap: .4rem; }
   .salta-consigli a { padding: 0 .75rem; font-size: .82rem; white-space: nowrap; }
 }
+
+/* 4/11: email reali. «Conferma la tua email» con «Rimanda il link» nell'accesso; il messaggio dopo la registrazione */
+.avviso.da-confermare { flex-wrap: wrap; gap: .25rem .75rem; text-align: left; }
+.avviso.da-confermare .link-bottone { min-height: 44px; }
+.avviso.registrata { text-align: left; }

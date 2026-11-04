@@ -9,9 +9,16 @@ import assert from "node:assert/strict";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../src/app.js";
+import { after } from "node:test";
+import { pool } from "../src/db.js";
 
 // La chiave per firmare i token: quella del file .env, oppure una solo per i test
 process.env.JWT_SECRET ??= "chiave-solo-per-i-test";
+
+// 4/11: con un token VALIDO il guardiano (requireAuth) chiede al database se la password è cambiata dopo il login.
+// Quei test quindi servono il database acceso, come i test di integrazione: senza, vengono saltati
+const senzaDb = process.env.DATABASE_URL ? false : "serve DATABASE_URL (file api/.env) e il database acceso";
+after(() => pool.end());
 
 test("senza login, l'armadio risponde 401", async () => {
   const risposta = await request(app).get("/api/oggetti");
@@ -49,7 +56,7 @@ test("un token firmato con un'altra chiave viene rifiutato: 401", async () => {
   assert.equal(risposta.body.error, "INVALID_TOKEN");
 });
 
-test("con un login valido, un codice a barre fatto di lettere: 400 BAD_CODICE", async () => {
+test("con un login valido, un codice a barre fatto di lettere: 400 BAD_CODICE", { skip: senzaDb }, async () => {
   const token = jwt.sign({ sub: 1, nome: "Asiha" }, process.env.JWT_SECRET);
   const risposta = await request(app).get("/api/prodotti/ABC123").set("Cookie", `token=${token}`);
   assert.equal(risposta.status, 400);
@@ -62,7 +69,7 @@ test("cambio password senza login: 401", async () => {
   assert.equal(risposta.status, 401);
 });
 
-test("cambio password: la nuova troppo corta viene rifiutata (400) prima ancora di guardare il database", async () => {
+test("cambio password: la nuova troppo corta viene rifiutata (400)", { skip: senzaDb }, async () => {
   const token = jwt.sign({ sub: 1, nome: "Asiha" }, process.env.JWT_SECRET);
   const risposta = await request(app).put("/api/auth/me/password").set("Cookie", `token=${token}`)
     .send({ attuale: "Password123!", nuova: "corta" });
@@ -70,8 +77,26 @@ test("cambio password: la nuova troppo corta viene rifiutata (400) prima ancora 
   assert.equal(risposta.body.error, "WEAK_PASSWORD");
 });
 
-test("eliminare l'account senza scrivere la password: 400", async () => {
+test("eliminare l'account senza scrivere la password: 400", { skip: senzaDb }, async () => {
   const token = jwt.sign({ sub: 1, nome: "Asiha" }, process.env.JWT_SECRET);
   const risposta = await request(app).delete("/api/auth/me").set("Cookie", `token=${token}`).send({});
+  assert.equal(risposta.status, 400);
+});
+
+// --- 4/11: conferma dell'email e «password dimenticata» (le regole che scattano prima del database) ---
+test("conferma con un codice troppo corto: 400 LINK_NON_VALIDO", async () => {
+  const risposta = await request(app).post("/api/auth/conferma").send({ codice: "abc" });
+  assert.equal(risposta.status, 400);
+  assert.equal(risposta.body.error, "LINK_NON_VALIDO");
+});
+
+test("nuova password troppo corta: 400 WEAK_PASSWORD, prima ancora di guardare il codice", async () => {
+  const risposta = await request(app).post("/api/auth/nuova-password").send({ codice: "x".repeat(43), password: "corta" });
+  assert.equal(risposta.status, 400);
+  assert.equal(risposta.body.error, "WEAK_PASSWORD");
+});
+
+test("password dimenticata senza email: 400", async () => {
+  const risposta = await request(app).post("/api/auth/password-dimenticata").send({});
   assert.equal(risposta.status, 400);
 });

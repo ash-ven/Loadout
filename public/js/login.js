@@ -10,6 +10,14 @@ if (!new URLSearchParams(location.search).has("uscita")) {
 
 const form = document.querySelector("#form-login");
 const errore = document.querySelector("#errore");
+const daConfermare = document.querySelector("#da-confermare"); // 4/11: email non ancora confermata
+
+// 4/11: arrivo dalla pagina «Nuova password»
+if (new URLSearchParams(location.search).get("password") === "nuova") {
+  const avviso = document.querySelector("#avviso-login");
+  avviso.textContent = "Password cambiata: accedi con quella nuova.";
+  avviso.hidden = false;
+}
 
 // B7: arrivo dopo aver eliminato l'account
 if (new URLSearchParams(location.search).has("eliminato")) {
@@ -32,13 +40,29 @@ form.addEventListener("submit", async (e) => {
 
   const bottone = form.querySelector('button[type="submit"]'); // C2: non l'occhio della password
   bottone.disabled = true; // evita doppi click mentre aspettiamo il server
+  daConfermare.hidden = true;
   try {
     await api("/api/auth/login", { method: "POST", body: dati });
     location.href = "/"; // login riuscito: alla home
   } catch (err) {
+    // 4/11: 403 = password giusta, ma l'email non è ancora confermata
+    if (err.status === 403) { daConfermare.hidden = false; return; }
     mostraErrore(err.message); // es. "Email o password errati"
   } finally {
     bottone.disabled = false;
+  }
+});
+
+// 4/11: «Rimanda il link» di conferma (la risposta del server è sempre la stessa, non dice se l'email esiste)
+document.querySelector("#rimanda").addEventListener("click", async (e) => {
+  e.target.disabled = true;
+  try {
+    const { message } = await api("/api/auth/rimanda-conferma", { method: "POST", body: { email: form.elements.email.value.trim() } });
+    daConfermare.querySelector("span").textContent = message;
+  } catch (err) {
+    mostraErrore(err.message);
+  } finally {
+    e.target.disabled = false;
   }
 });
 

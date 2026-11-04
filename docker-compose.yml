@@ -41,6 +41,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:?manca JWT_SECRET - copia .env.example in .env e inserisci una chiave lunga e casuale}
       CORS_ORIGINS: ${CORS_ORIGINS:-}   # facoltativa: altri siti ammessi (vuota = nessuno)
       MAPTILER_KEY: ${MAPTILER_KEY:-}   # facoltativa: senza, l'app funziona ma non mostra le mappe
+      # 4/11, email reali (conferma e password dimenticata). Senza BREVO_API_KEY le email non partono:
+      # il link compare nel terminale (docker compose logs api). APP_URL: l'indirizzo dell'app nei link
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      EMAIL_MITTENTE: ${EMAIL_MITTENTE:-}
+      APP_URL: ${APP_URL:-https://localhost}
     depends_on:
       db:
         condition: service_healthy   # parte solo quando il database risponde

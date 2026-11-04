@@ -18,9 +18,12 @@ form.addEventListener("submit", async (e) => {
   bottone.disabled = true;
   try {
     await api("/api/auth/register", { method: "POST", body: dati });
-    // registrazione riuscita: facciamo subito il login, così l'utente entra senza riscrivere tutto
-    await api("/api/auth/login", { method: "POST", body: { email: dati.email, password: dati.password } });
-    location.href = "/";
+    // 4/11: niente accesso subito: prima si conferma l'email. Al posto del form, cosa fare adesso
+    const fatto = document.querySelector("#registrata");
+    fatto.querySelector("strong").textContent = dati.email.trim();
+    form.hidden = true;
+    fatto.hidden = false;
+    fatto.focus();
   } catch (err) {
     mostraErrore(err.message); // es. "Valore già presente" se l'email esiste, "Indirizzo email non valido"
   } finally {

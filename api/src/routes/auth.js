@@ -6,6 +6,8 @@ import { query } from "../db.js";
 import { validate } from "../middleware/validate.js";
 import { HttpError } from "../middleware/errors.js";
 import { requireAuth } from "../middleware/auth.js";
+import * as codici from "../services/token-email.js";
+import { componiEmail, inviaEmail } from "../services/email.js";
 
 export const router = Router();
 
@@ -35,7 +37,42 @@ const limiteRegistrazione = rateLimit({
   message: RISPOSTA_TROPPI(60),
 });
 
+// 4/11: le richieste che mandano un'email (rimanda conferma, password dimenticata): poche per ora e per indirizzo IP,
+// così nessuno può usare Loadout per riempire di email la casella di qualcun altro (né consumare le 300 al giorno di Brevo)
+const limiteEmail = rateLimit({
+  windowMs: 60 * 60 * 1000,      // un'ora
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: RISPOSTA_TROPPI(60),
+});
+
+// L'indirizzo dell'app per i link nelle email. Online viene da APP_URL (es. https://loadout-t4ju.onrender.com):
+// NON dall'intestazione Host della richiesta, che chi chiama può falsificare per far puntare il link a un sito suo.
+// Solo in sviluppo, senza APP_URL, usiamo l'indirizzo da cui è arrivata la richiesta (https://localhost).
+function indirizzoApp(req) {
+  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+  if (process.env.NODE_ENV === "production") throw new Error("Manca APP_URL: serve per i link nelle email");
+  return `${req.protocol}://${req.get("host")}`;
+}
+
+// L'email con il link di conferma. Un errore di Brevo non deve far fallire la registrazione:
+// lo scriviamo nel log, e l'utente può farsi rimandare il link dalla pagina di accesso
+async function mandaConferma(req, utente) {
+  try {
+    const codice = await codici.crea(utente.id, "conferma");
+    const link = `${indirizzoApp(req)}/conferma-email.html?codice=${codice}`;
+    const { testo, html } = componiEmail({ nome: utente.nome, titolo: "Conferma la tua email", link,
+      frase: "Grazie per l'iscrizione a Loadout. Per attivare l'account conferma che questo indirizzo è tuo.",
+      pulsante: "Conferma l'email", nota: "Il link vale 24 ore. Se l'iscrizione non l'hai fatta tu, ignora questa email." });
+    await inviaEmail({ a: utente.email, oggetto: "Conferma la tua email per Loadout", testo, html });
+  } catch (err) {
+    console.error("Email di conferma non inviata:", err.message);
+  }
+}
+
 // === POST /api/auth/register ===
+// 4/11: l'account nasce NON confermato e non si può usare finché non clicchi il link nell'email (scelta di Asiha)
 const schemaRegister = {
   email:    { etichetta: "l'email", type: "string", required: true, maxLength: 255 },
   password: { etichetta: "la password", type: "string", required: true },
@@ -52,7 +89,8 @@ router.post("/register", limiteRegistrazione, validate(schemaRegister), async (r
       "INSERT INTO utente (email, password_hash, nome) VALUES ($1, $2, $3) RETURNING id, email, nome",
       [email.toLowerCase(), hash, nome]
     );
-    res.status(201).json(rows[0]);
+    await mandaConferma(req, rows[0]);
+    res.status(201).json({ ...rows[0], conferma_necessaria: true });
   } catch (err) { next(err); }
 });
 
@@ -72,6 +110,11 @@ router.post("/login", limiteLogin, validate(schemaLogin), async (req, res, next)
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       throw new HttpError(401, "BAD_CREDENTIALS", "Email o password errati");
     }
+    // 4/11: password giusta ma email non ancora confermata: niente accesso. Lo diciamo solo DOPO aver controllato
+    // la password, così non si scopre quali email sono iscritte
+    if (!user.email_confermata_il) {
+      throw new HttpError(403, "EMAIL_NON_CONFERMATA", "Conferma la tua email: apri il link che ti abbiamo mandato");
+    }
 
     const token = jwt.sign({ sub: user.id, nome: user.nome }, process.env.JWT_SECRET, { expiresIn: "8h" });
     res.cookie("token", token, COOKIE).json({ id: user.id, nome: user.nome });
@@ -85,6 +128,81 @@ router.post("/logout", (req, res) => {
   const { maxAge, ...opzioni } = COOKIE;
   res.clearCookie("token", opzioni).status(204).end();
 });
+
+// =====================================================================
+//  4/11: CONFERMA DELL'EMAIL E «PASSWORD DIMENTICATA»
+//  I link nelle email aprono una PAGINA (conferma-email.html, nuova-password.html) e la pagina chiama queste rotte
+//  con POST. Perché non direttamente un GET? Alcuni programmi di posta e antivirus "aprono" i link delle email
+//  per controllarli: con un GET userebbero il codice al posto tuo, prima ancora che tu lo clicchi.
+// =====================================================================
+const RISPOSTA_GENERICA = { message: "Se l'indirizzo è registrato, ti abbiamo mandato un'email. Controlla anche lo spam." };
+const schemaSoloEmail = { email: { etichetta: "l'email", type: "string", required: true, maxLength: 255 } };
+
+// === POST /api/auth/conferma { codice } → email confermata e accesso fatto ===
+router.post("/conferma", limiteLogin, validate({ codice: { etichetta: "il codice", type: "string", required: true, maxLength: 100 } }),
+  async (req, res, next) => {
+    try {
+      const utenteId = await codici.usa(req.validated.codice, "conferma");
+      if (!utenteId) throw new HttpError(400, "LINK_NON_VALIDO", "Il link non è valido o è scaduto: accedi e chiedine uno nuovo");
+      const { rows } = await query(
+        "UPDATE utente SET email_confermata_il = COALESCE(email_confermata_il, now()) WHERE id = $1 RETURNING id, nome",
+        [utenteId]
+      );
+      // confermata: entri subito, senza riscrivere la password
+      const token = jwt.sign({ sub: rows[0].id, nome: rows[0].nome }, process.env.JWT_SECRET, { expiresIn: "8h" });
+      res.cookie("token", token, COOKIE).json({ id: rows[0].id, nome: rows[0].nome });
+    } catch (err) { next(err); }
+  });
+
+// === POST /api/auth/rimanda-conferma { email } → un nuovo link (risposta sempre uguale) ===
+router.post("/rimanda-conferma", limiteEmail, validate(schemaSoloEmail), async (req, res, next) => {
+  try {
+    const { rows } = await query("SELECT id, email, nome, email_confermata_il FROM utente WHERE email = $1", [req.validated.email.toLowerCase()]);
+    if (rows[0] && !rows[0].email_confermata_il) await mandaConferma(req, rows[0]);
+    res.json(RISPOSTA_GENERICA); // uguale anche se l'email non esiste: non riveliamo chi è iscritto
+  } catch (err) { next(err); }
+});
+
+// === POST /api/auth/password-dimenticata { email } → email con il link per sceglierne una nuova ===
+router.post("/password-dimenticata", limiteEmail, validate(schemaSoloEmail), async (req, res, next) => {
+  try {
+    const { rows } = await query("SELECT id, email, nome FROM utente WHERE email = $1", [req.validated.email.toLowerCase()]);
+    if (rows[0]) {
+      try {
+        const codice = await codici.crea(rows[0].id, "reset");
+        const link = `${indirizzoApp(req)}/nuova-password.html?codice=${codice}`;
+        const { testo, html } = componiEmail({ nome: rows[0].nome, titolo: "Scegli una nuova password", link,
+          frase: "Hai chiesto di cambiare la password di Loadout. Scegline una nuova dal pulsante qui sotto.",
+          pulsante: "Scegli la nuova password", nota: "Il link vale 1 ora e si usa una volta sola. Se non l'hai chiesto tu, ignora questa email: la password resta quella di prima." });
+        await inviaEmail({ a: rows[0].email, oggetto: "La tua nuova password per Loadout", testo, html });
+      } catch (err) {
+        console.error("Email per la nuova password non inviata:", err.message);
+      }
+    }
+    res.json(RISPOSTA_GENERICA);
+  } catch (err) { next(err); }
+});
+
+// === POST /api/auth/nuova-password { codice, password } ===
+// La password cambia, le sessioni aperte con quella vecchia non valgono più (password_cambiata_il), e l'email
+// risulta confermata (il link è arrivato in quella casella). Poi si accede con la password nuova.
+router.post("/nuova-password", limiteLogin,
+  validate({ codice: { etichetta: "il codice", type: "string", required: true, maxLength: 100 },
+             password: { etichetta: "la password", type: "string", required: true, maxLength: 200 } }),
+  async (req, res, next) => {
+    try {
+      const { codice, password } = req.validated;
+      if (password.length < 8) throw new HttpError(400, "WEAK_PASSWORD", "Password di almeno 8 caratteri");
+      const utenteId = await codici.usa(codice, "reset");
+      if (!utenteId) throw new HttpError(400, "LINK_NON_VALIDO", "Il link non è valido o è scaduto: chiedine uno nuovo");
+      await query(
+        `UPDATE utente SET password_hash = $1, password_cambiata_il = now(), email_confermata_il = COALESCE(email_confermata_il, now())
+         WHERE id = $2`,
+        [await bcrypt.hash(password, 12), utenteId]
+      );
+      res.status(204).end();
+    } catch (err) { next(err); }
+  });
 
 // Le colonne del profilo che restituiamo (mai il password_hash; la foto ha un indirizzo suo)
 const CAMPI_PROFILO = `id, email, nome, peso_corporeo_kg,
@@ -196,8 +314,11 @@ router.put("/me/password", requireAuth, limiteLogin, validate(schemaPassword), a
     if (!rows[0] || !(await bcrypt.compare(attuale, rows[0].password_hash))) {
       throw new HttpError(403, "WRONG_PASSWORD", "La password attuale non è corretta"); // 403, non 401: sei loggata, ma la conferma è sbagliata
     }
-    await query("UPDATE utente SET password_hash = $1 WHERE id = $2", [await bcrypt.hash(nuova, 12), req.user.sub]);
-    res.status(204).end();
+    // 4/11: password_cambiata_il = adesso → le sessioni aperte altrove (altri dispositivi) non valgono più.
+    // Questa sessione invece continua: le diamo un cookie nuovo
+    await query("UPDATE utente SET password_hash = $1, password_cambiata_il = now() WHERE id = $2", [await bcrypt.hash(nuova, 12), req.user.sub]);
+    const token = jwt.sign({ sub: req.user.sub, nome: req.user.nome }, process.env.JWT_SECRET, { expiresIn: "8h" });
+    res.cookie("token", token, COOKIE).status(204).end();
   } catch (err) { next(err); }
 });
 

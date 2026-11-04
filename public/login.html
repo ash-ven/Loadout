@@ -31,11 +31,16 @@
           <input name="password" type="password" autocomplete="current-password" required>
         </label>
         <p class="avviso" id="avviso-login" hidden></p>
+        <!-- 4/11: email non ancora confermata: il messaggio e «Rimanda il link» -->
+        <div class="avviso da-confermare" id="da-confermare" hidden>
+          <span>Prima di entrare conferma la tua email: apri il link che ti abbiamo mandato.</span>
+          <button type="button" class="link-bottone" id="rimanda">Rimanda il link</button>
+        </div>
         <p class="errore" id="errore" hidden></p>
         <button type="submit">Entra</button>
       </form>
-      <!-- C2: finché l'app non invia email, il recupero della password passa da un indirizzo (d'esempio: da cambiare con quello vero) -->
-      <p class="muto">Password dimenticata? Scrivi a <a href="mailto:assistenza@loadout.example">assistenza@loadout.example</a></p>
+      <!-- 4/11: il recupero della password ora è vero: un link per email (password-dimenticata.html) -->
+      <p class="muto"><a href="/password-dimenticata.html">Password dimenticata?</a></p>
       <p class="muto">Non hai un account? <a href="/register.html">Registrati</a></p>
     </section>
     <!-- PWA (3/11): «Installa Loadout sul telefono», solo dove serve (js/pwa.js, collegaRigaInstalla) -->
