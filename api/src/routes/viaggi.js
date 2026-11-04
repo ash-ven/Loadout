@@ -74,6 +74,9 @@ export function tracciaValida(t) {
     && (t.profilo === undefined || ["sentieri", "breve"].includes(t.profilo))
     && (t.origine === undefined || t.origine === "gpx")   // collaudo 3/11, B2: la linea viene da un file GPX
     && avvisiValidi(t.avvisi_percorso)
+    // 4/11: i nomi dei punti (facoltativi), uno per tappa, testi corti
+    && (t.nomi === undefined || (Array.isArray(t.nomi) && t.nomi.length === t.tappe.length
+      && t.nomi.every((n) => typeof n === "string" && n.length <= 60)))
     && (t.discesa_m === undefined || t.discesa_m === null || (Number.isInteger(t.discesa_m) && t.discesa_m >= 0 && t.discesa_m <= 9000));
 }
 

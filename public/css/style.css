@@ -788,7 +788,7 @@ button.pulsante-fisso { position: fixed; right: 1rem; bottom: calc(96px + env(sa
 .nota-navigazione { margin: .5rem 0 0; font-size: .8rem; }
 .posizione-gps { background: none; border: 0; }
 .in-navigazione .mappa { height: min(72vh, 680px); }
-.in-navigazione .legenda, .in-navigazione .strumenti, .in-navigazione #nota-anello, .in-navigazione #form-percorso,
+.in-navigazione .legenda, .in-navigazione .strumenti, .in-navigazione .barra-percorso, .in-navigazione #nota-anello, .in-navigazione #form-percorso,
 .in-navigazione .testata { display: none; }
 @media (max-width: 600px) {
   .numeri-navigazione { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -880,3 +880,30 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
                  padding: 0 1rem; text-align: center; font-size: .9rem; color: var(--terra); }
 .riga-installa img { flex-shrink: 0; border-radius: 6px; }
 .riga-installa .link-bottone { min-height: 44px; }   /* tocco da 44 px */
+
+/* 4/11 (Asiha): pagina della mappa più ordinata. Sopra il profilo: una riga con ↶ indietro, Importa GPX e Ricomincia */
+.barra-percorso { display: flex; flex-wrap: nowrap; align-items: center; gap: .5rem; margin-top: .9rem; }
+.barra-percorso .btn-piccolo { min-height: 44px; }
+.btn-indietro { display: inline-grid; place-items: center; width: 44px; padding: 0; }
+.btn-indietro:disabled { opacity: .45; cursor: default; }
+.barra-percorso #ricomincia { margin-left: auto; }        /* Ricomincia in fondo alla riga, lontano da ↶ */
+/* Elenco dei punti: la colonna del nome */
+.tappa-nome-campo { flex: 1 1 9rem; min-width: 0; min-height: 40px; padding: .35rem .6rem; font-size: .9rem; }
+@media (max-width: 600px) { .tappa-nome { font-size: .85rem; } }
+/* Aggiungi una tappa: prima la ricerca per nome, poi le coordinate */
+.campo-tappa { margin-top: .6rem; }
+/* Quote e coordinate nella tendina */
+.altri-dati { margin-top: .6rem; }
+.altri-dati summary { cursor: pointer; font-weight: 600; color: var(--muschio); min-height: 44px; display: flex; align-items: center; }
+.altri-dati[open] summary { margin-bottom: .4rem; }
+/* Il riquadrino su «Scarica GPX»: compare con il mouse sopra, con il dito (tocco = :hover sul telefono) o con la tastiera */
+.con-suggerimento { position: relative; display: inline-flex; }
+.suggerimento-bolla { position: absolute; bottom: calc(100% + .5rem); right: 0; z-index: 5; width: min(18rem, 80vw);
+                      padding: .6rem .75rem; border-radius: var(--raggio-piccolo); background: var(--muschio); color: #f6efdf;
+                      font-size: .82rem; line-height: 1.4; box-shadow: var(--ombra);
+                      opacity: 0; visibility: hidden; transition: opacity .15s; pointer-events: none; }
+.con-suggerimento:hover .suggerimento-bolla, .con-suggerimento:focus-within .suggerimento-bolla { opacity: 1; visibility: visible; }
+/* I tratti difficili sul profilo altimetrico, come sulla mappa */
+.profilo-tratto { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.profilo-tratto.attenzione { stroke: var(--senape); }
+.profilo-tratto.grave { stroke: var(--rosso); }

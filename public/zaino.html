@@ -54,8 +54,8 @@
               <button type="button" id="genera">Genera zaino</button>
             </div>
           </div>
-          <p><strong id="peso-inserito">0,00</strong> kg già nello zaino su <strong id="peso-totale">0,00</strong> kg previsti
-            <span class="muto">(senza acqua e cibo)</span><span class="muto" id="peso-addosso" hidden></span></p>
+          <!-- 4/11 (Asiha): più corto. Era «… kg già nello zaino su … kg previsti (senza acqua e cibo)» -->
+          <p><strong id="peso-inserito">0,00</strong> su <strong id="peso-totale">0,00</strong> kg<span class="muto" id="peso-addosso" hidden></span></p>
           <!-- B4: l'acqua si porta in più, ma non entra nel calcolo (peso base) -->
           <p class="muto riga-acqua" id="peso-acqua" hidden></p>
           <div class="barra"><div id="barra-riempimento"></div></div>
@@ -80,7 +80,7 @@
              (scelta di Asiha). Due volte di fila nella stessa attività → la prossima volta lo zaino te lo ricorda -->
         <section class="card rientro" id="rientro" hidden aria-labelledby="titolo-rientro">
           <h2 id="titolo-rientro">Com'è andata?</h2>
-          <p class="muto">Spunta quello che <strong>non</strong> hai usato. Se succede due volte di fila, la prossima volta te lo ricordo.</p>
+          <p class="muto">Spunta quello che <strong>non</strong> hai usato.</p>
           <div class="rientro-elenco" id="rientro-elenco"></div>
         </section>
 

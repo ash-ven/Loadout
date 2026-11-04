@@ -51,8 +51,7 @@
       </div>
       <p class="errore" id="errore-naviga" hidden></p>
       <!-- Senza rete: si vedono le tessere già guardate, la traccia e la tua posizione (sw.js) -->
-      <p class="avviso" id="senza-rete" hidden><span><strong>Sei senza rete.</strong> Vedi il percorso, la tua posizione e le zone
-        della mappa che avevi già guardato; le altre restano vuote. Le modifiche si salvano solo con la rete.</span></p>
+      <p class="avviso" id="senza-rete" hidden><span><strong>Sei senza rete:</strong> vedi il percorso e la tua posizione. Le modifiche si salvano solo con la rete.</span></p>
       <div class="mappa-cornice"><div class="mappa" id="mappa"></div></div>
       <!-- Il pannello della navigazione: compare solo mentre navighi -->
       <div class="pannello-navigazione" id="pannello-navigazione" hidden>
@@ -68,20 +67,28 @@
           <button type="button" class="secondario btn-piccolo" id="centra" hidden>Centra su di me</button>
           <button type="button" class="secondario btn-piccolo" id="termina-navigazione">Termina</button><!-- C10: contorno, non rosa: non cancella niente -->
         </div>
-        <p class="muto nota-navigazione">La tua posizione resta sul telefono: Loadout non la salva e non la manda a nessuno.
-          Tieni lo schermo acceso: con lo schermo spento il browser smette di leggere il GPS.</p>
+        <p class="muto nota-navigazione">Tieni lo schermo acceso. La tua posizione resta sul telefono.</p>
       </div>
-      <!-- Profilo altimetrico (js/profilo-altimetrico.js): salite e discese del percorso, sotto la mappa e la navigazione -->
-      <section class="profilo-altimetrico" id="profilo" aria-labelledby="titolo-profilo" hidden>
-        <h3 id="titolo-profilo">Profilo altimetrico</h3>
-        <div class="profilo-grafico" id="profilo-grafico"></div>
-        <p class="muto profilo-riepilogo" id="profilo-riepilogo"></p>
-      </section>
-      <!-- Avvisi sul percorso (js/avvisi-percorso.js): i tratti difficili secondo i sentieri di OpenStreetMap -->
-      <section class="avvisi-percorso" id="sezione-avvisi" aria-labelledby="titolo-avvisi" hidden>
-        <h3 id="titolo-avvisi">Difficoltà del percorso</h3>
-        <div id="avvisi-percorso"></div>
-      </section>
+
+      <!-- 4/11 (Asiha): tutti i comandi del percorso SOPRA il profilo. Prima riga: ↶ indietro (annulla l'ultima modifica,
+           al posto di «Togli l'ultimo punto»), Importa GPX e Ricomincia, sulla stessa linea -->
+      <div class="barra-percorso">
+        <button type="button" class="secondario btn-piccolo btn-indietro" id="indietro" aria-label="Annulla l'ultima modifica" title="Annulla l'ultima modifica" disabled>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+        </button>
+        <!-- B8: importa un file GPX (letto nel browser, js/gpx-lettura.js). Il vero <input type="file"> è nascosto: lo apre il <label> -->
+        <label class="btn secondario btn-piccolo" for="file-gpx">Importa GPX</label>
+        <input type="file" id="file-gpx" accept=".gpx,application/gpx+xml" hidden>
+        <button type="button" class="pericolo btn-piccolo" id="ricomincia">Ricomincia</button>
+      </div>
+      <!-- Seconda riga: come cercare il percorso (parte su Sentieri) e l'anello -->
+      <div class="strumenti">
+        <div class="segmenti scelta-profilo" id="scelta-profilo" role="group" aria-label="Come cercare il percorso">
+          <button type="button" data-profilo="sentieri" aria-pressed="true">Sentieri</button>
+          <button type="button" data-profilo="breve" aria-pressed="false">Più breve</button>
+        </div>
+        <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
+      </div>
       <ul class="legenda" aria-label="Legenda">
         <!-- B11 (revisione UX 2): data-tipo = la legenda mostra solo quello che c'è sulla mappa (mappa-disegno.js) -->
         <li data-tipo="partenza"><svg width="14" height="18" viewBox="0 0 30 40" aria-hidden="true"><path d="M15 38.5S28 24.5 28 14.5a13 13 0 0 0-26 0C2 24.5 15 38.5 15 38.5Z" fill="#31503f"/></svg>Partenza</li>
@@ -93,37 +100,44 @@
         <li data-tipo="attenzione" hidden><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#c8962b" stroke-width="3.5" stroke-linecap="round"/></svg>Tratto impegnativo</li>
         <li data-tipo="difficile" hidden><svg width="22" height="8" viewBox="0 0 22 8" aria-hidden="true"><path d="M2 4h18" stroke="#f6efdf" stroke-width="7" stroke-linecap="round"/><path d="M2 4h18" stroke="#a3312a" stroke-width="3.5" stroke-linecap="round"/></svg>Tratto difficile</li>
       </ul>
-      <div class="strumenti">
-        <!-- Come cercare il percorso (scelta di Asiha: parte su Sentieri). Il pulsante scelto ha aria-pressed="true" -->
-        <div class="segmenti scelta-profilo" id="scelta-profilo" role="group" aria-label="Come cercare il percorso">
-          <!-- Collaudo 3/11, B2: niente title (diventava il nome per i comandi vocali): la spiegazione è nella riga sotto, collegata con aria-describedby -->
-          <button type="button" data-profilo="sentieri" aria-pressed="true" aria-describedby="nota-profilo">Sentieri</button>
-          <button type="button" data-profilo="breve" aria-pressed="false" aria-describedby="nota-profilo">Più breve</button>
-        </div>
-        <label class="check"><input type="checkbox" id="anello"> Percorso ad anello</label>
-        <div class="azioni">
-          <!-- B8: importa un file GPX (letto nel browser, js/gpx-lettura.js). Il vero <input type="file"> è nascosto: lo apre il <label> -->
-          <label class="btn secondario btn-piccolo" for="file-gpx">Importa GPX</label>
-          <input type="file" id="file-gpx" accept=".gpx,application/gpx+xml" hidden>
-          <button type="button" class="secondario btn-piccolo" id="togli-punto">Togli l'ultimo punto</button>
-          <button type="button" class="pericolo btn-piccolo" id="ricomincia">Ricomincia</button>
-        </div>
-      </div>
-      <!-- I punti in ordine, con ↑ ↓ per cambiarlo e ✕ per toglierne uno (lo riempie mappa-disegno.js) -->
+      <!-- Solo con una traccia da file GPX (4/11: la spiegazione di Sentieri / Più breve non c'è più): la scrive mappa-disegno.js -->
+      <p class="muto nota-profilo" id="nota-profilo" hidden></p>
+      <p class="muto nota-anello" id="nota-anello" hidden>Con una sola tappa è un'andata e ritorno.</p>
+      <p id="stato-mappa" class="stato" hidden></p>
+      <p class="avviso" id="avviso-importata" hidden><span>Traccia ricalcolata sui sentieri: per quella del file, reimportalo.</span></p>
+      <p class="muto" id="messaggio-gpx" role="status" hidden></p>
+      <!-- Profilo altimetrico (js/profilo-altimetrico.js): salite e discese del percorso, sotto la mappa e la navigazione -->
+      <section class="profilo-altimetrico" id="profilo" aria-labelledby="titolo-profilo" hidden>
+        <h3 id="titolo-profilo">Profilo altimetrico</h3>
+        <div class="profilo-grafico" id="profilo-grafico"></div>
+        <p class="muto profilo-riepilogo" id="profilo-riepilogo"></p>
+      </section>
+      <!-- Avvisi sul percorso (js/avvisi-percorso.js): i tratti difficili secondo i sentieri di OpenStreetMap -->
+      <section class="avvisi-percorso" id="sezione-avvisi" aria-labelledby="titolo-avvisi" hidden>
+        <h3 id="titolo-avvisi">Difficoltà del percorso</h3>
+        <div id="avvisi-percorso"></div>
+      </section>
+      <!-- I punti in ordine, con il nome che gli dai tu, ↑ ↓ per cambiare l'ordine e ✕ per toglierlo (lo riempie mappa-disegno.js) -->
       <ol class="elenco-tappe" id="elenco-tappe" aria-label="Ordine dei punti del percorso" tabindex="-1" hidden></ol>
       <!-- B3: qui i lettori di schermo sentono cosa è cambiato ("Tappa 1 è ora la partenza") -->
       <p class="solo-lettori" id="annuncio-tappe" aria-live="polite"></p>
-      <!-- Una tappa da coordinate (richiesta di Asiha): si apre con un tocco; incollando «44.1934, 10.7012» nel primo campo
-           si riempiono tutti e due. La tappa va dove allunga meno il percorso (mappa-disegno.js, aggiungiTappa) -->
+      <!-- Aggiungi una tappa (4/11, Asiha): per nome, es. «rifugio Vajolet» (stessa ricerca del form, js/campo-luogo.js),
+           oppure con le coordinate. Incollando «44.1934, 10.7012» nel primo campo si riempiono tutti e due.
+           La tappa va dove allunga meno il percorso (mappa-disegno.js, aggiungiTappa) -->
       <details class="tappa-coordinate" id="tappa-coordinate">
-        <summary>Aggiungi una tappa da coordinate</summary>
+        <summary>Aggiungi una tappa</summary>
+        <div class="campo-luogo campo-tappa">
+          <label>Cerca un luogo
+            <input id="tappa-luogo" type="text" maxlength="100" autocomplete="off" placeholder="es. rifugio Vajolet"
+                   role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggerimenti-tappa">
+          </label>
+          <ul class="suggerimenti" id="suggerimenti-tappa" role="listbox" hidden></ul>
+        </div>
         <div class="riga-tappa">
           <label>Latitudine <input id="tappa-lat" type="number" min="-90" max="90" step="any" placeholder="es. 44,1934"></label>
           <label>Longitudine <input id="tappa-lon" type="number" min="-180" max="180" step="any" placeholder="es. 10,7012"></label>
           <button type="button" class="btn-piccolo" id="aggiungi-tappa">Aggiungi tappa</button>
         </div>
-        <p class="muto">Puoi incollare le due coordinate insieme nel primo campo (es. «44.1934, 10.7012» copiate da Google Maps).
-          La tappa va nel punto del percorso dove lo allunga di meno; partenza e arrivo restano gli stessi.</p>
         <p class="errore" id="errore-tappa" hidden></p>
         <!-- B4: tappa molto lontana: chiediamo conferma (niente finestra del browser) -->
         <div class="conferma-tappa" id="conferma-tappa" hidden>
@@ -134,13 +148,6 @@
           </div>
         </div>
       </details>
-      <!-- B2: cosa fanno Sentieri e Più breve (o che la traccia viene da un file): la scrive mappa-disegno.js -->
-      <p class="muto nota-profilo" id="nota-profilo"></p>
-      <p class="muto nota-anello" id="nota-anello" hidden>Con una sola tappa si torna indietro dalla stessa strada: aggiungi un'altra tappa per fare un anello.</p>
-      <p id="stato-mappa" class="stato" hidden></p>
-      <p class="avviso" id="avviso-importata" hidden><span><strong>Hai modificato la traccia importata:</strong> ora il percorso è
-        ricalcolato sui sentieri. Se vuoi quella del file, importalo di nuovo.</span></p>
-      <p class="muto" id="messaggio-gpx" role="status" hidden></p>
 
       <!-- I valori del percorso: campi normali. "dalla mappa" = li ha compilati la mappa; se li scrivi tu, restano tuoi.
            A2: sotto un valore tuo, se la mappa calcola un numero diverso, compare "La mappa calcola … · Usa questo" -->
@@ -161,41 +168,48 @@
             <input id="campo-discesa" type="number" readonly tabindex="-1" placeholder="dalla mappa">
           </label>
         </div>
-        <div class="riga2">
-          <label><span class="nome-campo">Quota minima (m) <span class="origine"></span></span>
-            <input name="quota_min_m" type="number" min="-500" max="9000" step="1">
-            <span class="muto calcolo-mappa" data-per="quota_min_m" hidden></span>
-          </label>
-          <label><span class="nome-campo">Quota massima (m) <span class="origine"></span></span>
-            <input name="quota_max_m" type="number" min="0" max="9000" step="1">
-            <span class="muto calcolo-mappa" data-per="quota_max_m" hidden></span>
-          </label>
-        </div>
-        <div class="riga2">
-          <label><span class="nome-campo">Latitudine partenza <span class="origine"></span></span>
-            <input name="lat_partenza" type="number" min="-90" max="90" step="any">
-          </label>
-          <label><span class="nome-campo">Longitudine partenza <span class="origine"></span></span>
-            <input name="lon_partenza" type="number" min="-180" max="180" step="any">
-          </label>
-        </div>
-        <div class="riga2">
-          <label><span class="nome-campo">Latitudine arrivo <span class="origine"></span></span>
-            <input name="lat_arrivo" type="number" min="-90" max="90" step="any">
-          </label>
-          <label><span class="nome-campo">Longitudine arrivo <span class="origine"></span></span>
-            <input name="lon_arrivo" type="number" min="-180" max="180" step="any">
-          </label>
-        </div>
+        <!-- 4/11 (Asiha): fuori solo lunghezza, D+ e D−; quote e coordinate in una tendina (si compilano da sole con la mappa) -->
+        <details class="altri-dati" id="altri-dati">
+          <summary>Quote e coordinate</summary>
+          <div class="riga2">
+            <label><span class="nome-campo">Quota minima (m) <span class="origine"></span></span>
+              <input name="quota_min_m" type="number" min="-500" max="9000" step="1">
+              <span class="muto calcolo-mappa" data-per="quota_min_m" hidden></span>
+            </label>
+            <label><span class="nome-campo">Quota massima (m) <span class="origine"></span></span>
+              <input name="quota_max_m" type="number" min="0" max="9000" step="1">
+              <span class="muto calcolo-mappa" data-per="quota_max_m" hidden></span>
+            </label>
+          </div>
+          <div class="riga2">
+            <label><span class="nome-campo">Latitudine partenza <span class="origine"></span></span>
+              <input name="lat_partenza" type="number" min="-90" max="90" step="any">
+            </label>
+            <label><span class="nome-campo">Longitudine partenza <span class="origine"></span></span>
+              <input name="lon_partenza" type="number" min="-180" max="180" step="any">
+            </label>
+          </div>
+          <div class="riga2">
+            <label><span class="nome-campo">Latitudine arrivo <span class="origine"></span></span>
+              <input name="lat_arrivo" type="number" min="-90" max="90" step="any">
+            </label>
+            <label><span class="nome-campo">Longitudine arrivo <span class="origine"></span></span>
+              <input name="lon_arrivo" type="number" min="-180" max="180" step="any">
+            </label>
+          </div>
+        </details>
         <p class="errore" id="errore-percorso" hidden></p>
         <p class="muto" id="messaggio-percorso" hidden></p>
         <div class="azioni">
           <button type="submit" id="salva-percorso">Salva il percorso</button>
-          <button type="button" class="secondario" id="scarica-gpx">Scarica GPX</button>
+          <!-- 4/11 (Asiha): la spiegazione del GPX in un riquadrino che compare passando con il mouse o il dito sul pulsante
+               (e con la tastiera, quando il pulsante ha il fuoco). aria-describedby: i lettori di schermo la leggono -->
+          <span class="con-suggerimento">
+            <button type="button" class="secondario" id="scarica-gpx" aria-describedby="suggerimento-gpx">Scarica GPX</button>
+            <span class="suggerimento-bolla" id="suggerimento-gpx" role="tooltip">Con il file GPX segui il percorso con il GPS anche senza rete,
+              in un'app di mappe offline come OsmAnd o Organic Maps (scarica prima la mappa della zona, con il Wi-Fi).</span>
+          </span>
         </div>
-        <!-- Il GPX si apre nelle app di mappe offline: seguono il percorso e mostrano dove sei con il GPS, anche senza rete -->
-        <p class="muto nota-gpx">Con il file GPX puoi seguire il percorso con il GPS anche senza rete: aprilo in un'app di mappe offline
-          come OsmAnd o Organic Maps (scarica prima la mappa della zona, a casa con il Wi-Fi).</p>
         <p class="errore" id="errore-gpx" hidden></p>
       </form>
     </section>

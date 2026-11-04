@@ -7,7 +7,6 @@ import { discesaDellaTraccia } from "./navigazione-calcoli.js";
 // Pagina Mappe: le uscite che hanno una mappa (ha_mappa arriva da GET /api/viaggi).
 // La mappa si disegna nel form dell'uscita, in «Percorso e coordinate».
 const lista = document.querySelector("#lista");
-const riepilogo = document.querySelector("#riepilogo");
 
 const num = (n) => Number(n).toLocaleString("it-IT", { useGrouping: "always" });
 
@@ -32,10 +31,10 @@ function rigaMappa(v) {
 
 try {
   const conMappa = (await api("/api/viaggi")).filter((v) => v.ha_mappa);
-  riepilogo.innerHTML = `<strong>${conMappa.length} ${conMappa.length === 1 ? "mappa" : "mappe"}</strong>`;
+  // 4/11 (Asiha): niente più «5 mappe» sotto il titolo
   lista.innerHTML = conMappa.length
     ? htmlGruppi(gruppiPerData(conMappa), rigaMappa)
-    : `<p class="vuoto">Nessuna mappa ancora. Apri un viaggio in <a href="/viaggi.html">Viaggi</a> e premi «Disegna la mappa».</p>`;
+    : `<p class="vuoto">Ancora nessuna mappa.</p>`;
 } catch (err) {
   lista.innerHTML = `<p class="errore">${esc(err.message)}</p>`;
 }

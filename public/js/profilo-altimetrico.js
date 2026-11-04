@@ -7,6 +7,7 @@
 //  Disegnato a mano in SVG (niente librerie). Le posizioni sono ATTRIBUTI dell'SVG, non style="": la CSP è contenta.
 // =====================================================================
 import { preparaTraccia, aggancia } from "./navigazione-calcoli.js";
+import { AVVISI } from "./avvisi-percorso.js"; // 4/11: quali avvisi sono "gravi" (rosso) e quali "attenzione" (senape)
 
 const ALTO = 170;                                  // altezza del disegno in pixel
 const SOPRA = 22, SOTTO = 22;                      // spazio per le scritte sopra e sotto
@@ -30,7 +31,7 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     const quote = linea.map((p, i) => p[2] ?? quotaVicina(linea, i));
     // le tappe (le tue puntine) sul profilo: dove cadono lungo la linea
     const tappeM = (traccia.tappe ?? []).map(([lat, lon]) => aggancia(prep, [lat, lon]).metri_fatti);
-    dati = { prep, quote, tappeM, min: Math.min(...quote), max: Math.max(...quote) };
+    dati = { prep, quote, tappeM, min: Math.min(...quote), max: Math.max(...quote), avvisi: traccia.avvisi_percorso?.avvisi ?? [] };
     scalaKm = kmCampo > 0 && prep.totale > 0 ? (kmCampo * 1000) / prep.totale : 1;
     sezione.hidden = false;
     disegna();
@@ -52,6 +53,16 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
       return `<circle cx="${x(m).toFixed(1)}" cy="${y(q).toFixed(1)}" r="5" class="profilo-tappa"/>`;
     }).join("");
     const iMax = quote.indexOf(max);
+    // 4/11 (Asiha): i tratti difficili anche sul profilo, con gli stessi colori della mappa (senape e rosso).
+    // Come sulla mappa: frazioni del percorso → metri → i punti del profilo in quel pezzo, più i due estremi
+    const tratti = [...dati.avvisi].reverse().flatMap((a) => a.tratti.map(([da, fino]) => {
+      const mDa = da * prep.totale, mA = fino * prep.totale;
+      const dentro = prep.cum.map((m, i) => [m, i]).filter(([m]) => m > mDa && m < mA)
+        .map(([m, i]) => `${x(m).toFixed(1)},${y(quote[i]).toFixed(1)}`);
+      const estremo = (m) => `${x(m).toFixed(1)},${y(quotaA(m)).toFixed(1)}`;
+      const classe = AVVISI[a.tipo]?.grave ? "grave" : "attenzione";
+      return `<path d="M${[estremo(mDa), ...dentro, estremo(mA)].join(" L")}" class="profilo-tratto ${classe}"/>`;
+    })).join("");
     contenitore.innerHTML = `
       <svg width="${largo}" height="${ALTO}" viewBox="0 0 ${largo} ${ALTO}" role="img"
            aria-label="Profilo altimetrico: da ${nf(quote[0])} m a ${nf(quote.at(-1))} m, punto più alto ${nf(max)} m, ${kmTesto(prep.totale * scalaKm)}">
@@ -65,6 +76,7 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
         <line x1="0" y1="${y(min)}" x2="${largo}" y2="${y(min)}" class="profilo-griglia"/>
         <path d="M0,${base} L${punti.join(" L")} L${largo},${base} Z" fill="url(#profilo-colore)"/>
         <path d="M${punti.join(" L")}" class="profilo-linea"/>
+        ${tratti}
         ${pallini}
         <text x="4" y="${y(max) - 6}" class="profilo-testo">${nf(max)} m</text>
         <text x="4" y="${ALTO - 6}" class="profilo-testo">${nf(min)} m</text>

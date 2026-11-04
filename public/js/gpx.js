@@ -20,13 +20,16 @@ export function creaGpx(nome, traccia) {
   const partenza = linea[0];
   const arrivo = linea.at(-1);
   const anello = Math.abs(partenza[0] - arrivo[0]) < 0.0005 && Math.abs(partenza[1] - arrivo[1]) < 0.0005;
-  const segnaposti = [punto("wpt", partenza, `<name>${anello ? "Partenza e arrivo" : "Partenza"}</name>`)];
+  // 4/11: se hai dato un nome al punto (traccia.nomi, uno per tappa), il segnaposto usa quello
+  const nomi = traccia.nomi ?? [];
+  const nomeDi = (i, diSerie) => `<name>${escXml(nomi[i] || diSerie)}</name>`;
+  const segnaposti = [punto("wpt", partenza, nomeDi(0, anello ? "Partenza e arrivo" : "Partenza"))];
   // Collaudo 3/11, C11: anche le tappe hanno il loro punto con il nome ("Tappa 1", "Tappa 2"…), come nell'elenco della mappa.
   // Nelle tappe salvate la prima è la partenza e (senza anello) l'ultima è l'arrivo: quelle le abbiamo già
   const tappe = traccia.tappe ?? [];
   const intermedie = anello ? tappe.slice(1) : tappe.slice(1, -1);
-  intermedie.forEach(([lat, lon], i) => segnaposti.push(punto("wpt", [lat, lon], `<name>Tappa ${i + 1}</name>`)));
-  if (!anello) segnaposti.push(punto("wpt", arrivo, "<name>Arrivo</name>"));
+  intermedie.forEach(([lat, lon], i) => segnaposti.push(punto("wpt", [lat, lon], nomeDi(i + 1, `Tappa ${i + 1}`))));
+  if (!anello) segnaposti.push(punto("wpt", arrivo, nomeDi(tappe.length - 1, "Arrivo")));
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Loadout" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>${escXml(nome)}</name></metadata>

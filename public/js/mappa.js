@@ -10,6 +10,7 @@ import { attivaNavigazione } from "./navigazione.js";
 import { attivaProfilo } from "./profilo-altimetrico.js";
 import { discesaDellaTraccia } from "./navigazione-calcoli.js";
 import { mostraAvvisi } from "./avvisi-percorso.js";
+import { attivaCampoLuogo } from "./campo-luogo.js"; // 4/11: la tappa si cerca anche per nome
 
 // Pagina della mappa di un'uscita: mappa.html?id=7 (come la pagina dello zaino).
 // Qui si disegna il percorso; «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate
@@ -29,7 +30,7 @@ const disegno = attivaDisegnoMappa({
   conteggio: document.querySelector("#conteggio-punti"),
   stato: document.querySelector("#stato-mappa"),
   interruttoreAnello: document.querySelector("#anello"),
-  bottoneTogli: document.querySelector("#togli-punto"),
+  bottoneIndietro: document.querySelector("#indietro"),       // 4/11: ↶ annulla l'ultima modifica
   bottoneRicomincia: document.querySelector("#ricomincia"),
   legenda: document.querySelector(".legenda"),          // B11
   notaAnello: document.querySelector("#nota-anello"),   // B11
@@ -165,7 +166,10 @@ form.addEventListener("submit", async (e) => {
     else delete dati.traccia.discesa_m;
   }
   // A3 + B1: coordinate e quote controllate prima di salvare, con il messaggio sotto il campo sbagliato
-  if (mostraErroriCampi(form, [...erroriCoordinate(dati), ...erroriQuote(dati)])) return;
+  const errori = [...erroriCoordinate(dati), ...erroriQuote(dati)];
+  // 4/11: quote e coordinate stanno nella tendina: se l'errore è lì dentro, la apriamo, se no non si vedrebbe
+  if (errori.length) document.querySelector("#altri-dati").open = true;
+  if (mostraErroriCampi(form, errori)) return;
   const bottone = document.querySelector("#salva-percorso");
   bottone.disabled = true;
   try {
@@ -228,11 +232,23 @@ tappaLat.addEventListener("paste", (e) => {
   [tappaLat.value, tappaLon.value] = numeri;
 });
 const confermaTappa = document.querySelector("#conferma-tappa");
+// 4/11 (Asiha): la tappa per nome («rifugio Vajolet»): la stessa ricerca del form del viaggio (OpenStreetMap, /api/luoghi).
+// Scegliendo un luogo la tappa entra subito, con quel nome nell'elenco dei punti
+const tappaLuogo = document.querySelector("#tappa-luogo");
+attivaCampoLuogo({
+  campoTesto: tappaLuogo, lista: document.querySelector("#suggerimenti-tappa"),
+  campoLat: tappaLat, campoLon: tappaLon,
+  suScelta: (lat, lon) => {
+    erroreTappa.hidden = true;
+    // l'etichetta di OpenStreetMap può essere lunga ("Rifugio Vajolet, Pozza di Fassa, …"): teniamo il primo pezzo
+    provaTappa(lat, lon, false, tappaLuogo.value.split(",")[0].trim().slice(0, 60));
+  },
+});
 let inAttesa = null; // B4: la tappa lontana in attesa di conferma: [lat, lon]
-function provaTappa(lat, lon, confermata = false) {
-  const esito = disegno.aggiungiTappa(lat, lon, confermata);
+function provaTappa(lat, lon, confermata = false, nome = "") {
+  const esito = disegno.aggiungiTappa(lat, lon, confermata, nome);
   if (esito?.domanda) { // B4: troppo lontana → chiediamo conferma
-    inAttesa = [lat, lon];
+    inAttesa = [lat, lon, nome];
     document.querySelector("#testo-conferma-tappa").textContent = esito.domanda;
     confermaTappa.hidden = false;
     document.querySelector("#conferma-si").focus();
@@ -244,6 +260,7 @@ function provaTappa(lat, lon, confermata = false) {
   if (esito) { erroreTappa.textContent = esito; return; }
   tappaLat.value = "";
   tappaLon.value = "";
+  tappaLuogo.value = "";
 }
 document.querySelector("#aggiungi-tappa").addEventListener("click", () => {
   const lat = tappaLat.value === "" ? NaN : Number(tappaLat.value);
@@ -256,7 +273,9 @@ document.querySelector("#aggiungi-tappa").addEventListener("click", () => {
   if (problema) { erroreTappa.textContent = problema; return; }
   provaTappa(lat, lon);
 });
-document.querySelector("#conferma-si").addEventListener("click", () => { if (inAttesa) provaTappa(...inAttesa, true); });
+document.querySelector("#conferma-si").addEventListener("click", () => {
+  if (inAttesa) { const [lat, lon, nome] = inAttesa; provaTappa(lat, lon, true, nome); }
+});
 document.querySelector("#conferma-no").addEventListener("click", () => {
   confermaTappa.hidden = true;
   inAttesa = null;

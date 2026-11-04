@@ -82,7 +82,7 @@ async function caricaKit() {
     elKitOk.innerHTML = gia.map(rigaKit).join("");
     // In alto, sotto il peso: la riga ocra se manca qualcosa
     elAvvisoKit.hidden = daFare === 0;
-    elTestoAvvisoKit.textContent = `Per questo viaggio ${daFare === 1 ? "manca 1 cosa" : `mancano ${daFare} cose`} nello zaino`;
+    elTestoAvvisoKit.textContent = daFare === 1 ? "Manca 1 cosa" : `Mancano ${daFare} cose`; // 4/11: più corto
     kitCard.hidden = false;
   } catch {
     kitCard.hidden = true;  // il riquadro è un aiuto in più: se non arriva, la pagina funziona lo stesso
@@ -97,8 +97,8 @@ document.querySelector("#vedi-kit").addEventListener("click", () => {
 });
 
 function rigaKit(v) {
-  // Zaini: se lo zaino è troppo piccolo per il viaggio, l'avviso va sotto il perché
-  const perche = `<span class="kit-perche">${esc(v.perche)}${v.avviso ? `<br><strong>${esc(v.avviso)}</strong>` : ""}</span>`;
+  // 4/11 (Asiha): niente più il perché sotto ogni voce. Resta solo l'avviso dello zaino troppo piccolo
+  const perche = v.avviso ? `<span class="kit-perche"><strong>${esc(v.avviso)}</strong></span>` : "";
   if (v.stato === "nello_zaino") {
     return `<li class="kit-ok"><span class="kit-segno" aria-hidden="true">✓</span>
       <span class="kit-testo"><strong>${esc(v.voce)}</strong> · nello zaino: ${esc(v.oggetto.nome)}${perche}</span></li>`;
@@ -172,21 +172,20 @@ function renderZaino() {
   elAvvisoPeso.hidden = !troppoPesante;
   barraRiempimento.classList.toggle("oltre-soglia", Boolean(troppoPesante));
   if (troppoPesante) {
-    const uscita = viaggio.pernotto === "nessuno" ? "per un viaggio in giornata" : "con il pernotto";
-    elTestoAvvisoPeso.textContent = `Lo zaino, senza acqua e cibo, pesa ${num2(p.peso_totale_kg)} kg: più del ${avviso.soglia_percento}% ` +
-      `del tuo peso corporeo, il limite consigliato ${uscita} (${num2(avviso.soglia_kg)} kg). Valuta cosa togliere.` +
-      piuPesanti(zaino.oggetti); // punto 1: solo qui, quando serve davvero (scelta di Asiha)
+    // 4/11 (Asiha): frase corta e senza l'elenco dei più pesanti
+    elTestoAvvisoPeso.textContent = `Lo zaino è troppo pesante: ${num2(p.peso_totale_kg)} kg. Il limite è ${num2(avviso.soglia_kg)} kg, valuta cosa togliere.`;
   }
   mostraPesoCorporeo(avviso, p.peso_totale_kg);
   // B4: solo un promemoria, fuori dai calcoli: l'acqua pesa 1 kg al litro
   const litri = viaggio?.consigli.acqua_persona_giorno;
   elPesoAcqua.hidden = litri == null;
-  if (litri != null) elPesoAcqua.textContent = `Più circa ${num(litri)} kg d'acqua a persona al giorno (1 litro = 1 kg), meno se lungo il percorso trovi fontane o rifugi.`;
+  // 4/11 (Asiha): «Più 2 L d'acqua», con i litri a persona al giorno della scheda del viaggio
+  if (litri != null) elPesoAcqua.textContent = `Più ${num(litri)} L d'acqua`;
 
   // Checklist: un gruppo per categoria, con il peso del gruppo (come nell'armadio)
   if (zaino.oggetti.length === 0) {
     elChecklist.innerHTML = "";
-    mostraInfo("Lo zaino è vuoto: premi «Genera zaino» per riempirlo con indispensabili e preferiti, oppure aggiungi un oggetto dall'armadio.");
+    mostraInfo("Zaino vuoto: premi «Genera zaino»."); // 4/11: più corto
   } else {
     elMessaggioZaino.hidden = true;
     elChecklist.innerHTML = Object.keys(CATEGORIE).map((categoria) => {
@@ -256,24 +255,12 @@ bottoneGenera.addEventListener("click", async () => {
   nascondiErrore();
   bottoneGenera.disabled = true;
   try {
-    const { aggiunti, base, dal_kit: dalKit, esclusi, esclusi_rifugio: esclusiRifugio, doppioni, zaino: zainoScelto } =
-      await api(`/api/viaggi/${id}/genera`, { method: "POST" });
+    const { aggiunti, zaino: zainoScelto } = await api(`/api/viaggi/${id}/genera`, { method: "POST" });
     await caricaZaino();
-    // C2: entrano solo gli oggetti adatti all'attività del viaggio (o adatti a tutte)
-    // B5: cosa ha fatto "Genera", in parole
-    const parti = [];
-    // B3: "Aggiunto 1 oggetto: 1 indispensabile o preferito." / "Aggiunti 5 oggetti: 3 indispensabili o preferiti e 2 …"
-    if (base > 0) parti.push(plurale(base, "indispensabile o preferito", "indispensabili o preferiti"));
-    if (dalKit > 0) parti.push(`${dalKit} dall'attrezzatura per questo viaggio`);
-    if (zainoScelto?.aggiunto) parti.push(`lo zaino «${zainoScelto.nome}»${zainoScelto.litri ? ` (${zainoScelto.litri} L)` : ""}`);
-    let messaggio = aggiunti > 0
-      ? `${aggiunti === 1 ? "Aggiunto" : "Aggiunti"} ${plurale(aggiunti, "oggetto", "oggetti")}: ${parti.join(" e ")}.`
-      : "Nessun oggetto nuovo: lo zaino ha già tutto quello che posso aggiungere dal tuo armadio.";
-    if (esclusi > 0) messaggio += ` In giornata ho lasciato fuori ${esclusi === 1 ? "un oggetto" : `${esclusi} oggetti`} che servono solo per dormire fuori.`;
-    // B5 (revisione UX 2)
-    if (esclusiRifugio > 0) messaggio += " In rifugio, con le temperature previste, ho lasciato fuori il sacco a pelo: basta il sacco lenzuolo.";
-    if (doppioni > 0) messaggio += ` Ho lasciato fuori ${doppioni === 1 ? "un oggetto doppio" : `${doppioni} oggetti doppi`} (ne basta uno per tipo, es. una frontale).`;
-    if (zainoScelto?.avviso) messaggio += ` ${zainoScelto.avviso}.`; // zaino troppo piccolo per questo viaggio (A1: anche quello che c'era già)
+    // 4/11 (Asiha): solo un segno che ha funzionato (sul telefono la lista è sotto, fuori dallo schermo).
+    // Niente più spiegazioni (indispensabili, esclusi per la giornata, doppioni…): resta l'avviso dello zaino troppo piccolo
+    let messaggio = aggiunti > 0 ? `${aggiunti === 1 ? "Aggiunto" : "Aggiunti"} ${plurale(aggiunti, "oggetto", "oggetti")}.` : "Niente da aggiungere.";
+    if (zainoScelto?.avviso) messaggio += ` ${zainoScelto.avviso}.`; // A1: zaino troppo piccolo per questo viaggio
     mostraInfo(messaggio);
   } catch (err) {
     mostraErrore(err.message);
@@ -518,15 +505,6 @@ function mostraPesoCorporeo(avviso, pesoZainoKg) {
   elPesoCorporeo.textContent = `Il ${percento}% del tuo peso · limite ${uscita} ${avviso.soglia_percento}% (${num2(avviso.soglia_kg)} kg)`;
 }
 
-// I 3 oggetti più pesanti DENTRO lo zaino (quelli addosso non contano), per capire cosa togliere:
-// « I più pesanti: tenda 1,8 kg · sacco a pelo 1,1 kg · fornello 400 g.»
-function piuPesanti(oggetti) {
-  const peso = (g) => (g >= 1000 ? `${(g / 1000).toLocaleString("it-IT", { maximumFractionDigits: 1 })} kg` : `${num(g)} g`);
-  const tre = oggetti.filter((o) => !o.indossato && o.peso_riga_g > 0)
-    .sort((a, b) => b.peso_riga_g - a.peso_riga_g)
-    .slice(0, 3);
-  return tre.length ? ` I più pesanti: ${tre.map((o) => `${o.nome} ${peso(o.peso_riga_g)}`).join(" · ")}.` : "";
-}
 
 // =====================================================================
 //  Punto 5 (3/11): «cosa non hai usato»
