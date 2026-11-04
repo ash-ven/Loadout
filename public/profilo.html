@@ -82,12 +82,15 @@
         </label>
         <div class="riga2">
           <label>Contatto di emergenza
-            <input name="emergenza_nome" type="text" maxlength="100" placeholder="Nome">
+            <input name="emergenza_nome" type="text" maxlength="100" placeholder="Nome" aria-describedby="nota-emergenza">
           </label>
           <label>Telefono
-            <input name="emergenza_telefono" type="tel" maxlength="30" placeholder="+39 333 1234567" autocomplete="off">
+            <input name="emergenza_telefono" type="tel" maxlength="30" placeholder="+39 333 1234567" autocomplete="off" aria-describedby="nota-emergenza">
           </label>
         </div>
+        <!-- 4/11 (privacy, punto 4): nome e telefono sono dati di un'altra persona, che non ha letto la nostra informativa:
+             lo diciamo dove si scrivono. aria-describedby (sui due campi) fa leggere la nota anche ai lettori di schermo -->
+        <p class="muto nota-emergenza" id="nota-emergenza">Avvisa questa persona che hai messo qui il suo numero. Lo vedi solo tu, nel riquadro Emergenza dei tuoi viaggi.</p>
         <!-- C9: le note mediche sono dati sulla salute (GDPR, art. 9): servono un consenso esplicito e una casella spuntata da te -->
         <label class="check consenso"><input type="checkbox" id="consenso-salute">
           <span>Acconsento a salvare le note mediche (dati sulla salute), visibili solo nel riquadro Emergenza dei miei viaggi.</span></label>

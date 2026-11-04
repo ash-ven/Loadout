@@ -1030,3 +1030,4 @@ button.etichetta-piu { min-height: 44px; }
 .nota-privacy { margin: 0; text-align: center; }
 .nota-registrazione { margin: 0; font-size: .88rem; }
 .nota-consenso { margin: -.25rem 0 0; font-size: .88rem; }
+.nota-emergenza { margin: .35rem 0 0; font-size: .88rem; }   /* 4/11: sotto i campi del contatto di emergenza */
