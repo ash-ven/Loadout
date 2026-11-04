@@ -913,3 +913,39 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
    Larghi 32 px ma alti 44 (il tocco resta comodo); il margine negativo annulla lo spazio tra un pulsante e l'altro */
 .elenco-tappe button.tappa-bottone { width: 32px; border-radius: var(--raggio-piccolo); }
 .elenco-tappe button.tappa-bottone + button.tappa-bottone { margin-left: -.5rem; }
+
+/* =====================================================================
+   CONSIGLI (4/11, Asiha: «deve essere un piacere leggerlo»). Due parti ben separate, testo arioso,
+   righe non troppo lunghe (si legge meglio sotto i 65 caratteri), il numero da ricordare in evidenza.
+   ===================================================================== */
+.salta-consigli { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.salta-consigli a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border-radius: 999px;
+                    background: rgba(246, 239, 223, .14); color: #f6efdf; font-weight: 600; text-decoration: none; }
+.salta-consigli a:hover, .salta-consigli a:focus-visible { background: rgba(246, 239, 223, .26); }
+.pagina-consigli { display: grid; gap: 2.5rem; }
+.sezione-consigli { scroll-margin-top: 5rem; }
+.sezione-testa { margin-bottom: 1rem; }
+.sezione-testa h2 { margin: 0; font-family: var(--font-titoli); font-size: 1.75rem; color: var(--muschio); }
+.sezione-testa p { margin: .25rem 0 0; }
+.pagina-consigli .consigli-griglia { grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+.pagina-consigli .consiglio-generale { gap: .75rem; line-height: 1.6; }
+.pagina-consigli .consiglio-generale h3 { margin: 0; flex: 1; font-family: var(--font-titoli); font-size: 1.3rem; color: var(--muschio); }
+.pagina-consigli .consiglio-generale p, .pagina-consigli .consiglio-generale li { max-width: 62ch; }
+.pagina-consigli .consiglio-generale ul { gap: .45rem; padding-left: 1.1rem; }
+.pagina-consigli .consiglio-generale li::marker { color: var(--senape); }
+.dato-consiglio { margin: 0; font-family: var(--font-titoli); font-size: 1.9rem; font-weight: 600; line-height: 1.2; color: var(--muschio); }
+.dato-consiglio span { font-family: var(--font); font-size: .9rem; font-weight: 500; color: var(--terra); }
+.dato-consiglio a { color: inherit; text-decoration: none; }
+.pagina-consigli .nota-consigli { margin: 1rem 0 0; }
+/* Il glossario: una scheda per parola, due colonne sul computer */
+.glossario.sezione-consigli { margin-top: 0; }
+/* a cascata come l'armadio: le schede corte non lasciano buchi (si legge in giù, prima la colonna di sinistra) */
+.voci-glossario { columns: 22rem 2; column-gap: 1rem; margin: 0; }
+.voce-glossario { margin: 0 0 1rem; break-inside: avoid; line-height: 1.6; scroll-margin-top: 5rem; }
+.voce-glossario dt { margin: 0 0 .35rem; font-family: var(--font-titoli); font-size: 1.15rem; font-weight: 600; color: var(--muschio); scroll-margin-top: 5rem; }
+.voce-glossario dd { margin: 0; max-width: 62ch; }
+/* Arrivando da un «?»: si accende tutta la scheda della parola (non più solo il titolo) */
+.voce-glossario:has(dt:target) { background: var(--ocra-chiaro); border-color: var(--senape); }
+.glossario .voce-glossario dt:target, .glossario .voce-glossario dt:target + dd { background: none; padding: 0; }
+.colore-senape { color: var(--senape-scuro); }
+.colore-rosso { color: var(--rosso); }

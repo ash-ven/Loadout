@@ -60,7 +60,7 @@ const HTML_FINESTRA = `
         <div class="campo-luogo">
           <label>Da dove parti
             <input name="luogo_partenza" type="text" maxlength="200" required autocomplete="off"
-                   placeholder="es. Malga Prato, Rifugio Vajolet, Cortina…"
+                   placeholder="es. Malga Prato"
                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggerimenti-partenza">
           </label>
           <ul class="suggerimenti" id="suggerimenti-partenza" role="listbox" hidden></ul>
@@ -95,7 +95,7 @@ const HTML_FINESTRA = `
 
         <details>
           <summary>Percorso (facoltativo)</summary>
-          <p class="muto nota-mappa" hidden>Questi dati vengono dalla mappa: per cambiarli <a class="link-mappa" href="#">apri la mappa</a>.</p>
+          <!-- 4/11 (Asiha): la nota «Questi dati vengono dalla mappa…» resta una volta sola, sopra le coordinate -->
           <!-- Il percorso si può anche disegnare sulla mappa, nella pagina della mappa dell'uscita (dalla scheda: «Disegna la mappa») -->
           <div class="riga2">
             <label>Lunghezza (km)

@@ -33,129 +33,178 @@
   <section class="testata">
     <div class="testata-dentro">
       <h1>Consigli</h1>
-      <p>Le regole di base per preparare lo zaino e partire tranquilli. Più in basso, <a href="#glossario">le parole della scheda</a>.</p>
+      <p>Le regole di base per partire tranquilli e le parole che trovi nella scheda del viaggio.</p>
+      <!-- 4/11: le due parti della pagina, a un tocco -->
+      <nav class="salta-consigli" aria-label="Parti della pagina">
+        <a href="#prima-di-partire">Prima di partire</a>
+        <a href="#glossario">Le parole della scheda</a>
+      </nav>
     </div>
   </section>
 
-  <main class="container">
-    <!-- Consigli generali, uguali per tutti: testo fisso, nessuna chiamata all'API -->
-    <div class="consigli-griglia">
-      <section class="card consiglio-generale">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/zaino.svg" alt="" width="22" height="22"></span>
-          <h2>Il peso dello zaino</h2>
-        </div>
-        <p>Una regola diffusa: lo zaino non dovrebbe superare il 10% del tuo peso corporeo nei viaggi in giornata e il 20% quando dormi fuori. Loadout ti avvisa quando li superi.</p>
-        <ul>
-          <li>Gli oggetti più pesanti vanno vicino alla schiena, all'altezza delle scapole.</li>
-          <li>Quello che usi spesso (acqua, snack, mappa) sta nelle tasche esterne.</li>
-        </ul>
-      </section>
-      <section class="card consiglio-generale">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/avviso-peso.svg" alt="" width="22" height="22"></span>
-          <h2>Peso base e acqua</h2>
-        </div>
-        <p>Il <strong>peso base</strong> è lo zaino senza acqua, cibo e combustibile: è la parte che decidi tu con l'attrezzatura. Loadout conta solo quello, perché acqua e cibo cambiano a ogni viaggio e calano mentre cammini.</p>
-        <ul>
-          <li>L'acqua pesa 1 kg al litro: 2,5 litri sono 2,5 kg in più sulle spalle.</li>
-          <li>Rifornisciti a fontane e rifugi invece di portare tutto da casa: è il modo più semplice per alleggerire.</li>
-          <li>Per alleggerire davvero, lavora sul peso base: ogni etto risparmiato lo porti per tutto il giorno.</li>
-        </ul>
-      </section>
-      <section class="card consiglio-generale">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/acqua.svg" alt="" width="22" height="22"></span>
-          <h2>Acqua</h2>
-        </div>
-        <p>Come riferimento, circa mezzo litro per ogni ora di cammino: di più con il caldo e in salita.</p>
-        <ul>
-          <li>Bevi a piccoli sorsi e spesso, senza aspettare di avere sete.</li>
-          <li>Informati su fontane e rifugi lungo il percorso: non serve portare tutto da casa.</li>
-        </ul>
-      </section>
-      <section class="card consiglio-generale">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/armadio.svg" alt="" width="22" height="22"></span>
-          <h2>Vestirsi a strati</h2>
-        </div>
-        <p>Tre strati che si aggiungono o si tolgono durante la giornata:</p>
-        <ul>
-          <li>uno strato a contatto con la pelle che lascia traspirare (meglio evitare il cotone);</li>
-          <li>uno strato caldo, come un pile;</li>
-          <li>un guscio contro vento e pioggia.</li>
-        </ul>
-        <p>Salendo la temperatura scende: circa 6 °C in meno ogni 1.000 metri di dislivello.</p>
-      </section>
-      <section class="card consiglio-generale">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/sole.svg" alt="" width="22" height="22"></span>
-          <h2>Orari e luce</h2>
-        </div>
-        <ul>
-          <li>Parti presto, soprattutto d'estate, quando nel pomeriggio arrivano spesso i temporali.</li>
-          <li>Calcola i tempi per rientrare prima del tramonto: nella scheda di ogni viaggio trovi l'orario.</li>
-          <li>La frontale va sempre nello zaino, anche per i viaggi brevi.</li>
-        </ul>
-      </section>
-      <section class="card consiglio-generale">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/meteo.svg" alt="" width="22" height="22"></span>
-          <h2>Meteo</h2>
-        </div>
-        <ul>
-          <li>Controlla le previsioni la sera prima e di nuovo la mattina della partenza.</li>
-          <li>In montagna il tempo cambia in fretta: tornare indietro è una scelta, non una sconfitta.</li>
-        </ul>
-      </section>
-      <section class="card consiglio-generale">
-        <div class="scorciatoia-testa">
-          <span class="cerchio-icona"><img src="/img/icone/consigli.svg" alt="" width="22" height="22"></span>
-          <h2>Sicurezza</h2>
-        </div>
-        <ul>
-          <li>Lascia detto a qualcuno dove vai e a che ora pensi di rientrare.</li>
-          <li>Telefono carico e, se puoi, una batteria esterna.</li>
-          <li>Nello zaino: kit di pronto soccorso e telo termico.</li>
-          <li>In caso di emergenza chiama il <strong>112</strong>, il numero unico di emergenza.</li>
-        </ul>
-      </section>
-    </div>
-    <!-- C10 (revisione UX 2): il glossario. Ogni termine ha un id (g-…): dalla scheda del viaggio i «?» portano qui -->
-    <section class="card glossario" id="glossario">
-      <div class="scorciatoia-testa">
-        <span class="cerchio-icona"><img src="/img/icone/consigli.svg" alt="" width="22" height="22"></span>
-        <h2>Le parole della scheda</h2>
+  <main class="container pagina-consigli">
+    <!-- 4/11 (Asiha): pagina riscritta per essere piacevole da leggere. Due parti ben separate:
+         «Prima di partire» (i consigli, con il numero da ricordare in evidenza) e «Le parole della scheda» (il glossario,
+         in ordine alfabetico). Gli id g-… delle voci restano gli stessi: ci portano i «?» della scheda del viaggio.
+         Testo fisso, nessuna chiamata all'API -->
+    <section class="sezione-consigli" id="prima-di-partire" aria-labelledby="titolo-prima">
+      <div class="sezione-testa">
+        <h2 id="titolo-prima">Prima di partire</h2>
+        <p class="muto">Sei regole semplici, da ricordare a ogni uscita.</p>
       </div>
-      <dl>
-        <dt id="g-dislivello">Dislivello positivo e negativo (D+ e D−)</dt>
-        <dd>Quanti metri sali (D+) e quanti scendi (D−) in tutto, sommando ogni salita e ogni discesa del percorso. «D+ 650 m» vuol dire 650 metri di salita, anche se la vetta è solo 400 m più in alto della partenza. In un giro ad anello D+ e D− sono uguali; le discese lunghe stancano le ginocchia: i bastoncini aiutano.</dd>
-        <dt id="g-avvisi">Avvisi sul percorso</dt>
-        <dd>I tratti da guardare con attenzione, presi dai sentieri di OpenStreetMap. Sulla mappa sono in senape quelli impegnativi (T3, fondo roccioso: si cammina su roccia o pietraie; traccia poco visibile: il sentiero si perde facilmente, servono mappa e orientamento) e in rosso quelli difficili (T4 e oltre, tratti attrezzati come le vie ferrate). I dati non sono completi: la percentuale dice per quanta parte del percorso la difficoltà è segnata. Nessun avviso non vuol dire nessun pericolo: informati sempre (rifugi, guide alpine, sezioni CAI).</dd>
-        <dt id="g-sac">Scala SAC (T1–T6)</dt>
-        <dd>La difficoltà dei sentieri usata su OpenStreetMap, da T1 (sentiero facile) a T6 (alpinismo difficile). T3 è un sentiero di montagna impegnativo, simile all'EE del CAI: tratti ripidi, qualche passaggio su roccia, serve passo sicuro. T4 è terreno alpino dove a volte servono le mani, vicino all'EEA. T5 e T6 sono alpinismo: servono esperienza e attrezzatura.</dd>
-        <dt id="g-quota">Quota massima</dt>
-        <dd>Il punto più alto che raggiungi. Loadout lo usa per il meteo in vetta e per avvisarti di neve e ghiaccio.</dd>
-        <dt id="g-peso-base">Peso base</dt>
-        <dd>Il peso dello zaino senza acqua, cibo e combustibile: la parte che decidi tu con l'attrezzatura.</dd>
-        <dt id="g-percepita">Temperatura percepita</dt>
-        <dd>Il freddo (o il caldo) che senti davvero: con vento e umidità può essere molto diversa dal termometro. Con 2 °C e vento forte puoi percepire −5 °C.</dd>
-        <dt id="g-raffiche">Raffiche</dt>
-        <dd>Le folate più forti del vento, non la sua velocità media. Da 40 km/h serve uno strato antivento; da 62 km/h sulle creste si fatica e si può perdere l'equilibrio; da 88 km/h creste e tratti esposti sono sconsigliati (le stesse soglie degli avvisi della scheda, collaudo C5).</dd>
-        <dt id="g-zero-termico">Zero termico</dt>
-        <dd>La quota sopra cui la temperatura scende sotto zero e l'acqua gela. Se è più bassa della vetta, in alto puoi trovare ghiaccio.</dd>
-        <dt id="g-ora-limite">Ora limite di partenza</dt>
-        <dd>L'ora entro cui partire per arrivare almeno un'ora prima del tramonto, con le ore di cammino che hai indicato. Le soste sono comprese in quell'ora di margine.</dd>
-        <dt id="g-anello">Giro ad anello</dt>
-        <dd>Un percorso che finisce dove è iniziato, senza rifare la stessa strada.</dd>
-        <dt id="g-valanghe">Bollettino valanghe</dt>
-        <dd>Il pericolo di valanghe zona per zona, da 1 (debole) a 5 (molto forte), pubblicato dai servizi regionali e raccolto da AINEVA. Si controlla prima di ogni viaggio su neve.</dd>
-        <dt id="g-artva">ARTVA, pala e sonda</dt>
-        <dd>Il kit di autosoccorso in valanga: l'ARTVA trasmette e cerca il segnale di chi è sepolto, la sonda lo trova, la pala lo libera. Servono tutti e tre, e bisogna saperli usare.</dd>
-      </dl>
+      <div class="consigli-griglia">
+        <article class="card consiglio-generale">
+          <div class="scorciatoia-testa">
+            <span class="cerchio-icona"><img src="/img/icone/zaino.svg" alt="" width="22" height="22"></span>
+            <h3>Il peso dello zaino</h3>
+          </div>
+          <p class="dato-consiglio">10% <span>in giornata</span> · 20% <span>se dormi fuori</span></p>
+          <p>Lo zaino non dovrebbe pesare più di così, rispetto al tuo peso corporeo. Loadout conta il <strong>peso base</strong>:
+            lo zaino senza acqua, cibo e combustibile, cioè la parte che decidi tu con l'attrezzatura.</p>
+          <ul>
+            <li>Gli oggetti più pesanti vicino alla schiena, all'altezza delle scapole.</li>
+            <li>Quello che usi spesso (acqua, snack, mappa) nelle tasche esterne.</li>
+            <li>Per alleggerire davvero, lavora sul peso base: ogni etto risparmiato lo porti per tutto il giorno.</li>
+          </ul>
+        </article>
+
+        <article class="card consiglio-generale">
+          <div class="scorciatoia-testa">
+            <span class="cerchio-icona"><img src="/img/icone/acqua.svg" alt="" width="22" height="22"></span>
+            <h3>Acqua</h3>
+          </div>
+          <p class="dato-consiglio">½ litro <span>per ogni ora di cammino</span></p>
+          <p>Di più con il caldo e in salita.</p>
+          <ul>
+            <li>Bevi a piccoli sorsi e spesso, senza aspettare di avere sete.</li>
+            <li>L'acqua pesa 1 kg al litro: 2,5 litri sono 2,5 kg in più sulle spalle.</li>
+            <li>Informati su fontane e rifugi lungo il percorso: rifornirti lì è il modo più semplice per alleggerire.</li>
+          </ul>
+        </article>
+
+        <article class="card consiglio-generale">
+          <div class="scorciatoia-testa">
+            <span class="cerchio-icona"><img src="/img/icone/categorie/abbigliamento.svg" alt="" width="22" height="22"></span>
+            <h3>Vestirsi a strati</h3>
+          </div>
+          <p class="dato-consiglio">3 strati <span>da aggiungere o togliere</span></p>
+          <ul>
+            <li>A contatto con la pelle, uno strato che lascia traspirare (meglio evitare il cotone).</li>
+            <li>Sopra, uno strato caldo, come un pile.</li>
+            <li>Fuori, un guscio contro vento e pioggia.</li>
+          </ul>
+          <p class="muto">Salendo fa più freddo: circa 6 °C in meno ogni 1.000 metri.</p>
+        </article>
+
+        <article class="card consiglio-generale">
+          <div class="scorciatoia-testa">
+            <span class="cerchio-icona"><img src="/img/icone/sole.svg" alt="" width="22" height="22"></span>
+            <h3>Orari e luce</h3>
+          </div>
+          <ul>
+            <li>Parti presto, soprattutto d'estate: nel pomeriggio arrivano spesso i temporali.</li>
+            <li>Calcola i tempi per rientrare prima del tramonto: nella scheda di ogni viaggio trovi l'orario.</li>
+            <li>La frontale va sempre nello zaino, anche per i viaggi brevi.</li>
+          </ul>
+        </article>
+
+        <article class="card consiglio-generale">
+          <div class="scorciatoia-testa">
+            <span class="cerchio-icona"><img src="/img/icone/meteo.svg" alt="" width="22" height="22"></span>
+            <h3>Meteo</h3>
+          </div>
+          <ul>
+            <li>Controlla le previsioni la sera prima e di nuovo la mattina della partenza.</li>
+            <li>In montagna il tempo cambia in fretta: tornare indietro è una scelta, non una sconfitta.</li>
+          </ul>
+        </article>
+
+        <article class="card consiglio-generale">
+          <div class="scorciatoia-testa">
+            <span class="cerchio-icona"><img src="/img/icone/categorie/sicurezza.svg" alt="" width="22" height="22"></span>
+            <h3>Sicurezza</h3>
+          </div>
+          <p class="dato-consiglio"><a href="tel:112">112</a> <span>il numero unico di emergenza</span></p>
+          <ul>
+            <li>Lascia detto a qualcuno dove vai e a che ora pensi di rientrare.</li>
+            <li>Telefono carico e, se puoi, una batteria esterna.</li>
+            <li>Nello zaino: kit di pronto soccorso e telo termico.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="muto nota-consigli">Sono consigli generali: quelli calcolati per il tuo viaggio sono nella sua scheda.</p>
     </section>
 
-    <p class="muto nota-consigli">Questi sono consigli generali. Nella scheda di ogni viaggio trovi quelli calcolati sul tuo viaggio: acqua, alba e tramonto, meteo e percorso.</p>
+    <section class="sezione-consigli glossario" id="glossario" aria-labelledby="titolo-glossario">
+      <div class="sezione-testa">
+        <h2 id="titolo-glossario">Le parole della scheda</h2>
+        <p class="muto">In ordine alfabetico. I «?» della scheda del viaggio portano qui.</p>
+      </div>
+      <dl class="voci-glossario">
+        <div class="card voce-glossario">
+          <dt id="g-anello">Anello</dt>
+          <dd>Un percorso che finisce dove è iniziato, senza rifare la stessa strada.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-artva">ARTVA, pala e sonda</dt>
+          <dd>Il kit di autosoccorso in valanga: l'ARTVA trasmette e cerca il segnale di chi è sepolto, la sonda lo trova,
+            la pala lo libera. Servono tutti e tre, e bisogna saperli usare.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-avvisi">Avvisi sul percorso</dt>
+          <dd>I tratti da guardare con attenzione, presi dai sentieri di OpenStreetMap.
+            In <strong class="colore-senape">senape</strong> quelli impegnativi: T3, fondo roccioso (si cammina su roccia o pietraie),
+            traccia poco visibile (il sentiero si perde facilmente: servono mappa e orientamento).
+            In <strong class="colore-rosso">rosso</strong> quelli difficili: T4 e oltre, tratti attrezzati come le vie ferrate.
+            I dati non sono completi: la percentuale dice per quanta parte del percorso la difficoltà è segnata.
+            Nessun avviso non vuol dire nessun pericolo: informati sempre (rifugi, guide alpine, sezioni CAI).</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-valanghe">Bollettino valanghe</dt>
+          <dd>Il pericolo di valanghe zona per zona, da 1 (debole) a 5 (molto forte), pubblicato dai servizi regionali
+            e raccolto da AINEVA. Si controlla prima di ogni viaggio su neve.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-dislivello">Dislivello positivo e negativo (D+ e D−)</dt>
+          <dd>Quanti metri sali (D+) e quanti scendi (D−) in tutto, sommando ogni salita e ogni discesa.
+            «D+ 650 m» vuol dire 650 metri di salita, anche se la vetta è solo 400 m sopra la partenza.
+            In un anello D+ e D− sono uguali. Le discese lunghe stancano le ginocchia: i bastoncini aiutano.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-ora-limite">Ora limite di partenza</dt>
+          <dd>L'ora entro cui partire per arrivare almeno un'ora prima del tramonto, con le ore di cammino che hai indicato.
+            Le soste stanno in quell'ora di margine.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-peso-base">Peso base</dt>
+          <dd>Il peso dello zaino senza acqua, cibo e combustibile: la parte che decidi tu con l'attrezzatura.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-quota">Quota massima</dt>
+          <dd>Il punto più alto che raggiungi. Loadout la usa per il meteo in vetta e per avvisarti di neve e ghiaccio.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-raffiche">Raffiche</dt>
+          <dd>Le folate più forti del vento, non la sua velocità media. Da 40 km/h serve uno strato antivento;
+            da 62 km/h sulle creste si fatica e si può perdere l'equilibrio; da 88 km/h creste e tratti esposti sono sconsigliati.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-sac">Scala SAC (T1–T6)</dt>
+          <dd>La difficoltà dei sentieri usata su OpenStreetMap, da T1 (sentiero facile) a T6 (alpinismo difficile).
+            T3 è un sentiero di montagna impegnativo, simile all'EE del CAI: tratti ripidi, qualche passaggio su roccia, serve passo sicuro.
+            T4 è terreno alpino dove a volte servono le mani, vicino all'EEA. T5 e T6 sono alpinismo: servono esperienza e attrezzatura.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-percepita">Temperatura percepita</dt>
+          <dd>Il freddo (o il caldo) che senti davvero: con vento e umidità può essere molto diversa dal termometro.
+            Con 2 °C e vento forte puoi percepire −5 °C.</dd>
+        </div>
+        <div class="card voce-glossario">
+          <dt id="g-zero-termico">Zero termico</dt>
+          <dd>La quota sopra cui la temperatura scende sotto zero e l'acqua gela. Se è più bassa della vetta, in alto puoi trovare ghiaccio.</dd>
+        </div>
+      </dl>
+    </section>
   </main>
 
   <script type="module" src="/js/menu.js"></script>
