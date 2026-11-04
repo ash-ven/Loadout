@@ -144,3 +144,18 @@ test("kit: i tratti difficili del percorso aggiungono bastoncini, casco e set da
   assert.ok(voci({ attrezzato: true }).includes("set-ferrata"));
   assert.ok(!voci({}).includes("bastoncini")); // escursione normale: niente
 });
+
+// 4/11 (UX con un amico di Asiha): «Telino termico» nello zaino, ma il kit diceva «Telo termico · ti manca»
+test("sinonimi allargati: diminutivi, plurali e scritture con trattini e apostrofi", () => {
+  assert.ok(corrisponde({ nome: "Telino termico" }, voce("telo-termico")));
+  assert.ok(corrisponde({ nome: "Telo d'emergenza oro/argento" }, voce("telo-termico")));
+  assert.ok(corrisponde({ nome: "Coperta d’emergenza" }, voce("telo-termico")));      // apostrofo "curvo"
+  assert.ok(corrisponde({ nome: "Borraccina 0,5 L" }, voce("borraccia")));
+  assert.ok(corrisponde({ nome: "Frontalino Petzl" }, voce("frontale")));
+  assert.ok(corrisponde({ nome: "K-Way" }, voce("guscio")));
+  assert.ok(corrisponde({ nome: "Sacco-lenzuolo seta" }, voce("sacco-lenzuolo", { pernotto: "rifugio" })));
+  assert.ok(corrisponde({ nome: "Guantini touch" }, voce("guanti", { freddo: true })));
+  // e quello che NON deve corrispondere
+  assert.ok(!corrisponde({ nome: "Nastro isolante" }, voce("materassino", { pernotto: "tenda" })));
+  assert.ok(!corrisponde({ nome: "Maglietta tecnica" }, voce("telo-termico")));
+});

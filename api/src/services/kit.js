@@ -14,21 +14,27 @@ import * as consigli from "./consigli.js";
 const VOCI = [
   // --- sempre ---
   { id: "frontale", nome: "Frontale", categoria: "elettronica",
-    parole: ["frontale", "lampada frontale", "lampada da testa", "pila frontale", "torcia", "torcia frontale", "headlamp", "tikka", "tikkina"],
+    parole: ["frontale", "lampada frontale", "lampada da testa", "pila frontale", "torcia", "torcia frontale", "headlamp", "tikka", "tikkina",
+             "frontalino", "frontalina", "luce frontale", "lampadina frontale", "led frontale", "lampada a led"],
     quando: () => true, perche: "sempre: se fai tardi" },
   { id: "pronto-soccorso", nome: "Kit di pronto soccorso", categoria: "sicurezza",
-    parole: ["pronto soccorso", "primo soccorso", "kit di soccorso", "kit soccorso", "kit medico", "medikit", "first aid", "cerotti"],
+    parole: ["pronto soccorso", "primo soccorso", "kit di soccorso", "kit soccorso", "kit medico", "medikit", "first aid", "cerotti",
+             "medicazioni", "garze", "trousse medica", "astuccio medico"],
     quando: () => true, perche: "sempre" },
   { id: "guscio", nome: "Giacca impermeabile (guscio)", categoria: "abbigliamento",
     parole: ["guscio", "giacca impermeabile", "impermeabile", "antipioggia", "giacca da pioggia", "mantella", "poncho",
-             "k-way", "kway", "gore-tex", "goretex", "hardshell", "rain jacket"],
+             "k-way", "kway", "gore-tex", "goretex", "hardshell", "rain jacket",
+             "impermeabilino", "giacchetta impermeabile", "giubbotto impermeabile", "giacca anti pioggia", "mantellina"],
     quando: () => true, perche: "sempre: in montagna il tempo cambia in fretta" },
   { id: "borraccia", nome: "Borraccia", categoria: "attrezzatura",
-    parole: ["borraccia", "borracce", "thermos", "termos", "sacca idrica", "camelbak", "bottiglia", "water bottle"],
+    parole: ["borraccia", "borracce", "thermos", "termos", "sacca idrica", "camelbak", "bottiglia", "water bottle",
+             "borraccina", "bottiglietta", "soft flask", "softflask", "flask", "sacca d'acqua", "nalgene"],
     quando: () => true, perche: "sempre" },
   { id: "telo-termico", nome: "Telo termico", categoria: "sicurezza",
     parole: ["telo termico", "coperta termica", "coperta isotermica", "telo isotermico", "telo di sopravvivenza",
-             "coperta di sopravvivenza", "metallina", "emergency blanket"],
+             "coperta di sopravvivenza", "metallina", "emergency blanket",
+             "telino", "telo d'emergenza", "telo di emergenza", "coperta d'emergenza", "coperta di emergenza",
+             "telo oro", "coperta oro", "foglio termico", "space blanket", "survival blanket"],
     quando: () => true, perche: "sempre: pesa pochi grammi e in emergenza ti tiene caldo" },
   // --- ferrata e alpinismo ---
   { id: "casco", nome: "Casco", categoria: "sicurezza", parole: ["casco", "caschetto", "elmetto", "helmet"],
@@ -38,7 +44,8 @@ const VOCI = [
     parole: ["imbrago", "imbraco", "imbracatura", "imbragatura", "harness"],
     quando: (u) => u.attivita === "ferrata" || u.attivita === "alpinismo", perche: "per la ferrata e l'alpinismo" },
   { id: "set-ferrata", nome: "Set da ferrata (longe con dissipatore)", categoria: "sicurezza",
-    parole: ["set da ferrata", "set ferrata", "kit da ferrata", "kit ferrata", "longe", "longes", "dissipatore", "via ferrata set"],
+    parole: ["set da ferrata", "set ferrata", "kit da ferrata", "kit ferrata", "longe", "longes", "dissipatore", "via ferrata set",
+             "set via ferrata", "kit via ferrata", "cordini da ferrata"],
     quando: (u) => u.attivita === "ferrata" || u.attrezzato, perche: "per la ferrata e i tratti attrezzati (catene, cavi)" },
   { id: "ramponi", nome: "Ramponi", categoria: "attrezzatura", parole: ["ramponi", "rampone", "crampons"],
     quando: (u) => u.attivita === "alpinismo", perche: "per l'alpinismo" },
@@ -56,50 +63,53 @@ const VOCI = [
   { id: "sonda", nome: "Sonda", categoria: "sicurezza", parole: ["sonda", "sonda da valanga"],
     quando: (u) => u.attivita === "ciaspolata", perche: "per la ciaspolata (autosoccorso in valanga)" },
   { id: "bastoncini", nome: "Bastoncini", categoria: "attrezzatura",
-    parole: ["bastoncini", "bastoncino", "bastoni da trekking", "bastoncini da trekking", "trekking poles", "poles"],
+    parole: ["bastoncini", "bastoncino", "bastoni da trekking", "bastoncini da trekking", "trekking poles", "poles",
+             "bastoni", "bastone", "racchette da trekking"],
     quando: (u) => u.attivita === "ciaspolata" || u.impegnativo, perche: "per la ciaspolata e i tratti impegnativi (T3 e oltre)" },
   // --- pernotto (in giornata NON servono: vedi SOLO_PERNOTTO) ---
   { id: "sacco-lenzuolo", nome: "Sacco lenzuolo", categoria: "attrezzatura",
-    parole: ["sacco lenzuolo", "sacco lenzuola", "sacco letto", "sacco da rifugio", "lenzuolo da rifugio", "sacco a pelo leggero", "liner"],
+    parole: ["sacco lenzuolo", "sacco lenzuola", "sacco letto", "sacco da rifugio", "lenzuolo da rifugio", "sacco a pelo leggero", "liner",
+             "saccolenzuolo", "sacco lenzuolo da rifugio", "lenzuolino"],
     quando: (u) => u.pernotto === "rifugio", perche: "per il rifugio (obbligatorio nei rifugi CAI)" },
-  { id: "sacco-a-pelo", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag"],
+  { id: "sacco-a-pelo", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag", "sacco pelo", "sacchi a pelo"],
     quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },
   // B5 (revisione UX 2, scelta di Asiha): in rifugio il sacco a pelo serve solo se la notte è fredda (sotto 10 °C)
-  { id: "sacco-a-pelo-rifugio", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag"],
+  { id: "sacco-a-pelo-rifugio", nome: "Sacco a pelo", categoria: "attrezzatura", parole: ["sacco a pelo", "saccoapelo", "sleeping bag", "sacco pelo", "sacchi a pelo"],
     quando: (u) => u.pernotto === "rifugio" && u.notte_fredda, perche: "per il rifugio: minima prevista sotto 10 °C" },
   { id: "materassino", nome: "Materassino", categoria: "attrezzatura",
-    parole: ["materassino", "materasso", "stuoino", "tappetino", "sleeping pad"],
+    parole: ["materassino", "materasso", "stuoino", "tappetino", "sleeping pad", "materassini", "stuoia", "autogonfiante"],
     quando: (u) => u.pernotto === "tenda" || u.pernotto === "bivacco", perche: "per dormire in tenda o in bivacco" },
-  { id: "tenda", nome: "Tenda", categoria: "attrezzatura", parole: ["tenda", "tendina"],
+  { id: "tenda", nome: "Tenda", categoria: "attrezzatura", parole: ["tenda", "tendina", "tende", "canadese"],
     quando: (u) => u.pernotto === "tenda", perche: "per dormire in tenda" },
   // --- cucina ---
-  { id: "fornello", nome: "Fornello", categoria: "cucina", parole: ["fornello", "fornellino", "jetboil", "bruciatore", "stove"],
+  { id: "fornello", nome: "Fornello", categoria: "cucina", parole: ["fornello", "fornellino", "jetboil", "bruciatore", "stove", "fornelletto", "fornelli", "jet boil"],
     quando: (u) => u.serve_cucina, perche: "serve la cucina" },
   { id: "pentolino", nome: "Pentolino", categoria: "cucina",
-    parole: ["pentolino", "pentola", "gavetta", "set pentole", "kit cucina"],
+    parole: ["pentolino", "pentola", "gavetta", "set pentole", "kit cucina", "pentolini", "padellino", "gavettino", "pentolame"],
     quando: (u) => u.serve_cucina, perche: "serve la cucina" },
-  { id: "gas", nome: "Cartuccia del gas", categoria: "cucina", parole: ["cartuccia", "bombola", "bomboletta", "gas", "combustibile"],
+  { id: "gas", nome: "Cartuccia del gas", categoria: "cucina", parole: ["cartuccia", "bombola", "bomboletta", "gas", "combustibile", "cartucce", "bombolette"],
     quando: (u) => u.serve_cucina, perche: "serve la cucina" },
   // --- freddo e neve ---
   { id: "berretto", nome: "Berretto", categoria: "abbigliamento",
-    parole: ["berretto", "cappello di lana", "cuffia", "beanie", "papalina"],
+    parole: ["berretto", "cappello di lana", "cuffia", "beanie", "papalina", "berrettino", "cappello in pile", "cappello invernale"],
     quando: (u) => u.freddo, perche: "farà freddo" },
-  { id: "guanti", nome: "Guanti", categoria: "abbigliamento", parole: ["guanti", "guanto", "muffole", "manopole", "gloves"],
+  { id: "guanti", nome: "Guanti", categoria: "abbigliamento", parole: ["guanti", "guanto", "muffole", "manopole", "gloves", "guantini", "sottoguanti"],
     quando: (u) => u.freddo, perche: "farà freddo" },
   { id: "strato-caldo", nome: "Strato caldo (pile o piumino)", categoria: "abbigliamento",
-    parole: ["pile", "piumino", "piumino leggero", "giacca termica", "maglia termica", "giacca imbottita", "primaloft", "fleece"],
+    parole: ["pile", "piumino", "piumino leggero", "giacca termica", "maglia termica", "giacca imbottita", "primaloft", "fleece",
+             "piumini", "piumino smanicato", "giacca in pile", "felpa", "maglione"],
     quando: (u) => u.freddo, perche: "farà freddo" },
-  { id: "scaldacollo", nome: "Scaldacollo", categoria: "abbigliamento", parole: ["scaldacollo", "buff", "sciarpa", "passamontagna"],
+  { id: "scaldacollo", nome: "Scaldacollo", categoria: "abbigliamento", parole: ["scaldacollo", "buff", "sciarpa", "passamontagna", "tubolare", "fascia collo"],
     quando: (u) => u.freddo, perche: "farà freddo (e c'è vento in quota)" },
   // Per neve e ghiaccio sui sentieri vanno bene i ramponcini, ma anche i ramponi (più pesanti):
   // se ci sono tutti e due, migliorOggetto sceglie il più leggero
   { id: "ramponcini", nome: "Ramponcini (o ramponi)", categoria: "attrezzatura",
-    parole: ["ramponcini", "catenelle", "microspikes", "ramponi", "rampone", "crampons"],
+    parole: ["ramponcini", "catenelle", "microspikes", "ramponi", "rampone", "crampons", "ramponcino", "catenine", "microramponi"],
     quando: (u) => u.neve && u.attivita !== "alpinismo", perche: "potresti trovare neve o ghiaccio" },
   // --- sole: in quota, sulla neve o con il caldo ---
-  { id: "occhiali-sole", nome: "Occhiali da sole", categoria: "abbigliamento", parole: ["occhiali da sole", "occhiali", "occhiale", "sunglasses"],
+  { id: "occhiali-sole", nome: "Occhiali da sole", categoria: "abbigliamento", parole: ["occhiali da sole", "occhiali", "occhiale", "sunglasses", "occhialini", "occhiali da ghiacciaio"],
     quando: (u) => u.neve || u.quota_alta || u.caldo, perche: "in quota e sulla neve il sole riflette e abbaglia" },
-  { id: "crema-solare", nome: "Crema solare", categoria: "igiene", parole: ["crema solare", "protezione solare", "latte solare", "spf", "sunscreen"],
+  { id: "crema-solare", nome: "Crema solare", categoria: "igiene", parole: ["crema solare", "protezione solare", "latte solare", "spf", "sunscreen", "crema protettiva", "stick solare", "solare viso"],
     quando: (u) => u.neve || u.quota_alta || u.caldo, perche: "in quota il sole scotta di più" },
   { id: "cappello-sole", nome: "Cappello da sole", categoria: "abbigliamento", parole: ["cappello", "cappellino", "visiera"],
     quando: (u) => u.caldo, perche: "farà caldo" },
@@ -111,9 +121,12 @@ const SOLO_PERNOTTO = VOCI.filter((v) => ["sacco-lenzuolo", "sacco-a-pelo", "mat
 
 // --- Funzioni "pure" (niente database né rete): le provano i test in test/kit.test.js ---
 
-// "Imbracatura Petzl Corax" → "imbracatura petzl corax" (minuscole, senza accenti)
+// "Imbracatura Petzl Corax" → "imbracatura petzl corax" (minuscole, senza accenti).
+// 4/11: trattini, apostrofi e trattini bassi diventano spazi (e più spazi uno solo), così «Sacco-lenzuolo»,
+// «telo d'emergenza» e «K-Way» si riconoscono comunque siano scritti, nel nome dell'oggetto e nelle parole chiave
 function normalizza(testo) {
-  return String(testo ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return String(testo ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[-_'’]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 // L'oggetto corrisponde alla voce? Una parola chiave deve comparire all'INIZIO di una parola
