@@ -149,6 +149,9 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 /* Zaino animato sopra il modulo di login/registrazione */
 .benvenuto { display: block; margin: 0 auto .5rem; }
 .centrato h1 { text-align: center; }
+/* 4/11 (Asiha): nelle schede di accesso (Accedi, Registrati, password…) le righe sotto il form sono centrate,
+   come il titolo; e anche la riga dell'informativa dentro il form di registrazione */
+.centrato > p.muto, .centrato .nota-registrazione { text-align: center; }
 /* Indicatore di caricamento della scheda viaggio */
 .caricamento { display: grid; justify-items: center; gap: .5rem; padding: 4rem 1rem; }
 
