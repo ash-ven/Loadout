@@ -33,6 +33,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   let avvisi = null;           // gli avvisi sul percorso (tratti T3, attrezzati…) dell'ultimo calcolo, o null
   let ultimiDati = null;       // i valori (km, D+, quote…) dell'ultimo percorso disegnato: servono all'annullamento
   let datiSalvati = null;      // gli stessi valori del percorso salvato nel viaggio (per annullare fino a com'era all'apertura)
+  let luoghi = { partenza: "", arrivo: "" }; // 4/11: i nomi dei luoghi del viaggio («Malga Prato»): diventano i nomi dei punti
   const storia = [];           // 4/11: le «fotografie» del percorso PRIMA di ogni modifica, per ↶ indietro (al massimo 30)
   let profilo = "sentieri";    // come chiedere il percorso: "sentieri" (preferisce i sentieri) o "breve" (il più corto)
   let attivita = null;         // l'attività del viaggio: con ferrata e alpinismo il server accetta i passaggi difficili
@@ -85,7 +86,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     else if (leggiCoppia(coordinate.latPartenza, coordinate.lonPartenza)) {
       // C'è già la partenza (dal luogo o scritta a mano): la puntina nasce lì, e tu tocchi subito le tappe.
       // Non è una modifica da salvare (niente suModifica): la mostriamo e basta.
-      punti.push(nuovaPuntina(leggiCoppia(coordinate.latPartenza, coordinate.lonPartenza)));
+      punti.push(nuovaPuntina(leggiCoppia(coordinate.latPartenza, coordinate.lonPartenza), luoghi.partenza));
       punti[0].setIcon(icona(tipoDelPunto(0, 1, interruttoreAnello.checked)));
       aggiornaConteggio();
       scriviStato(stato, "Ora tocca la prossima tappa (o l'arrivo).");
@@ -101,6 +102,14 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     puntina.on("dragstart", () => ricorda());  // la fotografia PRIMA dello spostamento (le parentesi: niente evento come argomento)
     puntina.on("dragend", ridisegna);  // spostare un punto ricalcola il percorso
     return puntina;
+  }
+
+  // 4/11 (Asiha): il nome non si scrive solo a mano. Se il viaggio ha i luoghi (scelti nel form, es. «Malga Prato»),
+  // la partenza e l'arrivo li prendono come nome; le tappe cercate per nome hanno già il loro (aggiungiTappa)
+  function nomeDalLuogo(i, quanti) {
+    if (i === 0) return luoghi.partenza;
+    if (i === quanti - 1 && !interruttoreAnello.checked) return luoghi.arrivo;
+    return "";
   }
 
   // =====================================================================
@@ -179,13 +188,13 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       punto = leggiCoppia(coordinate.latPartenza, coordinate.lonPartenza);
       if (!punto) return;
       if (punti.length) punti[0].setLatLng(punto);
-      else punti.push(nuovaPuntina(punto));
+      else punti.push(nuovaPuntina(punto, luoghi.partenza));
     } else {
       if (interruttoreAnello.checked) return;              // con l'anello l'arrivo è la partenza
       punto = leggiCoppia(coordinate.latArrivo, coordinate.lonArrivo);
       if (!punto || punti.length === 0) return;             // senza partenza l'arrivo non si mette
       if (punti.length >= 2) punti.at(-1).setLatLng(punto);
-      else punti.push(nuovaPuntina(punto));
+      else punti.push(nuovaPuntina(punto, luoghi.arrivo));
     }
     if (!mappa.getBounds().contains(punto)) mappa.panTo(punto); // se il punto è fuori dalla vista, la mappa ci va
     ricorda(prima);
@@ -413,7 +422,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
   function ripristina(traccia) {
     daRipristinare = null;
     interruttoreAnello.checked = eUnAnello(traccia);
-    punti = traccia.tappe.map(([lat, lon], i) => nuovaPuntina(L.latLng(lat, lon), traccia.nomi?.[i] ?? ""));
+    punti = traccia.tappe.map(([lat, lon], i) => nuovaPuntina(L.latLng(lat, lon), traccia.nomi?.[i] ?? nomeDalLuogo(i, traccia.tappe.length)));
     punti.forEach((p, i) => p.setIcon(icona(tipoDelPunto(i, punti.length, interruttoreAnello.checked))));
     linea = traccia.linea;
     discesa = traccia.discesa_m ?? discesaRiaperta; // le mappe vecchie non l'hanno salvato: lo ricava la pagina
@@ -596,6 +605,7 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
       this.svuota();
       attivita = viaggio.attivita ?? null;
       discesaRiaperta = discesaDellaTraccia(viaggio.traccia, viaggio.dislivello_m);
+      luoghi = { partenza: viaggio.luogo_partenza ?? "", arrivo: viaggio.luogo_arrivo ?? "" };
       datiSalvati = { distanza_km: viaggio.distanza_km ?? null, dislivello_m: viaggio.dislivello_m ?? null,
                       quota_min_m: viaggio.quota_min_m ?? null, quota_max_m: viaggio.quota_max_m ?? null,
                       discesa_m: viaggio.traccia?.discesa_m ?? discesaRiaperta };

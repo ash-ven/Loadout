@@ -907,3 +907,9 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 .profilo-tratto { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .profilo-tratto.attenzione { stroke: var(--senape); }
 .profilo-tratto.grave { stroke: var(--rosso); }
+.altro-oggetto summary { cursor: pointer; font-weight: 600; color: var(--muschio); min-height: 44px; display: flex; align-items: center; }
+.altro-oggetto[open] { display: grid; gap: .9rem; }
+/* 4/11 (Asiha): ↑ ↓ ✕ più stretti e vicini tra loro, così resta spazio per le coordinate.
+   Larghi 32 px ma alti 44 (il tocco resta comodo); il margine negativo annulla lo spazio tra un pulsante e l'altro */
+.elenco-tappe button.tappa-bottone { width: 32px; border-radius: var(--raggio-piccolo); }
+.elenco-tappe button.tappa-bottone + button.tappa-bottone { margin-left: -.5rem; }

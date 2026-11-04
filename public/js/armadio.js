@@ -8,7 +8,6 @@ import { segno, iconaSegno } from "./segni.js";
 const lista = document.querySelector("#lista");
 const q = document.querySelector("#q");
 const segmenti = document.querySelector(".segmenti");
-const riepilogo = document.querySelector("#riepilogo");
 const form = document.querySelector("#form-oggetto");
 const campi = form.elements; // i campi del form, per nome: campi.nome, campi.peso_g, ...
 const titoloForm = document.querySelector("#titolo-form");
@@ -67,10 +66,7 @@ const pesoTuttiIPezzi = (o) => o.peso_g * (o.quantita_posseduta ?? 1);
 
 // --- Render: dallo stato all'HTML ---
 function render() {
-  // Riepilogo nella testata: "23 oggetti, 9,60 kg in tutto". B2: sempre l'armadio INTERO, anche mentre cerchi
-  const pesoTotale = tutti.reduce((somma, o) => somma + pesoTuttiIPezzi(o), 0);
-  const kg = (pesoTotale / 1000).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  riepilogo.innerHTML = `<strong>${tutti.length} ${tutti.length === 1 ? "oggetto" : "oggetti"}</strong>, ${kg} kg in tutto`;
+  // 4/11 (Asiha): tolto il riepilogo «53 oggetti, 42,3 kg in tutto» sotto il titolo
   // Filtro dei segmenti: si applica qui, senza richiamare l'API (i dati li abbiamo già)
   const visibili = oggetti.filter((o) =>
     filtro === "tutti" ? true : filtro === "indispensabili" ? o.is_indispensabile : o.is_preferito
@@ -99,12 +95,12 @@ function render() {
     const cercato = q.value.trim();
     if (cercato && oggetti.length === 0) {
       // La ricerca non ha trovato niente: lo diciamo, e offriamo di cancellarla
-      lista.innerHTML = `<p class="vuoto">Nessun oggetto contiene «${esc(cercato)}» nel nome, nel marchio o nelle note.
+      lista.innerHTML = `<p class="vuoto">Nessun oggetto per «${esc(cercato)}».
         <button type="button" class="btn-piccolo secondario" id="cancella-ricerca">Cancella la ricerca</button>
         <button type="button" class="btn-piccolo" id="aggiungi-cercato">Aggiungi «${esc(cercato)}» all'armadio</button></p>`;
     } else {
       lista.innerHTML = `<p class="vuoto">${
-        oggetti.length === 0 ? "Nessun oggetto qui. Premi + in basso a destra per inserire il primo." : "Nessun oggetto con questo filtro."
+        oggetti.length === 0 ? "Armadio vuoto: premi + per aggiungere." : "Nessun oggetto con questo filtro."
       }</p>`;
     }
     return;
@@ -245,6 +241,7 @@ function riempiForm(o) {
   campi.is_preferito.checked = o.is_preferito;
   campi.codice_etichetta.value = o.codice_etichetta ?? "";
   campi.note.value = o.note ?? "";
+  document.querySelector("#altro-oggetto").open = Boolean(o.caratteristiche || o.note); // la tendina si apre se c'è qualcosa
   titoloForm.textContent = `Modifica: ${o.nome}`;
   bottoneElimina.hidden = false;
   nascondiErrore();
@@ -254,6 +251,7 @@ function riempiForm(o) {
 function svuotaForm() {
   inModifica = null;
   form.reset();
+  document.querySelector("#altro-oggetto").open = false;
   titoloForm.textContent = "Nuovo oggetto";
   bottoneElimina.hidden = true;
   infoForm.hidden = true;
@@ -395,9 +393,7 @@ async function cercaProdotto() {
     if (!finestra.open || campi.codice_etichetta.value.trim() !== codice) return;
 
     if (!p.trovato) {
-      mostraInfo(p.irraggiungibile
-        ? "Non riesco a raggiungere le banche dati dei prodotti (connessione?): completa a mano."
-        : `Codice ${codice}: prodotto non trovato nelle banche dati. Completa nome, categoria e peso a mano.`);
+      mostraInfo(p.irraggiungibile ? "Banche dati non raggiungibili: completa a mano." : "Prodotto non trovato: completa a mano.");
       return;
     }
     const riempiti = [];
@@ -409,10 +405,8 @@ async function cercaProdotto() {
       mostraCampoLitri();
       riempiti.push("categoria");
     }
-    const mancano = ["nome", "peso"].filter((c) => !riempiti.includes(c) && !campi[c === "peso" ? "peso_g" : c].value);
-    mostraInfo(`Trovato su ${p.fonte}: «${p.nome}». `
-      + (riempiti.length ? `Ho compilato: ${riempiti.join(", ")}. Controlla che sia giusto.` : "I campi erano già compilati: non ho cambiato nulla.")
-      + (mancano.length ? ` Manca ancora: ${mancano.join(", ")}.` : ""));
+    // 4/11 (Asiha): più corto
+    mostraInfo(riempiti.length ? `Trovato: ho compilato ${riempiti.join(", ")}. Controlla.` : "Trovato: i campi erano già compilati.");
   } catch (err) {
     mostraInfo(err.message);
   } finally {
@@ -538,8 +532,6 @@ function mostraSalvato(oggetto, eraNuovo) {
     riga.scrollIntoView({ block: "center", behavior: morbido ? "smooth" : "auto" });
     riga.classList.add("appena-salvato"); // l'animazione è nel CSS
     riga.addEventListener("animationend", () => riga.classList.remove("appena-salvato"), { once: true });
-  } else {
-    testo += " (con la ricerca o il filtro di adesso non si vede)";
   }
   avvisoSalvato.textContent = testo;
   avvisoSalvato.hidden = false;

@@ -13,7 +13,6 @@ import { gruppiPerData, htmlGruppi } from "./elenco-uscite.js";
 // =====================================================================
 const daPreparare = document.querySelector("#da-preparare");
 const lista = document.querySelector("#lista");
-const riepilogo = document.querySelector("#riepilogo");
 
 const num2 = (n) => Number(n).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const GIORNI_AVANTI = 7;
@@ -34,8 +33,7 @@ function vocePreparare(v, giorni) {
     </div>`;
   if (v.n_oggetti === 0) {
     return `<div class="preparare-voce">${testa}
-      <p class="preparare-stato"><span class="muto">Lo zaino non è ancora pronto.</span>
-        <a class="btn btn-piccolo" href="/zaino.html?id=${v.id}&genera=1">Genera zaino</a></p>
+      <p class="preparare-stato"><a class="btn btn-piccolo" href="/zaino.html?id=${v.id}&genera=1">Genera zaino</a></p>
     </div>`;
   }
   const percento = Math.round((v.n_inseriti / v.n_oggetti) * 100);
@@ -96,14 +94,12 @@ try {
   // 3. Gli altri zaini (quelli dei prossimi 7 giorni sono già sopra)
   const zaini = viaggi.filter((v) => v.n_oggetti > 0 && !vicini.includes(v));
 
-  const nZaini = viaggi.filter((v) => v.n_oggetti > 0).length;
-  riepilogo.innerHTML = `<strong>${nZaini} ${nZaini === 1 ? "zaino" : "zaini"}</strong>` +
-    (vicini.length ? ` · ${vicini.length} da preparare questa settimana` : "");
+  // 4/11 (Asiha): tolto il riepilogo «8 zaini · 2 da preparare questa settimana» sotto il titolo
 
   const htmlSenza = senzaZaino.length ? htmlGruppi([["Senza zaino", senzaZaino]], rigaSenzaZaino) : "";
   const htmlZaini = htmlGruppi(gruppiPerData(zaini), rigaZaino);
   lista.innerHTML = htmlSenza + htmlZaini ||
-    `<p class="vuoto">Nessun altro zaino. Apri un viaggio in <a href="/viaggi.html">Viaggi</a> e premi «Genera zaino».</p>`;
+    `<p class="vuoto">Nessun altro zaino.</p>`;
 } catch (err) {
   lista.innerHTML = `<p class="errore">${esc(err.message)}</p>`;
 }

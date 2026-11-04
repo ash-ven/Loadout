@@ -33,7 +33,6 @@
   <section class="testata">
     <div class="testata-dentro">
       <h1>Il mio armadio</h1>
-      <p id="riepilogo"></p>
       <div class="testata-azioni">
         <!-- Stretch 2: legge il codice a barre con la fotocamera (finestra "Scansiona l'etichetta" qui sotto) -->
         <button type="button" class="su-scuro" id="scansiona"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10"/></svg> Scansiona etichetta</button>
@@ -65,7 +64,7 @@
           <h2 id="titolo-scanner">Scansiona l'etichetta</h2>
           <button type="button" class="chiudi" id="chiudi-scanner" aria-label="Chiudi"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
         </div>
-        <p class="muto">Inquadra il codice a barre dell'etichetta, ben illuminato: si legge da solo.</p>
+        <p class="muto">Inquadra il codice a barre.</p>
         <!-- Qui la libreria mette il video della fotocamera -->
         <div class="lettore" id="lettore"></div>
         <p class="stato-scanner" id="stato-scanner" role="status"></p>
@@ -151,12 +150,16 @@
         </div>
         <label class="check"><input name="is_indispensabile" type="checkbox"> Indispensabile</label>
         <label class="check"><input name="is_preferito" type="checkbox"> Preferito</label>
-        <label>Caratteristiche tecniche
-          <textarea name="caratteristiche" maxlength="500" rows="2" placeholder="es. Gore-Tex, impermeabile, taglia M"></textarea>
-        </label>
-        <label>Note
-          <textarea name="note" maxlength="1000" rows="3"></textarea>
-        </label>
+        <!-- 4/11 (Asiha): caratteristiche e note in una tendina «Altro» (si apre da sola se l'oggetto le ha già) -->
+        <details class="altro-oggetto" id="altro-oggetto">
+          <summary>Altro</summary>
+          <label>Caratteristiche tecniche
+            <textarea name="caratteristiche" maxlength="500" rows="2" placeholder="es. Gore-Tex, impermeabile, taglia M"></textarea>
+          </label>
+          <label>Note
+            <textarea name="note" maxlength="1000" rows="3"></textarea>
+          </label>
+        </details>
         <p class="errore" id="form-errore" hidden></p>
         <div class="azioni">
           <button type="submit" id="salva">Salva</button>

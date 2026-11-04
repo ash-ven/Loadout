@@ -65,7 +65,7 @@
         <h2><img class="icona" src="/img/icone/profilo.svg" alt="" width="24" height="24">Dati personali</h2>
         <span class="stato-salvato" id="dati-stato" role="status" aria-live="polite"></span>
       </div>
-      <p class="muto">Tutti facoltativi, li vedi solo tu e si salvano da soli. Contatto, note mediche e tessera compaiono nel riquadro Emergenza di ogni viaggio; la sensibilità al freddo adatta i consigli sul vestiario.</p>
+      <p class="muto">Facoltativi, si salvano da soli.</p>
       <form id="form-dati" novalidate>
         <!-- "Esperienza in montagna" tolta (scelta di Asiha): nessuna funzione dell'app la usava (minimizzazione GDPR) -->
         <label>Come senti il freddo
@@ -86,7 +86,7 @@
         </div>
         <!-- C9: le note mediche sono dati sulla salute (GDPR, art. 9): servono un consenso esplicito e una casella spuntata da te -->
         <label class="check consenso"><input type="checkbox" id="consenso-salute">
-          <span>Le note mediche sono dati sulla salute: le salviamo solo se spunti questa casella e le mostriamo solo nel riquadro Emergenza dei tuoi viaggi.</span></label>
+          <span>Acconsento a salvare le note mediche (dati sulla salute), visibili solo nel riquadro Emergenza dei miei viaggi.</span></label>
         <!-- Quando hai dato il consenso (lo registra il server: consenso_salute_il) -->
         <p class="muto data-consenso" id="data-consenso" hidden></p>
         <label>Note mediche per chi ti soccorre
@@ -106,7 +106,7 @@
         <h2><img class="icona" src="/img/icone/avviso-peso.svg" alt="" width="24" height="24">Peso corporeo</h2>
         <span class="stato-salvato" id="peso-stato" role="status" aria-live="polite"></span>
       </div>
-      <p class="muto">Lo zaino, senza acqua e cibo, non dovrebbe superare il 10% del tuo peso nei viaggi in giornata e il 20% quando dormi fuori. Con il peso impostato, Loadout ti avvisa nella scheda di ogni viaggio.</p>
+      <p class="muto">Serve per l'avviso sul peso dello zaino.</p>
       <form id="form-profilo" class="aggiungi" novalidate>
         <label>Peso corporeo (kg)
           <input name="peso_corporeo_kg" type="number" min="20" max="300" step="0.1">
@@ -146,7 +146,7 @@
       </form>
 
       <h3>I tuoi dati</h3>
-      <p class="muto">Tutto quello che Loadout sa di te (profilo, armadio, viaggi e zaini) in un file che puoi conservare o portare altrove.</p>
+      <p class="muto">Profilo, armadio, viaggi e zaini in un file.</p>
       <div class="azioni"><a class="btn secondario" href="/api/auth/me/dati" download>Scarica i miei dati</a></div>
 
       <h3>Elimina l'account</h3>
