@@ -1,7 +1,7 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
-import { plurale, ore, unaSola } from "./testi.js"; // B3: numeri e parole accordati
+import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 import { discesaDellaTraccia } from "./navigazione-calcoli.js"; // D− anche per le mappe salvate prima che esistesse
 import { mostraAvvisi } from "./avvisi-percorso.js";
@@ -25,7 +25,6 @@ const formOre = document.querySelector("#form-ore");
 const elSole = document.querySelector("#sole");
 const elOraLimite = document.querySelector("#ora-limite"); // B2
 const elMeteo = document.querySelector("#meteo");
-const elPercorso = document.querySelector("#percorso");
 const elEmergenza = document.querySelector("#emergenza");
 
 // --- Collegamenti allo zaino e alla mappa dell'uscita (nella testata) ---
@@ -118,18 +117,10 @@ function renderConsigli() {
     elAcquaPersona.innerHTML = `${num(c.acqua_persona_giorno)}&nbsp;L <span>a persona, al giorno</span>`; // solo numeri: niente rischio XSS
     elAcquaPersona.hidden = false;
 
-    // Da cosa dipende il calcolo: un pezzo di frase per ogni fattore usato
-    // C4 (collaudo 3/11): "1 ora … (stimata)", "2 ore … (stimate)"
-    const finale = unaSola(c.ore_cammino_giorno) ? "a" : "e";
-    const fattori = [`${ore(c.ore_cammino_giorno)} di cammino al giorno (${c.fonte_ore === "utente" ? `inserit${finale} da te` : `stimat${finale} dal percorso`})`];
-    if (c.acqua_con_dislivello) fattori.push(`${num(Math.round(v.dislivello_m / v.n_giorni))} m di dislivello positivo al giorno`);
-    if (c.acqua_con_temperatura) fattori.push(`la temperatura prevista (${num(c.meteo.temp_max)} °C)`);
-    if (c.acqua_con_cucina) fattori.push("l'acqua per cucinare");
-
     const persone = `${v.n_persone} ${v.n_persone === 1 ? "persona" : "persone"}`;
     const giorni = `${v.n_giorni} ${v.n_giorni === 1 ? "giorno" : "giorni"}`;
-    elAcqua.textContent = `In tutto ${plurale(c.acqua_litri, "litro", "litri")} per ${persone} e ${giorni}. Calcolata su ${elenco(fattori)}.` +
-      (v.n_giorni > 1 ? " Sui percorsi di più giorni informati su fontane e rifugi per rifornirti." : "");
+    // 4/11 (Asiha): solo il totale, senza la spiegazione del calcolo (ore, dislivello, temperatura, cucina)
+    elAcqua.textContent = `In tutto ${num(c.acqua_litri)} L per ${persone} per ${giorni}.`;
   }
   formOre.elements.ore.value = c.ore_cammino_giorno ?? "";
 
@@ -139,18 +130,8 @@ function renderConsigli() {
     : `Non disponibile: ${c.sole.motivo}.`;
   // B2: l'ora limite di partenza, in evidenza (è il consiglio più utile d'inverno)
   const limite = c.ora_limite_partenza;
-  // B7 (revisione UX 2): se parti dopo il limite, un avviso in cima alla scheda che dice cosa rischi
-  const avvisoTardi = document.querySelector("#avviso-tardi");
-  avvisoTardi.hidden = !limite?.in_ritardo;
-  if (limite?.in_ritardo) {
-    const arrivo = minutiDa(limite.ora_partenza) + Math.round(c.ore_cammino_giorno * 60);
-    const quando = arrivo > minutiDa(c.sole.tramonto) ? "dopo il tramonto" : "a meno di un'ora dal tramonto";
-    const testo = document.querySelector("#testo-avviso-tardi");
-    const titolo = document.createElement("strong");
-    titolo.textContent = "Parti troppo tardi. ";
-    testo.replaceChildren(titolo, `Partendo alle ${orarioBreve(minutiDa(limite.ora_partenza))} arrivi verso le ${orarioBreve(arrivo)}, ` +
-      `${quando} (${c.sole.tramonto}). Anticipa la partenza entro le ${orarioBreve(minutiDa(limite.ora))} o accorcia il giro, e porta la frontale.`);
-  }
+  // 4/11 (Asiha): tolto l'avviso «Parti troppo tardi» in cima alla scheda (era la B7 della revisione UX 2):
+  // il ritardo resta detto solo qui sotto Alba e tramonto, nel riquadro dell'ora limite
   elOraLimite.hidden = !limite;
   if (limite) {
     // tutto dentro uno <span>: .avviso è un flex, e ogni pezzo di testo diventerebbe una "colonna"
@@ -158,7 +139,7 @@ function renderConsigli() {
       ? `<span><strong>Attenzione:</strong> con ${ore(c.ore_cammino_giorno)} di cammino non c'è abbastanza luce
          (alba ${esc(c.sole.alba)}, tramonto ${esc(c.sole.tramonto)}). Valuta di accorciare il percorso o di dividerlo in più giorni.</span>`
       : `<span>Parti <strong>entro le ${esc(limite.ora)}</strong> per arrivare almeno un'ora prima del tramonto
-         (${ore(c.ore_cammino_giorno)} di cammino, soste comprese nel margine) ${aiuto("ora-limite", "ora limite")}.${limite.in_ritardo
+         (${ore(c.ore_cammino_giorno)} di cammino) ${aiuto("ora-limite", "ora limite")}.${limite.in_ritardo
            ? ` <strong>Hai segnato la partenza alle ${esc(limite.ora_partenza)}: è più tardi del limite.</strong>` : ""}</span>`;
   }
 
@@ -217,20 +198,11 @@ function renderConsigli() {
   }
   elMeteo.innerHTML = htmlMeteo;
 
-  // Percorso
-  const parti = [];
-  if (viaggio.luogo_arrivo) parti.push(`arrivo a ${viaggio.luogo_arrivo}`);
-  if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km di sentiero`);
-  if (viaggio.dislivello_m != null) parti.push(`${num(viaggio.dislivello_m)} m di dislivello positivo`);
-  const discesa = discesaDellaTraccia(viaggio.traccia, viaggio.dislivello_m); // D−: dalla mappa (anche quelle salvate prima)
-  if (discesa != null) parti.push(`${num(discesa)} m di dislivello negativo`);
-  // C6 (collaudo 3/11): accanto al dislivello il «?» del glossario. Ora la riga è HTML: il luogo (scritto dall'utente) passa da esc()
-  const conDislivello = viaggio.dislivello_m != null || discesa != null;
-  elPercorso.innerHTML = parti.length
-    ? `${parti.map(esc).join(" · ")}${conDislivello ? ` ${aiuto("dislivello", "dislivello positivo e negativo")}` : ""}`
-    : "Aggiungi km, dislivello e coordinate per avere più consigli.";
+  // Percorso: 4/11 (Asiha) tolta la riga «12,4 km di sentiero · 950 m di dislivello positivo…» (gli stessi numeri
+  // sono nella tessera della mappa). Restano gli avvisi sul percorso; senza avvisi il riquadro Percorso non si vede
   const elAvvisi = document.querySelector("#avvisi-percorso");
   elAvvisi.hidden = !mostraAvvisi(elAvvisi, viaggio.traccia);
+  elAvvisi.closest(".consiglio").hidden = elAvvisi.hidden;
 }
 
 // Ricalcolo dell'acqua con le ore inserite dall'utente (US6 CA1)

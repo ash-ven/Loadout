@@ -148,13 +148,12 @@ if (fatti.length > 0) {
   // Punto 7 (3/11): i riquadrini. Ognuno è { numero, cosa, dettaglio? }; quelli a zero non si mostrano
   const piu = (campo) => fatti.filter((v) => v[campo] != null).reduce((max, v) => (!max || v[campo] > max[campo] ? v : max), null);
   const vetta = piu("quota_max_m");      // il viaggio con la quota più alta
-  const lungo = piu("distanza_km");      // e quello più lungo
   const riquadri = [
     { numero: num(fatti.length), cosa: fatti.length === 1 ? "viaggio fatto" : "viaggi fatti" },
     km > 0 && { numero: num(km), cosa: "km" },
     metri > 0 && { numero: num(metri), cosa: "m di salita (D+)" }, // C7: è solo la salita
     vetta && { numero: `${num(vetta.quota_max_m)} m`, cosa: "la vetta più alta", dettaglio: vetta.nome },
-    lungo && fatti.length > 1 && { numero: `${num(lungo.distanza_km, 1)} km`, cosa: "il viaggio più lungo", dettaglio: lungo.nome },
+    // 4/11 (Asiha): tolto «il viaggio più lungo», i riquadri sono 4 (numero pari: sul telefono due righe da due)
   ].filter(Boolean);
   // createElement + textContent: il nome del viaggio l'ha scritto l'utente, niente innerHTML
   elTotali.replaceChildren(...riquadri.map(({ numero, cosa, dettaglio }) => {

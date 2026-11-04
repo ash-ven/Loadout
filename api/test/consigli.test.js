@@ -10,7 +10,7 @@ test("vestiario: con 10–20 °C e profilo normale bastano gli strati", () => {
 test("vestiario: chi soffre il freddo a 10 °C riceve il pile", () => {
   const consigli = consigliVestiario(10, 20, 0, "alta");
   assert.ok(consigli.includes("Pile o piumino leggero per le ore più fresche"));
-  assert.ok(consigli.includes("Consigli adattati al tuo profilo: soffri il freddo"));
+  assert.ok(!consigli.some((c) => c.startsWith("Consigli adattati"))); // 4/11: la riga di promemoria non c'è più
 });
 
 test("vestiario: chi sente poco il freddo a 6 °C non riceve il pile", () => {

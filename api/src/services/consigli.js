@@ -312,8 +312,7 @@ export function consigliVestiario(tMin, tMax, pioggia, sensibilita = null, vento
   if (pioggia >= 50) consigli.push("Giacca impermeabile e copri-zaino");
   if (ventoKmh != null && ventoKmh >= 30) consigli.push("Giacca antivento: il vento fa sentire più freddo");
   if (consigli.length === 0) consigli.push("Abbigliamento a strati: temperature miti");
-  if (spostamento < 0) consigli.push("Consigli adattati al tuo profilo: soffri il freddo");
-  if (spostamento > 0) consigli.push("Consigli adattati al tuo profilo: senti poco il freddo");
+  // 4/11 (Asiha): niente più la riga «Consigli adattati al tuo profilo…»: i consigli si adattano lo stesso, senza ricordarlo
   return consigli;
 }
 

@@ -7,7 +7,6 @@ import { attivaFormUscita } from "./form-uscita.js";
 // --- Elementi della pagina ---
 const lista = document.querySelector("#lista");
 const segmenti = document.querySelector("#filtri-viaggi"); // con un id: nella pagina ci sono due gruppi di segmenti
-const riepilogo = document.querySelector("#riepilogo");
 const bottoneNuovo = document.querySelector("#apri-nuovo");    // "Nuovo viaggio" nella testata
 
 // --- Stato ---
@@ -36,7 +35,7 @@ async function carica() {
 
 // --- Render: i viaggi divisi in gruppi ---
 function render() {
-  riepilogo.innerHTML = `<strong>${viaggi.length} ${viaggi.length === 1 ? "viaggio" : "viaggi"}</strong>`;
+  // 4/11 (Asiha): niente più «12 viaggi» sotto il titolo: il numero c'è già nel filtro «Tutti · 12»
   segmenti.querySelector('[data-filtro="tutti"]').textContent = `Tutti · ${viaggi.length}`;
 
   const visibili = viaggi.filter((v) =>
@@ -44,7 +43,7 @@ function render() {
   );
   if (visibili.length === 0) {
     lista.innerHTML = `<p class="vuoto">${
-      viaggi.length === 0 ? "Nessun viaggio qui. Premi «Nuovo viaggio» per prepararne uno." : "Nessun viaggio con questo filtro."
+      viaggi.length === 0 ? "Ancora nessun viaggio." : "Nessun viaggio con questo filtro."
     }</p>`;
     return;
   }
