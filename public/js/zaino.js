@@ -22,6 +22,11 @@ const elPesoCorporeo = document.querySelector("#peso-corporeo"); // punto 1: lo 
 const elTestoAvvisoPeso = document.querySelector("#testo-avviso-peso"); // il testo: l'icona accanto resta fissa
 const elMessaggioZaino = document.querySelector("#messaggio-zaino");
 const elChecklist = document.querySelector("#checklist");
+// Punto 5: il riquadro «Com'è andata?». QUI in cima e non vicino al suo codice in fondo al file: il primo caricamento
+// (await caricaZaino() più giù) disegna la pagina PRIMA che il modulo arrivi in fondo, e una const non ancora
+// raggiunta non si può usare ("Cannot access 'elRientro' before initialization", errore del 4/11)
+const elRientro = document.querySelector("#rientro");
+const elRientroElenco = document.querySelector("#rientro-elenco");
 const formAggiungi = document.querySelector("#form-aggiungi");
 const erroreZaino = document.querySelector("#errore-zaino");
 
@@ -537,8 +542,6 @@ function notaNonUsato(o) {
 }
 
 // «Com'è andata?»: solo per i viaggi già fatti (fatto arriva dal server). Una casella per oggetto, spuntata = NON usato.
-const elRientro = document.querySelector("#rientro");
-const elRientroElenco = document.querySelector("#rientro-elenco");
 function renderRientro() {
   elRientro.hidden = !zaino.fatto || zaino.oggetti.length === 0;
   if (elRientro.hidden) return;
