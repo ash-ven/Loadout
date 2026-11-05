@@ -4,6 +4,8 @@
 - Loadout è una web app per escursionisti in cui ognuno registra la propria attrezzatura da montagna (l'armadio), con peso, categoria, marchio e indicazione di cosa è indispensabile o preferito.
 - Per ogni uscita l'utente descrive il viaggio (attività, persone, giorni, pernotto, cucina) e con un click ottiene uno zaino proposto, composto dai suoi oggetti indispensabili e preferiti.
 - Nella pagina del viaggio spunta la checklist, vede aggiornarsi in tempo reale il peso dello zaino e quello già inserito, e consulta i consigli: acqua a persona al giorno, alba e tramonto, meteo, percorso.
+- Disegna il percorso sulla mappa (sui sentieri, con profilo altimetrico, difficoltà dei tratti e navigazione GPS anche senza rete) e si installa sul telefono come un'app.
+- È online su https://loadout-t4ju.onrender.com, con email reali, informativa privacy, termini d'uso e controlli di accessibilità (WCAG 2.2 AA).
 
 ## Come avviare in locale
 
@@ -79,6 +81,9 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
 | `loadout_stretch_zaino_litri.sql` | zaini nell'armadio: categoria `zaini`, capienza `litri`; `fn_genera_zaino` non aggiunge più gli zaini (lo sceglie l'app in base ai litri) |
 | `loadout_stretch_profilo_consenso.sql` | profilo: data del consenso alle note mediche (`consenso_salute_il`, GDPR art. 9), tolto il livello di esperienza |
+| `loadout_stretch_usato.sql` | 3/11: oggetti non usati in un viaggio fatto (`viaggio_oggetto.non_usato`) |
+| `loadout_stretch_diario.sql` | 3/11: diario dei viaggi fatti (nota e voto da 1 a 5) |
+| `loadout_stretch_email.sql` | 4/11: email confermata, cambio password, tabella `token_email` (impronte dei link per email) |
 | `loadout_stretch_senza_note_mediche.sql` | 5/11: tolte le note mediche e il loro consenso (nessun dato sulla salute) |
 | `loadout_stretch_ultimo_accesso.sql` | 5/11: data dell'ultimo accesso e dell'avviso, per cancellare gli account inattivi da 2 anni |
 
@@ -97,9 +102,54 @@ docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_intelligente.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_zaino_litri.sql
 docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_profilo_consenso.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_usato.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_diario.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_email.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_ultimo_accesso.sql
+docker exec loadout-db psql -U loadout -d loadout -f /docker-entrypoint-initdb.d/loadout_stretch_senza_note_mediche.sql
 ```
 
 Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` in `/docker-entrypoint-initdb.d`.
+
+## Loadout online
+
+| Pezzo | Dove | Note |
+| --- | --- | --- |
+| Server (API + pagine) | Render, servizio web `Loadout`, Francoforte, piano Free | si aggiorna da solo a ogni `git push` su `master` (Docker, `./api/Dockerfile`, health check `/api/health`) |
+| Database | Neon, progetto `loadout`, AWS Frankfurt, Postgres 18, piano Free | dal 5/11 (prima: database Free di Render, con scadenza); si addormenta dopo 5 minuti senza richieste |
+| Email | Brevo (API https, 300 email al giorno) | mittente `loadout.noreply@gmail.com` |
+| Mappe e ricerca dei luoghi | MapTiler (piano Free, chiave limitata alle origini dell'app) | logo obbligatorio sulla mappa |
+| Monitoraggio | UptimeRobot, `https://loadout-t4ju.onrender.com/api/health` ogni 5 minuti | email se l'app non risponde; tiene sveglio il server |
+
+Variabili sul servizio web di Render: `DATABASE_URL` (quella di Neon, con `?sslmode=require`), `JWT_SECRET`, `MAPTILER_KEY`,
+`BREVO_API_KEY`, `EMAIL_MITTENTE`, `APP_URL`. Nessun segreto nel repository.
+
+**`/api/health` non tocca il database** (Render lo chiama ogni pochi secondi: se interrogasse Neon, il database non si
+addormenterebbe mai e finirebbe le ore di calcolo gratuite). Per controllare anche il database: `/api/health/db`.
+
+**Migrazioni online.** Le migrazioni nuove non arrivano con il push: si eseguono sul database online dal container locale,
+con l'indirizzo di Neon salvato nel `.env` (riga `NEON_DATABASE_URL`, mai su git):
+
+```powershell
+$neon = (Get-Content .env | Select-String '^NEON_DATABASE_URL=').ToString().Split('=',2)[1]
+docker exec loadout-db psql -v ON_ERROR_STOP=1 -f /docker-entrypoint-initdb.d/<file>.sql $neon
+```
+
+Ordine con il deploy: una colonna **nuova** prima del push (il codice vecchio la ignora), una colonna **tolta** dopo il
+deploy (il codice nuovo non la usa più).
+
+**Backup (una volta a settimana).** Neon è alla versione 18, il container `loadout-db` alla 16: il backup si fa con un
+container usa-e-getta `postgres:18` e finisce in `backups/` (esclusa da git: contiene i dati degli utenti).
+
+```powershell
+docker run --rm -e NEON=$neon -v ${PWD}\backups:/backups postgres:18 sh -c 'pg_dump --no-owner --no-privileges -f /backups/loadout-$(date +%F).sql "$NEON"'
+```
+
+Ripristino su un database vuoto: stesso comando con
+`psql -q -v ON_ERROR_STOP=1 --single-transaction -f /backups/<file>.sql "$NEON"` al posto di `pg_dump …`.
+
+Chi si è registrato:
+`docker exec loadout-db psql $neon -c "SELECT email, nome, created_at::date, email_confermata_il IS NOT NULL AS confermato, ultimo_accesso_il::date FROM utente ORDER BY created_at DESC;"`
 
 ## Utenti di prova
 
@@ -119,7 +169,10 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 
 | Pagina | JavaScript | Cosa fa |
 | --- | --- | --- |
-| `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (dopo la registrazione entra da sola) |
+| `login.html`, `register.html` | `login.js`, `register.js` | accesso e registrazione (4/11: l'account si attiva con il link nell'email; la registrazione risponde sempre uguale, anche se l'email esiste già) |
+| `conferma-email.html`, `password-dimenticata.html`, `nuova-password.html` | stessi nomi `.js` | conferma dell'indirizzo e nuova password, dai link via email |
+| `privacy.html`, `termini.html`, `crediti.html` | `privacy.js` | informativa privacy, termini d'uso, crediti e licenze: pagine pubbliche, con il menu se sei entrata |
+| `offline.html` | — | la pagina che il service worker mostra senza rete per le pagine mai aperte |
 | `index.html` | `index.js` | home (ci si arriva dal logo): saluto, frase casuale (anche "viva" sul prossimo viaggio), «La tua mappa»: cartina sul Satellite con un segnaposto sulla partenza di ogni viaggio fatto, il fumetto porta al viaggio; totali da sempre |
 | `armadio.html` | `armadio.js` | lista per categoria con ricerca e filtri Tutti/Indispensabili/Preferiti, scheda di dettaglio, aggiungi/modifica/elimina in una finestra |
 | `viaggi.html` | `viaggi.js` | viaggi divisi in in arrivo / senza data / già fatti, filtri, finestra "Prepara il tuo cammino" (da `form-uscita.js`, la stessa che nella scheda modifica l'uscita) |
@@ -131,13 +184,13 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
 | `profilo.html` | `profilo.js` | foto, dati personali (username, sensibilità al freddo, contatto di emergenza, tessera CAI), peso corporeo e soglia dello zaino, esci |
 
-Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/elenco-uscite.js` (gruppi per data per Zaino e Mappe), `js/post-it.js` (i campi compilati in automatico dalla mappa o dal luogo, che restano modificabili), `js/mappa-base.js` (sfondi MapTiler, puntine e tracciato, con Leaflet 1.9.4 in `public/vendor`), `js/mappa-disegno.js` (il disegno del percorso nella pagina della mappa). `js/form-uscita.js` (la finestra per creare o modificare un'uscita), `js/errori-campi.js` (errori sotto i campi), `js/controlli.js` (controlli di coordinate e quote), `js/testi.js` (singolare e plurale).
+Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/elenco-uscite.js` (gruppi per data per Zaino e Mappe), `js/post-it.js` (i campi compilati in automatico dalla mappa o dal luogo, che restano modificabili), `js/mappa-base.js` (sfondi MapTiler, puntine e tracciato, con Leaflet 1.9.4 in `public/vendor`), `js/mappa-disegno.js` (il disegno del percorso nella pagina della mappa). `js/form-uscita.js` (la finestra per creare o modificare un'uscita), `js/errori-campi.js` (errori sotto i campi), `js/controlli.js` (controlli di coordinate e quote), `js/testi.js` (singolare e plurale, sigle D+/D− lette a parole), `js/cerca-luoghi.js` + `js/campo-luogo.js` (ricerca dei luoghi con MapTiler, quote da `/api/luoghi/quote`), `js/glossario-finestra.js` (il «?» apre la voce del glossario in una finestrella), `js/avvisi-percorso.js` (difficoltà dei tratti), `js/pwa.js` (service worker e installazione), `js/contatti.js` (indirizzo di assistenza).
 Stile: un solo foglio, `css/style.css`. Immagini: logo, icone e sfondi SVG in `img/`.
 Menu: Armadio · Zaino · Viaggi · Mappe · Profilo. Sul telefono è una barra in basso, con Viaggi al centro (la scarpa senape) e Consigli come icona accanto a "Esci"; sul computer sta nella barra in alto, con Consigli come ultima voce. Alla home si torna dal logo.
 
 ## Stato
 
-Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
+Aggiornato a giovedì 5 novembre. Le sezioni fino a «Venerdì» raccontano la settimana della consegna (26–30 ottobre); «Settimana 3» quello che è venuto dopo.
 
 ### Database
 - [x] PostgreSQL 16 su Docker Compose, schema fornito + migrazioni in `db/initdb/` (vedi tabella sopra)
@@ -162,7 +215,7 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 - [x] 4. Percorsi da fare in futuro (`pianificato`) con filtro nella lista
 - [x] 5. Avviso se lo zaino supera il 10% del peso corporeo in giornata o il 20% con pernotto (sul peso base: senza acqua e cibo)
 - [x] 2. Scansione dell'etichetta con la fotocamera (libreria html5-qrcode 2.3.8 in `public/vendor`: EAN-13/8, UPC, Code 128/39, QR). Se il codice è già nell'armadio apre quell'oggetto, altrimenti il form nuovo con il codice compilato, e il server cerca nome, marchio e peso nelle banche dati gratuite (Open Facts, UPCitemdb: `GET /api/prodotti/:codice`), riempiendo solo i campi vuoti. Il pulsante "Cerca" accanto al codice fa la stessa ricerca per i codici scritti a mano. La fotocamera funziona solo su https o su localhost: altrimenti si scrive il codice a mano
-- [ ] 3. Mappa con Leaflet per scegliere partenza e arrivo: provata (anche con percorso sui sentieri via BRouter e file GPX), poi tolta per scelta di design; da riprogettare
+- [x] 3. Mappa con Leaflet: riprogettata e rifatta nella settimana 3 (pagina della mappa di ogni viaggio, vedi sotto)
 
 ### Oltre lo scope (giovedì e venerdì, dopo la revisione UX)
 - [x] Oggetti: marchio, caratteristiche tecniche, pezzi posseduti (lo zaino non ne accetta di più)
@@ -180,18 +233,28 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 - [x] 59 test automatici (`npm test` dalla cartella `api`, `node --test` + supertest): regole dell'API (401, 404, 400), sicurezza (helmet, CORS, 429 sul login), account, integrazione con il database (login → armadio; si saltano senza `DATABASE_URL`), funzioni pure (prodotti, luoghi, vestiario, ora limite, quota e neve, meteo in vetta e vento, traccia della mappa, lettura della risposta di BRouter, CSP delle mappe, soglia del peso, kit dello zaino intelligente)
 - [x] `npm audit` (0 vulnerabilità), pulizia del codice (ESLint), `NOTE.md` con le riflessioni di fine settimana
 
+### Settimana 3 (2–5 novembre): dopo la consegna
+- [x] **Mappe** (pagina della mappa di ogni viaggio): percorso sui sentieri con BRouter (Sentieri / Più breve, ferrate e alpinismo), D+ e D−, frecce del verso, nomi dei punti, tappa per nome o da coordinate, ↶ indietro, importa ed esporta GPX, profilo altimetrico (anche da tastiera), **difficoltà dei tratti** da OpenStreetMap (senape T3, rosso T4 e oltre), **navigazione GPS** e uso **senza rete** (service worker)
+- [x] **App installabile** (PWA: manifest, icone, pagina senza rete)
+- [x] **Zaino**: litri degli zaini, «Com'è andata?» (oggetti non usati, mai per la sicurezza), diario con voto, numeri da sempre in Home, peso rispetto al tuo
+- [x] **Email reali** (Brevo): conferma dell'indirizzo, password dimenticata, sessioni chiuse dopo il cambio password, assistenza e feedback dal Profilo, username
+- [x] **Privacy (GDPR)**: informativa, nessun dato sulla salute (note mediche tolte il 5/11), caratteri e librerie serviti dal nostro sito, cancellazione automatica di link scaduti, account mai confermati (7 giorni) e inattivi (2 anni, con avviso), registrazione che non rivela chi è iscritto
+- [x] **Termini d'uso** («In montagna decidi tu») e **crediti e licenze**, attribuzioni di MapTiler, OpenStreetMap, Open-Meteo, sunrise-sunset.org, Open Products Facts
+- [x] **Accessibilità** (WCAG 2.2 AA, controlli con Lighthouse, axe e tastiera): contrasti, anello di focus, bersagli da 24 px, focus mai sotto il menu, finestre con Esc, nomi per i lettori di schermo
+- [x] **Online**: Render (server) + Neon (database), monitoraggio, backup (sezione «Loadout online»)
+- [x] 90 test automatici (`npm test` in `api`; quelli con il database si saltano senza `DATABASE_URL`)
+
 ### Cosa manca (prossimi passi)
-- **Importazione della traccia GPX** (B8): lunghezza, dislivello, quote, partenza e arrivo letti dal file, proposti con il post-it come fa la mappa
-- **Avvisi sul percorso** (pietraie, tratti esposti, catene) dai dati di OpenStreetMap che BRouter già restituisce, collegati al kit dello zaino
-- **Password dimenticata**: richiede l'invio di email (un servizio SMTP); oggi c'è il cambio password da loggati
-- **Attrezzatura di gruppo**: con più persone, tenda e fornello li porta uno solo (peso a persona realistico)
-- **Modelli di uscita** e "duplica uscita" ("Giornata invernale", "Rifugio 2 giorni")
-- **Difficoltà CAI** (T, E, EE, EEA) da usare nei consigli e nel kit
-- **App installabile e offline** (PWA): checklist ed emergenza consultabili senza campo
+- **Navigazione con il lettore di schermo** (provata con l'Assistente vocale di Windows: ancora poco scorrevole)
+- **Test con le persone** (kit pronto: compiti, scheda di osservazione, questionario SUS)
+- **Tempi in ferrata**: la stima del tempo è pensata per i sentieri
+- **Attrezzatura di gruppo**: con più persone, tenda e fornello li porta uno solo
+- **Modelli di uscita** e «duplica uscita»
+- **Test automatici delle pagine** (Playwright)
+- **Dominio proprio**: indirizzo email con DPA e mittente con DKIM al posto di Gmail
 - Ricerca del prodotto dal codice a barre: le banche dati gratuite conoscono poco l'attrezzatura da montagna
-- Limite di tentativi: il contatore vive nella memoria del server (con più server servirebbe un archivio condiviso, es. Redis)
-- HTTPS solo con certificato locale: online servirebbe un dominio e un certificato pubblico (Caddy lo ottiene da solo con Let's Encrypt)
-- In sviluppo la porta 5432 del database è aperta sul PC: in produzione andrebbe chiusa
+- Limite di tentativi nella memoria del server (con più server servirebbe un archivio condiviso, es. Redis)
+- Prima di un lancio pubblico: ricerca del marchio «Loadout», piani a pagamento dei servizi (i gratuiti sono per uso non commerciale)
 
 ## User story MVP
 
