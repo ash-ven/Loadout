@@ -11,7 +11,7 @@
 //  Con la rete si usa sempre la versione nuova (prima la rete, poi la copia): così le modifiche si vedono subito.
 //  All'uscita dall'account i dati dei viaggi salvati qui si cancellano (menu.js).
 // =====================================================================
-const VERSIONE = "v5"; // v5: Leaflet e caratteri dal nostro sito · v2: + avvisi-percorso.js · v3: PWA (pagina senza rete, icone, manifest, pwa.js)
+const VERSIONE = "v6"; // v6: accessibilità (bordi dei campi, caselle, menu) · v5: Leaflet e caratteri dal nostro sito · v2: + avvisi-percorso.js · v3: PWA (pagina senza rete, icone, manifest, pwa.js)
 const CACHE_APP = `loadout-app-${VERSIONE}`;
 const CACHE_DATI = "loadout-dati";
 const CACHE_TESSERE = "loadout-tessere";

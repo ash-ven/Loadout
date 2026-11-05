@@ -40,6 +40,7 @@
   --testo: #2e3a2f;
   --terra: #6d6553;          /* testo secondario */
   --bordo: #ddd2bb;
+  --bordo-campi: #8a7f68;     /* 5/11 (accessibilità, WCAG 1.4.11): il bordo dei campi deve avere contrasto 3:1 con lo sfondo (#ddd2bb aveva 1,3:1; questo 3,5:1) */
   --senape: #c8962b;         /* pulsanti: l'unico colore "acceso" */
   --senape-scuro: #a97b1c;
   --su-senape: #2b1f05;      /* testo sopra la senape */
@@ -94,7 +95,7 @@ h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
         height: calc(80px + env(safe-area-inset-bottom)); padding: 0 .5rem env(safe-area-inset-bottom);
         background: var(--lana); border-top: 1px solid var(--bordo); border-radius: 28px 28px 0 0;
         box-shadow: 0 -6px 24px rgba(35, 58, 45, .08); }
-.menu a { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .72rem; font-weight: 600;
+.menu a { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .75rem; font-weight: 600;
           color: var(--muschio); text-decoration: none; }
 .menu-icona { display: grid; place-items: center; width: 56px; height: 30px; border-radius: 15px; }
 .menu-icona svg { display: block; }
@@ -108,7 +109,7 @@ h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
 /* B9 (revisione UX 2): anche sul telefono la scarpa ha il suo nome, sotto il cerchio, come le altre voci */
 .menu a.menu-centrale { position: relative; }
 .menu a.menu-centrale .etichetta-centrale { position: absolute; left: 50%; top: calc(100% + 1px); transform: translateX(-50%);   /* C12 (collaudo 3/11): 6 px d'aria sotto il cerchio */
-                                            font-size: .72rem; font-weight: 600; color: var(--muschio); white-space: nowrap; }
+                                            font-size: .75rem; font-weight: 600; color: var(--muschio); white-space: nowrap; }   /* 5/11: 12 px (erano 11,5) */
 .menu a.menu-centrale[aria-current="page"] .etichetta-centrale { color: var(--muschio-scuro); font-weight: 700; }
 /* Spazio in fondo alla pagina, così la barra fissa non copre l'ultimo contenuto */
 body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
@@ -199,9 +200,11 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 form { display: grid; gap: .8rem; }
 label { display: grid; gap: .3rem; font-size: .88rem; color: var(--terra); font-weight: 500; }
 label.check { display: flex; align-items: center; gap: .55rem; color: var(--testo); font-weight: 400; }
-input, select, textarea { width: 100%; padding: .6rem .75rem; border: 1px solid var(--bordo); border-radius: var(--raggio-piccolo);
+input, select, textarea { width: 100%; padding: .6rem .75rem; border: 1px solid var(--bordo-campi); border-radius: var(--raggio-piccolo);
                           font: inherit; color: var(--testo); background: var(--lana-chiara); }
 label.check input { width: auto; accent-color: var(--salvia); }
+/* 5/11 (accessibilità, WCAG 2.5.8 – scelta di Asiha): caselle da 22 px invece dei 13 di serie del browser */
+label.check input[type="checkbox"] { flex: none; width: 22px; height: 22px; margin: 0; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--salvia); box-shadow: 0 0 0 3px rgba(95, 132, 99, .25); }
 
 /* --- Pulsanti --- */
@@ -348,7 +351,7 @@ button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
 
 /* Ricerca a pillola con la lente: l'input è "trasparente" dentro un'etichetta che fa da contorno */
 .cerca { display: flex; align-items: center; gap: .6rem; height: 48px; padding: 0 1rem; border-radius: 999px;
-         background: var(--lana-chiara); border: 1px solid var(--bordo); color: var(--terra); font-weight: 400; }
+         background: var(--lana-chiara); border: 1px solid var(--bordo-campi); color: var(--terra); font-weight: 400; }   /* 5/11: è un campo: bordo 3:1 */
 .cerca:focus-within { border-color: var(--salvia); box-shadow: 0 0 0 3px rgba(95, 132, 99, .25); }
 .cerca input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; }
 .cerca input:focus { box-shadow: none; }
@@ -618,7 +621,7 @@ button.elimina-discreto:hover, button.elimina-discreto:focus-visible { backgroun
 
 /* --- Revisione UX 2: con la mappa, nel form i dati del percorso si vedono ma non si scrivono (si cambiano nella pagina della mappa) --- */
 input[readonly] { background: var(--crema); color: var(--terra); border-style: dashed; cursor: not-allowed; }
-input[readonly]:focus { box-shadow: none; border-color: var(--bordo); }
+input[readonly]:focus { box-shadow: none; border-color: var(--bordo-campi); }
 .nota-mappa { margin: 0; font-size: .85rem; }
 details > .nota-mappa { margin-top: .75rem; }
 
@@ -984,8 +987,12 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 /* Arrivando da un «?»: si accende tutta la scheda della parola (non più solo il titolo) */
 .voce-glossario:has(dt:target) { background: var(--ocra-chiaro); border-color: var(--senape); }
 .glossario .voce-glossario dt:target, .glossario .voce-glossario dt:target + dd { background: none; padding: 0; }
-.colore-senape { color: var(--senape-scuro); }
-.colore-rosso { color: var(--rosso); }
+/* 5/11 (accessibilità, WCAG 1.4.3 – scelta di Asiha): il nome del colore resta in nero (il senape scritto su crema
+   aveva contrasto 3,3:1, ne serve 4,5:1) e il colore si vede nel quadratino accanto. aria-hidden: il lettore di schermo legge solo la parola */
+.colore-nome { white-space: nowrap; }
+.quadratino-colore { display: inline-block; width: .8em; height: .8em; margin-right: .3em; border-radius: 2px; vertical-align: -.05em; }
+.quadratino-colore.senape { background: var(--senape); }
+.quadratino-colore.rosso { background: var(--rosso); }
 
 /* =====================================================================
    4/11 – PROVA A MISURA DI TELEFONO (390 e 360 px): le correzioni
@@ -1037,3 +1044,7 @@ button.etichetta-piu { min-height: 44px; }
 .nota-registrazione { margin: 0; font-size: .88rem; }
 .nota-consenso { margin: -.25rem 0 0; font-size: .88rem; }
 .nota-emergenza { margin: .35rem 0 0; font-size: .88rem; }   /* 4/11: sotto i campi del contatto di emergenza */
+
+/* 5/11 (accessibilità, WCAG 2.4.11 «focus non coperto»): sul telefono il menu è fisso in basso. Quando il browser fa scorrere
+   la pagina fino al campo attivo (Tab, tastiera esterna, sensori), lascia libera la fascia del menu. Non cambia l'aspetto */
+@media (max-width: 760px) { html { scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom)); } }
