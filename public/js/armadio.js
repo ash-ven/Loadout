@@ -409,7 +409,9 @@ async function cercaProdotto() {
       riempiti.push("categoria");
     }
     // 4/11 (Asiha): più corto
-    mostraInfo(riempiti.length ? `Trovato: ho compilato ${riempiti.join(", ")}. Controlla.` : "Trovato: i campi erano già compilati.");
+    // 5/11: diciamo da dove viene il dato (Open Products Facts chiede l'attribuzione, licenza ODbL)
+    const fonte = p.fonte ? ` su ${p.fonte}` : "";
+    mostraInfo(riempiti.length ? `Trovato${fonte}: ho compilato ${riempiti.join(", ")}. Controlla.` : `Trovato${fonte}: i campi erano già compilati.`);
   } catch (err) {
     mostraInfo(err.message);
   } finally {

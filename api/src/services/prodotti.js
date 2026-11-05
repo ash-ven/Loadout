@@ -16,7 +16,7 @@ const CAMPI_OPEN_FACTS = "product_name,product_name_it,brands,quantity,product_q
 const UPCITEMDB = "https://api.upcitemdb.com/prod/trial/lookup"; // prova gratuita: circa 100 ricerche al giorno
 
 // Open Facts chiede alle app di presentarsi con un nome nell'header User-Agent
-const INTESTAZIONI = { "User-Agent": "Loadout/1.0 (progetto di stage ITS Futura)", Accept: "application/json" };
+const INTESTAZIONI = { "User-Agent": "Loadout/1.0 (+https://loadout-t4ju.onrender.com)", Accept: "application/json" };
 const ATTESA_MAX_MS = 5000; // oltre, lasciamo perdere quella banca dati
 
 // Piccola memoria (cache): lo stesso codice cercato due volte non rifà le richieste.

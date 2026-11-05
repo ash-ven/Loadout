@@ -1,15 +1,16 @@
 // =====================================================================
 //  CAMPO LUOGO con suggerimenti (B1)
-//  Scrivi "malga prato": dopo mezzo secondo di pausa chiediamo al server (/api/luoghi)
-//  e mostriamo fino a 6 luoghi. Scegliendone uno, il nome va nel campo e le coordinate
+//  Scrivi "malga prato": dopo mezzo secondo di pausa cerchiamo (5/11: con MapTiler, js/cerca-luoghi.js)
+//  e mostriamo fino a 8 luoghi. Scegliendone uno, il nome va nel campo e le coordinate
 //  nei campi lat/lon del form, con il post-it "luogo" (vedi post-it.js): vince l'ultimo automatico
 //  (luogo o mappa), ma quello che scrivi tu a mano vince sempre.
 // =====================================================================
-import { api, esc } from "./api.js";
+import { esc } from "./api.js";
+import { cercaLuoghi } from "./cerca-luoghi.js"; // 5/11: MapTiler al posto di Nominatim
 import { proponi } from "./post-it.js";
 
 // campoTesto: l'<input> del nome; lista: l'<ul> dei suggerimenti; campoLat/campoLon: gli <input> delle coordinate;
-// suScelta(lat, lon): facoltativa, chiamata quando scegli un luogo (il form la usa per centrare la mappa)
+// suScelta(lat, lon, nome): facoltativa, chiamata quando scegli un luogo (il form la usa per centrare la mappa)
 export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, suScelta = () => {} }) {
   let timer = null;
   let ultimaRicerca = 0; // per ignorare le risposte arrivate tardi (se nel frattempo hai scritto altro)
@@ -26,16 +27,17 @@ export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, suScel
     const numero = ++ultimaRicerca;
     mostra('<li class="suggerimento-info">Cerco…</li>');
     try {
-      const risultati = await api(`/api/luoghi?q=${encodeURIComponent(testo)}`);
+      const risultati = await cercaLuoghi(testo);
       if (numero !== ultimaRicerca) return; // è arrivata una ricerca più nuova: questa non serve più
       trovati = risultati;
       // A5 (revisione UX 2): su due righe, il nome e poi tipo e quota ("passo · 1.402 m"), per distinguere gli omonimi
       const dettagli = (l) => [l.tipo, l.quota_m != null ? `${l.quota_m.toLocaleString("it-IT", { useGrouping: "always" })} m` : null]
         .filter(Boolean).join(" · ");
-      mostra(risultati.length
+      mostra((risultati.length
         ? risultati.map((l, i) => `<li><button type="button" class="suggerimento" data-i="${i}">
             <span>${esc(l.etichetta)}</span>${dettagli(l) ? `<span class="muto">${esc(dettagli(l))}</span>` : ""}</button></li>`).join("")
-        : '<li class="suggerimento-info">Nessun luogo trovato: prova un nome più semplice, o scrivi le coordinate a mano.</li>');
+        : '<li class="suggerimento-info">Nessun luogo trovato: prova un nome più semplice, o scrivi le coordinate a mano.</li>') +
+        '<li class="suggerimento-fonte">Ricerca © MapTiler © OpenStreetMap</li>'); // 5/11: attribuzione richiesta
     } catch (err) {
       if (numero === ultimaRicerca) mostra(`<li class="suggerimento-info">${esc(err.message)}</li>`);
     }
@@ -49,7 +51,7 @@ export function attivaCampoLuogo({ campoTesto, lista, campoLat, campoLon, suScel
     campoTesto.value = luogo.etichetta;
     proponi(campoLat, luogo.lat, "luogo"); // solo se il campo è vuoto o compilato in automatico
     proponi(campoLon, luogo.lon, "luogo");
-    suScelta(luogo.lat, luogo.lon);
+    suScelta(luogo.lat, luogo.lon, luogo.nome);
     chiudi();
     campoTesto.focus();
   });

@@ -79,6 +79,8 @@ Al primo avvio il container esegue da solo, in ordine alfabetico, gli script in 
 | `loadout_stretch_profilo.sql` | profilo: livello di esperienza, contatto di emergenza, note mediche, tessera CAI/assicurazione, sensibilità al freddo, foto |
 | `loadout_stretch_zaino_litri.sql` | zaini nell'armadio: categoria `zaini`, capienza `litri`; `fn_genera_zaino` non aggiunge più gli zaini (lo sceglie l'app in base ai litri) |
 | `loadout_stretch_profilo_consenso.sql` | profilo: data del consenso alle note mediche (`consenso_salute_il`, GDPR art. 9), tolto il livello di esperienza |
+| `loadout_stretch_senza_note_mediche.sql` | 5/11: tolte le note mediche e il loro consenso (nessun dato sulla salute) |
+| `loadout_stretch_ultimo_accesso.sql` | 5/11: data dell'ultimo accesso e dell'avviso, per cancellare gli account inattivi da 2 anni |
 
 Se il volume del database esisteva già, le migrazioni nuove si applicano a mano (una volta sola; si possono rieseguire senza danni):
 
@@ -127,7 +129,7 @@ Il file viene letto dentro il container: `docker-compose.yml` monta `db/initdb` 
 | `mappe.html` | `mappe.js` | le uscite che hanno una mappa |
 | `mappa.html?id=` | `mappa.js` | la mappa di un'uscita, come la pagina dello zaino: si disegna il percorso (partenza, tappe, anello) e «Salva il percorso» salva traccia, km, dislivello positivo, quote e coordinate (`PUT /api/viaggi/:id/percorso`); «Sentieri / Più breve», D−, frecce del verso di percorrenza, «Scarica GPX» (`gpx.js`, file creato nel browser per le app di mappe offline) e «Importa GPX» (B8, `gpx-lettura.js`: file letto nel browser, salite e discese con soglia di 5 m, al massimo 5.000 punti); tappa da coordinate ed elenco dei punti con ↑ ↓ ✕; **«Naviga»** col GPS (`navigazione.js` + calcoli puri in `navigazione-calcoli.js`: posizione, km fatti/mancanti, salita restante, arrivo, fuori percorso, schermo acceso; la posizione non lascia il browser); profilo altimetrico (`profilo-altimetrico.js`, SVG con tappe e cursore che accende il punto sulla mappa); **senza rete** con il service worker `public/sw.js` (pagina, dati del viaggio e tessere già guardate; CSP di `sw.js` allargata a MapTiler solo per lui) |
 | `consigli.html` | — | consigli generali (peso dello zaino, acqua, strati, orari, meteo, sicurezza) |
-| `profilo.html` | `profilo.js` | foto, dati personali (esperienza, sensibilità al freddo, contatto di emergenza, note mediche, tessera CAI), peso corporeo e soglia dello zaino, esci |
+| `profilo.html` | `profilo.js` | foto, dati personali (username, sensibilità al freddo, contatto di emergenza, tessera CAI), peso corporeo e soglia dello zaino, esci |
 
 Moduli condivisi: `js/api.js` (funzione `api()` per tutte le richieste, `esc()` contro l'XSS, date), `js/menu.js` (logout), `js/categorie.js` (elenco delle categorie), `js/elenco-uscite.js` (gruppi per data per Zaino e Mappe), `js/post-it.js` (i campi compilati in automatico dalla mappa o dal luogo, che restano modificabili), `js/mappa-base.js` (sfondi MapTiler, puntine e tracciato, con Leaflet 1.9.4 in `public/vendor`), `js/mappa-disegno.js` (il disegno del percorso nella pagina della mappa). `js/form-uscita.js` (la finestra per creare o modificare un'uscita), `js/errori-campi.js` (errori sotto i campi), `js/controlli.js` (controlli di coordinate e quote), `js/testi.js` (singolare e plurale).
 Stile: un solo foglio, `css/style.css`. Immagini: logo, icone e sfondi SVG in `img/`.
@@ -168,7 +170,7 @@ Aggiornato a venerdì 30 ottobre, pomeriggio (dopo la consegna e la demo).
 - [x] Uscite: luogo per nome (OpenStreetMap), ora limite di partenza, quota massima e minima, ora di partenza, meteo in vetta all'ora di arrivo (Open-Meteo con la quota) con avvisi di vento, zero termico e temporali, avviso neve e bollettino valanghe; peso base (senza acqua e cibo) con soglia 10% in giornata e 20% con pernotto; «Lascia detto»: messaggio già scritto per il contatto di emergenza (WhatsApp o SMS, lo invia l'utente)
 - [x] Account e privacy (GDPR): cambio password, «Scarica i miei dati» (JSON con profilo, armadio, uscite e zaini), elimina l'account con conferma della password (tutto il resto si cancella da solo: ON DELETE CASCADE)
 - [x] Zaino: oggetti indossati (solo abbigliamento) fuori dal peso; acqua a persona al giorno con salita, caldo e cucina
-- [x] Profilo: foto (ridotta nel browser), esperienza, contatto di emergenza, note mediche e tessera CAI/assicurazione (mostrati nel riquadro Emergenza della scheda del viaggio), sensibilità al freddo (adatta i consigli di vestiario)
+- [x] Profilo: foto (ridotta nel browser), esperienza, contatto di emergenza e tessera CAI/assicurazione (5/11: tolte le note mediche; mostrati nel riquadro Emergenza della scheda del viaggio), sensibilità al freddo (adatta i consigli di vestiario)
 - [x] Home con frasi casuali e "vive" sul prossimo viaggio; pagina di consigli generali
 
 ### Venerdì: sicurezza, Docker, qualità

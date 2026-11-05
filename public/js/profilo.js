@@ -24,31 +24,9 @@ campoPeso.value = utente.peso_corporeo_kg ?? "";
 mostraSoglia(utente.peso_corporeo_kg);
 mostraFoto();
 // I campi del form "Dati personali" (stessi nomi delle colonne del database)
-const CAMPI_DATI = ["nome", "sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "note_mediche", "tessera_soccorso"];
+const CAMPI_DATI = ["nome", "sensibilita_freddo", "emergenza_nome", "emergenza_telefono", "tessera_soccorso"]; // 5/11: senza note mediche
 for (const nome of CAMPI_DATI) {
   formDati.elements[nome].value = utente[nome] ?? "";
-}
-// C9: le note mediche si possono scrivere solo con il consenso. Il server registra QUANDO l'hai dato
-// (consenso_salute_il): la casella è spuntata solo se il consenso c'è davvero
-const consensoSalute = document.querySelector("#consenso-salute");
-const campoNote = formDati.elements.note_mediche;
-const dataConsenso = document.querySelector("#data-consenso");
-consensoSalute.checked = Boolean(utente.consenso_salute_il);
-campoNote.disabled = !consensoSalute.checked;
-mostraDataConsenso();
-// Note salvate prima che chiedessimo il consenso: restano visibili, ma per tenerle va spuntata la casella
-if (utente.note_mediche && !utente.consenso_salute_il) {
-  infoDati.textContent = "Le tue note mediche sono state salvate prima che chiedessimo il consenso: spunta la casella per tenerle. " +
-    "Se salvi senza spunta, vengono cancellate.";
-  infoDati.hidden = false;
-}
-
-function mostraDataConsenso() {
-  dataConsenso.hidden = !utente.consenso_salute_il;
-  if (utente.consenso_salute_il) {
-    dataConsenso.textContent = `Consenso dato il ${new Date(utente.consenso_salute_il).toLocaleDateString("it-IT")}. ` +
-      "Togliendo la spunta lo ritiri e le note vengono cancellate.";
-  }
 }
 
 // =====================================================================
@@ -129,20 +107,17 @@ async function salvaDati() {
     erroreDati.hidden = false;
     return;
   }
-  // Mando tutti i campi: quelli vuoti ("") il server li svuota. Senza consenso le note mediche vanno sempre vuote.
+  // Mando tutti i campi: quelli vuoti ("") il server li svuota
   const dati = {};
   for (const nome of CAMPI_DATI) {
     dati[nome] = formDati.elements[nome].value.trim();
   }
-  if (!consensoSalute.checked) dati.note_mediche = "";
-  dati.consenso_salute = consensoSalute.checked; // il server registra la data del consenso, o lo ritira
   mostraStato(statoDati, "Salvataggio…");
   try {
     utente = await api("/api/auth/me", { method: "PATCH", body: dati });
     elNome.textContent = utente.nome; // 4/11: il nome in alto (e l'iniziale, se non c'è la foto) si aggiorna subito
     if (!utente.ha_foto) mostraFoto();
     mostraStato(statoDati, "✓ Salvato", true);
-    mostraDataConsenso();
   } catch (err) {
     mostraStato(statoDati, "");
     erroreDati.textContent = err.message; // es. "Numero di telefono non valido"
@@ -150,27 +125,9 @@ async function salvaDati() {
   }
 }
 
-formDati.addEventListener("change", (e) => {
-  if (e.target === consensoSalute) return; // la casella ha il suo gestore qui sotto
-  salvaDati();
-});
+formDati.addEventListener("change", () => salvaDati());
 // Invio in un campo di testo: niente ricarica della pagina, si salva e basta
 formDati.addEventListener("submit", (e) => { e.preventDefault(); salvaDati(); });
-
-// Togliendo il consenso, le note mediche spariscono subito anche dal server
-// Spuntare = dare il consenso (si registra subito la data); togliere la spunta = ritirarlo (note cancellate)
-consensoSalute.addEventListener("change", async () => {
-  campoNote.disabled = !consensoSalute.checked;
-  const cherano = campoNote.value.trim() !== "";
-  if (!consensoSalute.checked) campoNote.value = "";
-  await salvaDati();
-  if (consensoSalute.checked) {
-    campoNote.focus();
-  } else {
-    infoDati.textContent = cherano ? "Consenso ritirato: note mediche cancellate." : "Consenso ritirato.";
-    infoDati.hidden = false;
-  }
-});
 
 // =====================================================================
 //  PESO CORPOREO (stretch 5)

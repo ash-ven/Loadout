@@ -46,6 +46,17 @@ export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom 
   // A8 (revisione UX 2, scelta di Asiha): il selettore degli sfondi parte SEMPRE chiuso (icona a strati),
   // su qualsiasi schermo: aperto copriva un pezzo di mappa e la puntina di partenza. Si apre con un tocco.
   L.control.layers(sfondi, null, { collapsed: true }).addTo(mappa);
+  // 5/11: il piano gratuito di MapTiler chiede il suo logo sulla mappa, con il link al sito (scelta di Asiha: piccolo)
+  const logo = L.control({ position: "bottomleft" });
+  logo.onAdd = () => {
+    const link = L.DomUtil.create("a", "logo-maptiler");
+    link.href = "https://www.maptiler.com/";
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.innerHTML = '<img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler" height="18">';
+    return link;
+  };
+  logo.addTo(mappa);
   return mappa;
 }
 

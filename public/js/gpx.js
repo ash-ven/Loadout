@@ -32,7 +32,7 @@ export function creaGpx(nome, traccia) {
   if (!anello) segnaposti.push(punto("wpt", arrivo, nomeDi(tappe.length - 1, "Arrivo")));
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Loadout" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata><name>${escXml(nome)}</name></metadata>
+  <metadata><name>${escXml(nome)}</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata>
   ${segnaposti.join("\n  ")}
   <trk>
     <name>${escXml(nome)}</name>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loadout – Termini d'uso</title>
+  <meta name="description" content="Le regole per usare Loadout">
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#31503f">
+  <link rel="apple-touch-icon" href="/img/app/icona-180.png">
+  <meta name="apple-mobile-web-app-title" content="Loadout">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- 5/11: termini d'uso. Pagina PUBBLICA come l'informativa: si legge prima di registrarsi. Il menu compare se sei entrata (js/privacy.js). Se cambi qualcosa di importante, aggiorna la data in fondo e avvisa gli utenti per email -->
+  <header class="topbar">
+    <a class="logo" href="/" aria-label="Loadout, torna alla home"><img src="/img/logo-topbar.svg" alt="" width="38" height="38"><span>Load<span class="out">out</span></span></a>
+    <!-- 5/11 (accessibilità, WCAG 3.2.3 – scelta di Asiha): se sei entrata vedi il menu di tutte le pagine (js/privacy.js lo mostra);
+         se non sei entrata resta solo il logo, come in Accedi e Registrati -->
+    <nav class="menu" hidden aria-label="Navigazione principale">
+      <a href="/armadio.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.2 5.2A1.8 1.8 0 1 1 12 7v1.5"/><path d="M12 8.5 3.6 15a1 1 0 0 0 .6 1.8h15.6a1 1 0 0 0 .6-1.8Z"/><path d="M8 16.8v2.7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.7"/></svg></span>Armadio</a>
+      <a href="/zaini.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 5a1.5 1.5 0 0 1 3 0"/><path d="M9 5h6a2 2 0 0 1 2 2l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 7a2 2 0 0 1 2-2Z"/><path d="M7.3 9.6C9 11 10.5 11.4 12 11.4s3-.4 4.7-1.8"/><path d="M6.4 15H5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.6M17.6 15h.9a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-.6"/><path d="M8.5 17.5l2.5-2.5 1.5 1.5 2.5-2.5"/><rect x="11" y="10.4" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Zaino</a>
+      <a href="/viaggi.html" class="menu-centrale" aria-label="Viaggi" title="Viaggi"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h6l.6 5.6 4.9 2.2C19 12 21 13.6 21 16v1H3V5a2 2 0 0 1 2-2Z"/><path d="M3 17v2a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-2"/><path d="M7.5 6.5h3.6M8 10h4.6"/></svg><span class="etichetta-centrale" aria-hidden="true">Viaggi</span></a>
+      <a href="/mappe.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5l2.1-4.9Z"/><path d="M14.6 9.4 13 13 11 11Z" fill="#c8962b" stroke="none"/></svg></span>Mappe</a>
+      <a href="/profilo.html"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20.5c0-3.9 3.1-7 7-7s7 3.1 7 7"/><rect x="11" y="15.5" width="2" height="2.6" rx=".6" fill="#c8962b" stroke="none"/></svg></span>Profilo</a>
+      <a href="/consigli.html" class="solo-computer"><span class="menu-icona"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.8C10.2 5.3 7.6 4.6 3.5 4.6v13.2c4.1 0 6.7.7 8.5 2.2 1.8-1.5 4.4-2.2 8.5-2.2V4.6c-4.1 0-6.7.7-8.5 2.2Z"/><path d="M12 6.8V20"/><path d="M15 5.4v4.4l1.3-1 1.3 1V5" fill="#c8962b" stroke="none"/></svg></span>Consigli</a>
+    </nav>
+    <a href="/consigli.html" class="icona-alto consigli-alto" hidden aria-label="Consigli" title="Consigli"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.8C10.2 5.3 7.6 4.6 3.5 4.6v13.2c4.1 0 6.7.7 8.5 2.2 1.8-1.5 4.4-2.2 8.5-2.2V4.6c-4.1 0-6.7.7-8.5 2.2Z"/><path d="M12 6.8V20"/><path d="M15 5.4v4.4l1.3-1 1.3 1V5" fill="#c8962b" stroke="none"/></svg></a>
+    <a href="#" id="esci" class="icona-alto esci" hidden aria-label="Esci" title="Esci"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5H7a2.5 2.5 0 0 0-2.5 2.5v12A2.5 2.5 0 0 0 7 20.5h3"/><path d="M10 12h10"/><path d="M16.5 8.5 20 12l-3.5 3.5"/></svg></a>
+  </header>
+
+  <section class="testata">
+    <div class="testata-dentro">
+      <h1>Termini d'uso</h1>
+      <p>Le regole per usare Loadout, in breve. La più importante: in montagna decidi tu.</p>
+    </div>
+  </section>
+
+  <main class="container pagina-consigli pagina-privacy">
+    <article class="card consiglio-generale">
+      <h2>Chi offre Loadout</h2>
+      <p>Loadout è un'app gratuita creata e gestita da <strong>Asiha Venturi</strong>. Per qualsiasi domanda scrivi a <a href="mailto:loadout.noreply@gmail.com">loadout.noreply@gmail.com</a>.</p>
+      <p>Usando Loadout accetti questi termini. Come trattiamo i tuoi dati è spiegato nell'<a href="/privacy.html">informativa privacy</a>.</p>
+    </article>
+
+    <article class="card consiglio-generale" id="montagna">
+      <h2>In montagna decidi tu</h2>
+      <p>Loadout ti aiuta a preparare lo zaino e il percorso, ma <strong>non può valutare la montagna al posto tuo</strong>.</p>
+      <ul>
+        <li>Il kit, il meteo, l'ora limite di partenza, la difficoltà dei tratti, il percorso e la navigazione sono <strong>indicazioni</strong> calcolate da dati di altri servizi (OpenStreetMap, Open-Meteo, BRouter e altri), che possono essere incompleti, vecchi o sbagliati.</li>
+        <li>Non sostituiscono i <strong>bollettini ufficiali</strong> meteo e valanghe, le informazioni di rifugi, guide alpine e sezioni CAI, una mappa di carta e la tua esperienza.</li>
+        <li>Il GPS del telefono può sbagliare o spegnersi: porta sempre una mappa e segui i segnavia.</li>
+        <li>Prima di partire e durante il percorso valuta tu condizioni, allenamento e attrezzatura. Se hai dubbi, rinuncia o torna indietro.</li>
+        <li>In caso di emergenza chiama il <a href="tel:112"><strong>112</strong></a>.</li>
+      </ul>
+    </article>
+
+    <article class="card consiglio-generale">
+      <h2>Il tuo account</h2>
+      <ul>
+        <li>Per registrarti devi avere almeno <strong>14 anni</strong> e usare un indirizzo email tuo.</li>
+        <li>La password è solo tua: non darla ad altri. Se pensi che qualcuno la conosca, cambiala dal Profilo.</li>
+        <li>Quello che inserisci (armadio, viaggi, diario) resta tuo: lo puoi scaricare o cancellare quando vuoi.</li>
+      </ul>
+    </article>
+
+    <article class="card consiglio-generale">
+      <h2>Uso corretto</h2>
+      <p>Non usare Loadout per attività illegali, per disturbare il servizio o per raccogliere dati in modo automatico. Se succede, l'account può essere sospeso o chiuso.</p>
+    </article>
+
+    <article class="card consiglio-generale">
+      <h2>Il servizio</h2>
+      <ul>
+        <li>Loadout è gratuito e offerto «così com'è»: può avere errori o interruzioni, e alcune funzioni dipendono da servizi esterni che possono non rispondere.</li>
+        <li>Le funzioni possono cambiare. Se un giorno Loadout dovesse chiudere, te lo diremo per email con anticipo, così potrai scaricare i tuoi dati.</li>
+      </ul>
+    </article>
+
+    <article class="card consiglio-generale">
+      <h2>Responsabilità</h2>
+      <p>Nei limiti consentiti dalla legge, Loadout non risponde di danni che derivano dall'uso delle sue indicazioni, dal mancato funzionamento del servizio o dalle scelte fatte in montagna. Restano sempre ferme le responsabilità che la legge non permette di escludere, per esempio per dolo, colpa grave o danni alla persona, e i tuoi diritti di consumatore.</p>
+    </article>
+
+    <article class="card consiglio-generale">
+      <h2>Mappe e dati di altri</h2>
+      <p>Mappe, meteo e percorsi vengono da servizi esterni con le loro licenze: li trovi in <a href="/crediti.html">Crediti e licenze</a>.</p>
+    </article>
+
+    <article class="card consiglio-generale">
+      <h2>Modifiche e legge</h2>
+      <ul>
+        <li>Questi termini possono cambiare. Per i cambiamenti importanti ti avvisiamo per email prima che valgano.</li>
+        <li>Valgono la legge italiana e, se sei un consumatore, le tutele del Codice del consumo e il giudice del luogo in cui vivi.</li>
+      </ul>
+    </article>
+
+    <p class="muto nota-privacy">Ultimo aggiornamento: 5 novembre 2026. · <a href="/privacy.html">Informativa privacy</a> · <a href="/crediti.html">Crediti e licenze</a></p>
+  </main>
+  <script type="module" src="/js/privacy.js"></script>
+</body>
+</html>

@@ -234,16 +234,16 @@ tappaLat.addEventListener("paste", (e) => {
   [tappaLat.value, tappaLon.value] = numeri;
 });
 const confermaTappa = document.querySelector("#conferma-tappa");
-// 4/11 (Asiha): la tappa per nome («rifugio Vajolet»): la stessa ricerca del form del viaggio (OpenStreetMap, /api/luoghi).
+// 4/11 (Asiha): la tappa per nome («rifugio Vajolet»): la stessa ricerca del form del viaggio (5/11: MapTiler, js/cerca-luoghi.js).
 // Scegliendo un luogo la tappa entra subito, con quel nome nell'elenco dei punti
 const tappaLuogo = document.querySelector("#tappa-luogo");
 attivaCampoLuogo({
   campoTesto: tappaLuogo, lista: document.querySelector("#suggerimenti-tappa"),
   campoLat: tappaLat, campoLon: tappaLon,
-  suScelta: (lat, lon) => {
+  suScelta: (lat, lon, nome) => {
     erroreTappa.hidden = true;
-    // l'etichetta di OpenStreetMap può essere lunga ("Rifugio Vajolet, Pozza di Fassa, …"): teniamo il primo pezzo
-    provaTappa(lat, lon, false, tappaLuogo.value.split(",")[0].trim().slice(0, 60));
+    // il nome del luogo senza la zona tra parentesi ("Rifugio Vajolet", non "Rifugio Vajolet (Pozza di Fassa, Trento)")
+    provaTappa(lat, lon, false, (nome || tappaLuogo.value).trim().slice(0, 60));
   },
 });
 let inAttesa = null; // B4: la tappa lontana in attesa di conferma: [lat, lon]

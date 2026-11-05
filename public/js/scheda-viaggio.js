@@ -294,7 +294,7 @@ async function proponiAggiornamento(subito = false) {
 
 // --- Emergenza (C1): sempre il 112, più il contatto del profilo se c'è (tel: = un tocco per chiamare) ---
 function mostraEmergenza(utente) {
-  const { emergenza_nome: nome, emergenza_telefono: telefono, note_mediche: note, tessera_soccorso: tessera } = utente;
+  const { emergenza_nome: nome, emergenza_telefono: telefono, tessera_soccorso: tessera } = utente; // 5/11: niente più note mediche
   let html = 'In caso di emergenza chiama il <a href="tel:112"><strong>112</strong></a>.'; // un tocco per chiamare
   if (nome || telefono) {
     const chi = esc(nome || "il tuo contatto");
@@ -302,10 +302,9 @@ function mostraEmergenza(utente) {
     html += ` Avvisa anche ${chi}${numero}.`;
   }
   // Le informazioni da dire (o far leggere) a chi ti soccorre
-  if (note) html += `<br><strong>Note mediche:</strong> ${esc(note)}`;
   if (tessera) html += `<br><strong>Tessera / assicurazione:</strong> ${esc(tessera)}`;
-  if (!nome && !telefono && !note && !tessera) {
-    html += ' <a href="/profilo.html">Aggiungi nel profilo</a> un contatto di emergenza, le note mediche e la tessera CAI.';
+  if (!nome && !telefono && !tessera) {
+    html += ' <a href="/profilo.html">Aggiungi nel profilo</a> un contatto di emergenza e la tessera CAI.';
   }
   // B6: "Lascia detto": un messaggio già scritto per il contatto di emergenza (lo mandi tu, l'app non invia niente)
   if (telefono) {

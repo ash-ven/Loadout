@@ -25,7 +25,7 @@ form.addEventListener("submit", async (e) => {
     fatto.hidden = false;
     fatto.focus();
   } catch (err) {
-    mostraErrore(err.message); // es. "Valore già presente" se l'email esiste, "Indirizzo email non valido"
+    mostraErrore(err.message); // es. "Indirizzo email non valido" (5/11: un'email già registrata non dà più errore)
   } finally {
     bottone.disabled = false;
   }

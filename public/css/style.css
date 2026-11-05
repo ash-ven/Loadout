@@ -497,6 +497,7 @@ fieldset.scelte legend .muto { font-size: .8rem; }
 .suggerimento:hover, .suggerimento:focus-visible { background: var(--salvia-chiaro); }
 .suggerimento .muto { flex-shrink: 0; font-size: .8rem; }
 .suggerimento-info { padding: .55rem .7rem; font-size: .88rem; color: var(--terra); }
+.suggerimento-fonte { padding: .2rem .7rem .35rem; font-size: .7rem; color: var(--terra); text-align: right; }   /* 5/11: attribuzione, discreta */
 .nota-luogo { margin: 0; font-size: .8rem; }
 .riga-acqua { margin: -.25rem 0 .5rem; font-size: .85rem; }
 .riga-peso-corporeo { margin: .5rem 0 0; font-size: .85rem; }   /* punto 1: lo zaino rispetto al tuo peso, sotto la barra */   /* B4: il promemoria sull'acqua sotto il peso */
@@ -755,8 +756,6 @@ a.aiuto:hover, a.aiuto:focus-visible { background: var(--salvia-chiaro); }
 
 /* C9 (revisione UX 2): profilo che si salva da solo; consenso per le note mediche */
 .stato-salvato { font-size: .85rem; font-weight: 600; color: var(--muschio); min-height: 1.2em; }
-label.check.consenso { align-items: flex-start; font-size: .88rem; }
-label.check.consenso input { margin-top: .2rem; }
 textarea:disabled { background: var(--crema); cursor: not-allowed; }
 
 /* C8 (revisione UX 2): Home = la mappa di tutti i viaggi */
@@ -873,7 +872,6 @@ button.tappa-bottone:disabled { opacity: .3; cursor: default; background: none; 
 button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 .in-navigazione .elenco-tappe { display: none; }
 @media (max-width: 600px) { .tappa-nome { min-width: 0; } .tappa-coordinate-testo { display: none; } }
-.data-consenso { margin: -.3rem 0 .2rem 1.9rem; font-size: .82rem; }
 
 /* Collaudo 3/11 */
 /* B2: la riga che spiega «Sentieri / Più breve» (o che la traccia viene da un file); selettore spento con una traccia da file */
@@ -1043,7 +1041,6 @@ button.etichetta-piu { min-height: 44px; }
 .pagina-privacy .consiglio-generale p { margin: 0; }
 .nota-privacy { margin: 0; text-align: center; }
 .nota-registrazione { margin: 0; font-size: .88rem; }
-.nota-consenso { margin: -.25rem 0 0; font-size: .88rem; }
 .nota-emergenza { margin: .35rem 0 0; font-size: .88rem; }   /* 4/11: sotto i campi del contatto di emergenza */
 
 /* 5/11 (accessibilità, WCAG 2.4.11 «focus non coperto»): sul telefono il menu è fisso in basso. Quando il browser fa scorrere
@@ -1058,3 +1055,9 @@ input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { outlin
 /* 5/11 (accessibilità, WCAG 1.4.3 – scelta di Asiha): il testo di esempio nei campi vuoti, grigio-terra come le note
    (il grigio di serie del browser aveva contrasto 4,28:1; questo 5,4:1). opacity: 1 perché Firefox lo schiarisce */
 ::placeholder { color: var(--terra); opacity: 1; }
+
+/* 5/11: fonti dei dati e avvertenze accanto ai dati (attribuzioni richieste dalle licenze), discrete */
+.fonte-dati { margin: .4rem 0 0; font-size: .75rem; color: var(--terra); }
+.fonte-dati a { color: inherit; }
+.leaflet-control.logo-maptiler { display: block; margin: 0 0 26px 6px; line-height: 0; opacity: .85; }   /* sopra la riga dei crediti, che sul telefono è larga quanto la mappa */
+.leaflet-control.logo-maptiler img { display: block; width: auto; height: 18px; }

@@ -71,6 +71,19 @@ async function mandaConferma(req, utente) {
   }
 }
 
+// 5/11 (sicurezza): ci si registra con un'email che ha già un account confermato. Al sito rispondiamo come sempre
+// (così nessuno scopre chi usa Loadout), e a quell'indirizzo arriva un'email che lo dice
+async function mandaGiaRegistrato(req, utente) {
+  try {
+    const { testo, html } = componiEmail({ nome: utente.nome, titolo: "Hai già un account", link: `${indirizzoApp(req)}/login.html`,
+      frase: "Qualcuno, forse tu, ha provato a registrarsi a Loadout con questo indirizzo, ma un account c'è già.",
+      pulsante: "Accedi", nota: "Se non ricordi la password usa «Password dimenticata?» nella pagina di accesso. Se non l'hai fatto tu, ignora questa email." });
+    await inviaEmail({ a: utente.email, oggetto: "Hai già un account su Loadout", testo, html });
+  } catch (err) {
+    console.error("Email «hai già un account» non inviata:", err.message);
+  }
+}
+
 // === POST /api/auth/register ===
 // 4/11: l'account nasce NON confermato e non si può usare finché non clicchi il link nell'email (scelta di Asiha)
 const schemaRegister = {
@@ -84,13 +97,27 @@ router.post("/register", limiteRegistrazione, validate(schemaRegister), async (r
     const { email, password, nome } = req.validated;
     if (password.length < 8) throw new HttpError(400, "WEAK_PASSWORD", "Password di almeno 8 caratteri");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "BAD_EMAIL", "Indirizzo email non valido");
-    const hash = await bcrypt.hash(password, 12);
+    const hash = await bcrypt.hash(password, 12); // sempre, anche se l'email esiste: stessi tempi di risposta
+    // 5/11 (sicurezza): la risposta è IDENTICA che l'email sia nuova o già registrata (prima: 409 «già presente»,
+    // e chiunque poteva scoprire se una persona usa Loadout). Cosa succede davvero lo sa solo chi legge quella casella:
+    //  - email nuova → account nuovo + email di conferma
+    //  - account non ancora confermato → valgono username e password di QUESTA registrazione + nuova email di conferma
+    //    (solo chi legge la casella può confermare: chi si era registrato con l'email di un altro non entra)
+    //  - account confermato → nessuna modifica, email «hai già un account»
     const { rows } = await query(
-      "INSERT INTO utente (email, password_hash, nome) VALUES ($1, $2, $3) RETURNING id, email, nome",
+      `INSERT INTO utente (email, password_hash, nome) VALUES ($1, $2, $3)
+       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, nome = EXCLUDED.nome
+         WHERE utente.email_confermata_il IS NULL
+       RETURNING id, email, nome`,
       [email.toLowerCase(), hash, nome]
     );
-    await mandaConferma(req, rows[0]);
-    res.status(201).json({ ...rows[0], conferma_necessaria: true });
+    if (rows[0]) {
+      await mandaConferma(req, rows[0]);
+    } else {
+      const { rows: gia } = await query("SELECT id, email, nome FROM utente WHERE email = $1", [email.toLowerCase()]);
+      if (gia[0]) await mandaGiaRegistrato(req, gia[0]);
+    }
+    res.status(201).json({ email: email.toLowerCase(), conferma_necessaria: true });
   } catch (err) { next(err); }
 });
 
@@ -116,6 +143,9 @@ router.post("/login", limiteLogin, validate(schemaLogin), async (req, res, next)
       throw new HttpError(403, "EMAIL_NON_CONFERMATA", "Conferma la tua email: apri il link che ti abbiamo mandato");
     }
 
+    // 5/11 (privacy): solo la data dell'ultimo accesso, che si sovrascrive (niente IP, niente storico).
+    // Serve a cancellare gli account inattivi da 2 anni (services/pulizia.js); azzera anche un eventuale avviso già mandato
+    await query("UPDATE utente SET ultimo_accesso_il = now(), avviso_inattivita_il = NULL WHERE id = $1", [user.id]);
     const token = jwt.sign({ sub: user.id, nome: user.nome }, process.env.JWT_SECRET, { expiresIn: "8h" });
     res.cookie("token", token, COOKIE).json({ id: user.id, nome: user.nome });
   } catch (err) { next(err); }
@@ -145,7 +175,7 @@ router.post("/conferma", limiteLogin, validate({ codice: { etichetta: "il codice
       const utenteId = await codici.usa(req.validated.codice, "conferma");
       if (!utenteId) throw new HttpError(400, "LINK_NON_VALIDO", "Il link non è valido o è scaduto: accedi e chiedine uno nuovo");
       const { rows } = await query(
-        "UPDATE utente SET email_confermata_il = COALESCE(email_confermata_il, now()) WHERE id = $1 RETURNING id, nome",
+        "UPDATE utente SET email_confermata_il = COALESCE(email_confermata_il, now()), ultimo_accesso_il = now() WHERE id = $1 RETURNING id, nome",
         [utenteId]
       );
       // confermata: entri subito, senza riscrivere la password
@@ -206,7 +236,7 @@ router.post("/nuova-password", limiteLogin,
 
 // Le colonne del profilo che restituiamo (mai il password_hash; la foto ha un indirizzo suo)
 const CAMPI_PROFILO = `id, email, nome, peso_corporeo_kg,
-                       emergenza_nome, emergenza_telefono, note_mediche, consenso_salute_il, tessera_soccorso,
+                       emergenza_nome, emergenza_telefono, tessera_soccorso,
                        sensibilita_freddo, (foto IS NOT NULL) AS ha_foto`;
 
 // === GET /api/auth/me (dati aggiornati dal database) ===
@@ -223,59 +253,29 @@ router.get("/me", requireAuth, async (req, res, next) => {
 const schemaProfilo = {
   nome:               { etichetta: "lo username", type: "string", maxLength: 100 },                            // 4/11: modificabile dal Profilo
   peso_corporeo_kg:   { etichetta: "il peso corporeo", type: "number", min: 20, max: 300, nullable: true },     // stretch 5
-  consenso_salute:    { etichetta: "il consenso per le note mediche", type: "boolean" },                         // GDPR art. 9
   emergenza_nome:     { etichetta: "il nome del contatto di emergenza", type: "string", maxLength: 100, nullable: true },
   emergenza_telefono: { etichetta: "il telefono del contatto di emergenza", type: "string", maxLength: 30, nullable: true },
-  note_mediche:       { etichetta: "le note mediche", type: "string", maxLength: 300, nullable: true },
   tessera_soccorso:   { etichetta: "la tessera", type: "string", maxLength: 80, nullable: true },
   sensibilita_freddo: { etichetta: "la sensibilità al freddo", type: "string", enum: ["alta", "normale", "bassa"], nullable: true },
   foto:               { etichetta: "la foto", type: "string", maxLength: 200000, nullable: true },
 };
 
-// Le regole del consenso (funzione "pura": la provano i test in test/consenso.test.js)
-//   consenso === true  → si registra la data (solo la prima volta), le note si possono salvare
-//   consenso === false → consenso ritirato: data cancellata E note mediche cancellate
-//   consenso non mandato → le note si salvano solo se il consenso c'era già
-// → { campi (quelli da salvare), setConsenso (pezzo di SQL fisso o null), errore (testo o null) }
-export function regoleConsenso(campi, consenso, consensoAttuale) {
-  if (consenso === false) {
-    return { campi: { ...campi, note_mediche: null }, setConsenso: "consenso_salute_il = NULL", errore: null };
-  }
-  if (consenso === true) {
-    return { campi, setConsenso: "consenso_salute_il = COALESCE(consenso_salute_il, now())", errore: null };
-  }
-  if (campi.note_mediche && !consensoAttuale) {
-    return { campi, setConsenso: null,
-             errore: "Per salvare le note mediche serve il tuo consenso: spunta la casella sopra il campo" };
-  }
-  return { campi, setConsenso: null, errore: null };
-}
+// 5/11 (scelta di Asiha): tolte le note mediche e il loro consenso. Erano gli unici dati sulla salute (GDPR, art. 9):
+// senza, Loadout non tratta categorie particolari di dati (migrazione loadout_stretch_senza_note_mediche.sql)
 
 router.patch("/me", requireAuth, validate(schemaProfilo), async (req, res, next) => {
   try {
     const dati = req.validated;
-    // Consenso per le note mediche: non è una colonna, decide cosa fare di note_mediche e di consenso_salute_il
-    const { consenso_salute: consenso, ...campi } = dati;
-    let consensoAttuale = false;
-    if (consenso === undefined && campi.note_mediche) {
-      const { rows } = await query("SELECT consenso_salute_il IS NOT NULL AS dato FROM utente WHERE id = $1", [req.user.sub]);
-      consensoAttuale = rows[0]?.dato ?? false;
-    }
-    const regola = regoleConsenso(campi, consenso, consensoAttuale);
-    if (regola.errore) throw new HttpError(400, "CONSENSO_MANCANTE", regola.errore);
-    const nomi = Object.keys(regola.campi); // solo nomi presi dallo schema qui sopra: è sicuro metterli nella query
-    if (nomi.length === 0 && !regola.setConsenso) throw new HttpError(400, "VALIDATION_ERROR", "Nessun campo da modificare");
-    Object.assign(dati, regola.campi);
+    const nomi = Object.keys(dati); // solo nomi presi dallo schema qui sopra: è sicuro metterli nella query
+    if (nomi.length === 0) throw new HttpError(400, "VALIDATION_ERROR", "Nessun campo da modificare");
     if (dati.emergenza_telefono && !/^\+?[0-9 ]{6,20}$/.test(dati.emergenza_telefono)) {
       throw new HttpError(400, "BAD_TELEFONO", "Numero di telefono non valido (solo cifre, spazi e un + iniziale)");
     }
     if (dati.foto && !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(dati.foto)) {
       throw new HttpError(400, "BAD_FOTO", "La foto deve essere un'immagine JPEG, PNG o WebP");
     }
-    // SET peso_corporeo_kg = $1, note_mediche = $2, ...  (i VALORI restano parametri $n, mai dentro la stringa)
-    // + la data del consenso: COALESCE tiene quella di quando l'hai dato la PRIMA volta (non cambia a ogni salvataggio)
-    const set = [...nomi.map((nome, i) => `${nome} = $${i + 1}`),
-                 ...(regola.setConsenso ? [regola.setConsenso] : [])].join(", ");
+    // SET peso_corporeo_kg = $1, tessera_soccorso = $2, ...  (i VALORI restano parametri $n, mai dentro la stringa)
+    const set = nomi.map((nome, i) => `${nome} = $${i + 1}`).join(", ");
     const { rows } = await query(
       `UPDATE utente SET ${set} WHERE id = $${nomi.length + 1} RETURNING ${CAMPI_PROFILO}`,
       [...nomi.map((nome) => dati[nome]), req.user.sub]
@@ -329,7 +329,7 @@ router.get("/me/dati", requireAuth, async (req, res, next) => {
     const id = req.user.sub;
     const profilo = (await query(
       `SELECT email, nome, peso_corporeo_kg, emergenza_nome, emergenza_telefono,
-              note_mediche, consenso_salute_il, tessera_soccorso, sensibilita_freddo, foto FROM utente WHERE id = $1`, [id])).rows[0];
+              tessera_soccorso, sensibilita_freddo, foto FROM utente WHERE id = $1`, [id])).rows[0];
     const oggetti = (await query("SELECT * FROM oggetto WHERE utente_id = $1 ORDER BY categoria, nome", [id])).rows;
     const viaggi = (await query("SELECT * FROM viaggio WHERE utente_id = $1 ORDER BY data_partenza NULLS LAST, id", [id])).rows;
     const zaini = (await query(

@@ -54,3 +54,26 @@ test("link via email: via quelli scaduti o usati da più di 7 giorni, resta quel
   const rimasti = (await query("SELECT id FROM token_email WHERE id = ANY($1)", [[scaduto, usato, valido]])).rows.map((r) => r.id);
   assert.deepEqual(rimasti, [valido]);
 });
+
+// 5/11: account inattivi (avviso a 23 mesi, cancellazione a 24 mesi solo se l'avviso è partito da almeno 30 giorni)
+async function inattivo(mesi, avvisoGiorniFa) {
+  const id = await utente(800, true);
+  await query(`UPDATE utente SET ultimo_accesso_il = now() - make_interval(months => $2),
+               avviso_inattivita_il = CASE WHEN $3::int IS NULL THEN NULL ELSE now() - make_interval(days => $3::int) END
+               WHERE id = $1`, [id, mesi, avvisoGiorniFa]);
+  return id;
+}
+const avvisato = async (id) => (await query("SELECT avviso_inattivita_il IS NOT NULL AS a FROM utente WHERE id = $1", [id])).rows[0]?.a;
+
+test("inattivi: a 23 mesi parte l'avviso; a 24 mesi con avviso vecchio si cancella; chi è attivo resta", { skip: senzaDb }, async () => {
+  const daAvvisare = await inattivo(23, null);
+  const daCancellare = await inattivo(25, 31);
+  const avvisoRecente = await inattivo(25, 5);   // avvisato da poco: ha ancora tempo per rientrare
+  const attivo = await inattivo(1, null);
+  await pulisci();
+  assert.equal(await avvisato(daAvvisare), true);
+  assert.equal(await esiste(daCancellare), false);
+  assert.equal(await esiste(avvisoRecente), true);
+  assert.equal(await esiste(attivo), true);
+  assert.equal(await avvisato(attivo), false);
+});

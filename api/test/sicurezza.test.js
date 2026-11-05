@@ -24,7 +24,7 @@ test("CSP delle mappe: tessere solo da MapTiler, script, stili e caratteri solo 
   assert.match(csp, /style-src 'self'(;|$)/);
   assert.match(csp, /font-src 'self'(;|$)/);
   assert.doesNotMatch(csp, /unpkg|googleapis|gstatic/);
-  assert.match(csp, /connect-src 'self'(;|$)/); // BRouter lo chiama il server: il browser non esce dal nostro sito
+  assert.match(csp, /connect-src 'self' https:\/\/api\.maptiler\.com(;|$)/); // 5/11: + la ricerca dei luoghi di MapTiler (BRouter lo chiama il server)
 });
 
 // Mappa senza rete: SOLO il service worker può scaricare le tessere; le pagine restano chiuse

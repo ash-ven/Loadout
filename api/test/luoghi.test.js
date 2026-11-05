@@ -1,28 +1,24 @@
-// Test della funzione che trasforma la risposta di Nominatim (non usa la rete)
+// api/test/luoghi.test.js – le quote dei luoghi trovati (5/11: la ricerca per nome ora la fa il browser con MapTiler)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { daNominatim, conQuote } from "../src/services/luoghi.js";
+import { leggiPunti, quoteDaRisposta } from "../src/services/luoghi.js";
 
-test("daNominatim: nome, comune e sigla della provincia, tipo tradotto, coordinate numeriche", () => {
-  const risposta = [{
-    name: "Rifugio Vajolet", type: "alpine_hut", lat: "46.4561234567", lon: "11.6201234567",
-    address: { village: "Pozza di Fassa", "ISO3166-2-lvl6": "IT-TN", state: "Trentino-Alto Adige", country_code: "it", country: "Italia" },
-  }];
-  assert.deepEqual(daNominatim(risposta), [
-    { etichetta: "Rifugio Vajolet (Pozza di Fassa, TN)", tipo: "rifugio", lat: 46.456123, lon: 11.620123 },
-  ]);
+test("leggiPunti: coppie lat,lon separate da ; (anche negative)", () => {
+  assert.deepEqual(leggiPunti("44.19,10.70;46.41,11.62"), [[44.19, 10.7], [46.41, 11.62]]);
+  assert.deepEqual(leggiPunti("-33.9,-70.1"), [[-33.9, -70.1]]);
 });
 
-test("daNominatim: fuori dall'Italia aggiunge lo stato; risposta strana = nessun risultato", () => {
-  const risposta = [{ name: "Zermatt", type: "village", lat: "46.02", lon: "7.75",
-    address: { village: "Zermatt", state: "Vallese", country_code: "ch", country: "Svizzera" } }];
-  assert.equal(daNominatim(risposta)[0].etichetta, "Zermatt (Vallese, Svizzera)");
-  assert.deepEqual(daNominatim({ errore: true }), []);
+test("leggiPunti: niente punti, troppi punti, fuori dal mondo o testo = null", () => {
+  assert.equal(leggiPunti(""), null);
+  assert.equal(leggiPunti(undefined), null);
+  assert.equal(leggiPunti(Array(11).fill("44,10").join(";")), null);
+  assert.equal(leggiPunti("95,10"), null);
+  assert.equal(leggiPunti("44,abc"), null);
+  assert.equal(leggiPunti("44,10,5"), null);
 });
 
-// A5 (revisione UX 2): la quota accanto a ogni luogo, per distinguere gli omonimi
-test("conQuote: quote arrotondate nell'ordine dei luoghi; senza risposta la quota è null", () => {
-  const luoghi = [{ etichetta: "Passo del Lupo (Fanano, MO)", lat: 44.15, lon: 10.8 }, { etichetta: "Passo del Lupo (Leonessa, RI)", lat: 42.5, lon: 13 }];
-  assert.deepEqual(conQuote(luoghi, { elevation: [1402.4, 1049.6] }).map((l) => l.quota_m), [1402, 1050]);
-  assert.deepEqual(conQuote(luoghi, null).map((l) => l.quota_m), [null, null]); // Open-Meteo non risponde: la ricerca funziona lo stesso
+test("quoteDaRisposta: quote arrotondate nell'ordine dei luoghi; senza risposta la quota è null", () => {
+  assert.deepEqual(quoteDaRisposta(2, { elevation: [1402.3, 2243.6] }), [1402, 2244]);
+  assert.deepEqual(quoteDaRisposta(2, { elevation: [1402.3] }), [1402, null]);
+  assert.deepEqual(quoteDaRisposta(2, null), [null, null]);
 });

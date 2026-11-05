@@ -44,7 +44,7 @@ app.use(helmet({
       "style-src": ["'self'"],
       "font-src": ["'self'"],
       "img-src": ["'self'", "data:", "https://api.maptiler.com"],  // + "data:" (la foto ridotta nel browser) + le tessere della mappa
-      "connect-src": ["'self'"],                                   // fetch() solo verso la nostra API
+      "connect-src": ["'self'", "https://api.maptiler.com"],      // fetch() verso la nostra API + 5/11: la ricerca dei luoghi di MapTiler
       "object-src": ["'none'"],                                    // niente plugin (Flash e simili)
       "frame-ancestors": ["'none'"],                               // nessun sito può mettere Loadout dentro un suo riquadro
       "upgrade-insecure-requests": null,                           // tolta: in sviluppo usiamo http://localhost:3000

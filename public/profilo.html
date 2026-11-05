@@ -91,16 +91,7 @@
         <!-- 4/11 (privacy, punto 4): nome e telefono sono dati di un'altra persona, che non ha letto la nostra informativa:
              lo diciamo dove si scrivono. aria-describedby (sui due campi) fa leggere la nota anche ai lettori di schermo -->
         <p class="muto nota-emergenza" id="nota-emergenza">Avvisa questa persona che hai messo qui il suo numero. Lo vedi solo tu, nel riquadro Emergenza dei tuoi viaggi.</p>
-        <!-- C9: le note mediche sono dati sulla salute (GDPR, art. 9): servono un consenso esplicito e una casella spuntata da te -->
-        <label class="check consenso"><input type="checkbox" id="consenso-salute">
-          <span>Acconsento a salvare le note mediche (dati sulla salute), visibili solo nel riquadro Emergenza dei miei viaggi.</span></label>
-        <!-- 4/11 (privacy): cosa vuol dire il consenso. In un'altra scheda, per non perdere quello che stai scrivendo -->
-        <p class="muto nota-consenso"><a href="/privacy.html#su-che-base" target="_blank" rel="noopener">Cosa vuol dire</a></p>
-        <!-- Quando hai dato il consenso (lo registra il server: consenso_salute_il) -->
-        <p class="muto data-consenso" id="data-consenso" hidden></p>
-        <label>Note mediche per chi ti soccorre
-          <textarea name="note_mediche" disabled maxlength="300" rows="2" placeholder="es. allergia alle punture d'api, asma (inalatore nella tasca alta), gruppo sanguigno 0+"></textarea>
-        </label>
+        <!-- 5/11 (scelta di Asiha): tolte le note mediche e il loro consenso (erano dati sulla salute, GDPR art. 9) -->
         <label>Tessera CAI o assicurazione per il soccorso
           <input name="tessera_soccorso" type="text" maxlength="80" placeholder="es. CAI 1234567 · Sezione di Bologna" autocomplete="off">
         </label>
@@ -169,7 +160,7 @@
       </form>
 
       <h3>I tuoi dati</h3>
-      <p class="muto">Profilo, armadio, viaggi e zaini in un file. Come li trattiamo: <a href="/privacy.html">informativa privacy</a>.</p>
+      <p class="muto">Profilo, armadio, viaggi e zaini in un file. Come li trattiamo: <a href="/privacy.html">informativa privacy</a> · <a href="/termini.html">Termini d'uso</a> · <a href="/crediti.html">Crediti</a>.</p>
       <div class="azioni"><a class="btn secondario" href="/api/auth/me/dati" download>Scarica i miei dati</a></div>
 
       <h3>Assistenza</h3>

@@ -80,6 +80,10 @@ export function mostraAvvisi(contenitore, traccia) {
   let fiducia = `La difficoltà è segnata per il ${dati.copertura}% del percorso.`;
   if (dati.copertura < 50) fiducia += " Nessun avviso non vuol dire nessun pericolo.";
   parti.push(paragrafo(fiducia));
+  // 5/11: avvertenza (Termini d'uso) e fonte dei dati, discrete
+  const fonte = paragrafo("Indicazioni dai sentieri di © OpenStreetMap: controlla sempre le condizioni sul posto.");
+  fonte.className = "fonte-dati";
+  parti.push(fonte);
   contenitore.replaceChildren(...parti);
   return true;
 }
