@@ -1,6 +1,7 @@
 import { api, esc, formattaData, oggiISO, giorniTra } from "./api.js";
 import "./menu.js";
 import { creaMappa, icona } from "./mappa-base.js";
+import { D_PIU } from "./testi.js"; // 5/11: D+ letto a parole
 import { scarponcini } from "./diario.js"; // punto 6: il voto piccolo nel fumetto
 
 // =====================================================================
@@ -89,7 +90,7 @@ const num = (n, decimali = 0) => Number(n).toLocaleString("it-IT", { maximumFrac
 function fumetto(v) {
   const dettagli = [data(v) ? formattaData(data(v)) : "data da decidere"];
   if (v.distanza_km != null) dettagli.push(`${num(v.distanza_km, 1)} km`);
-  if (v.dislivello_m != null) dettagli.push(`D+ ${num(v.dislivello_m)} m`);
+  if (v.dislivello_m != null) dettagli.push(`${D_PIU} ${num(v.dislivello_m)} m`);
   // Punto 6: i segnaposto diventano ricordi. Il voto e l'inizio della nota (al massimo 80 caratteri, tagliata su una parola)
   let ricordo = "";
   if (v.diario_voto || v.diario_nota) {
@@ -129,6 +130,18 @@ try {
     segnaposto.getElement()?.setAttribute("aria-label", `${v.nome}${quando}: apri il fumetto`);
     segnaposto.getElement()?.setAttribute("role", "button");
   }
+  // 5/11 (accessibilità, WCAG 2.1.1 e 2.4.3): aperto il fumetto (Invio sul segnaposto, o tocco), il fuoco va sul link
+  // «Apri il viaggio», così non si devono attraversare tutti gli altri segnaposti. Esc chiude e torna sul segnaposto
+  let segnapostoAperto = null;
+  mappa.on("popupopen", (e) => {
+    segnapostoAperto = e.popup._source ?? null;
+    e.popup.getElement()?.querySelector("a[href]")?.focus({ preventScroll: true });
+  });
+  elMappa.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !segnapostoAperto?.isPopupOpen()) return;
+    mappa.closePopup();
+    segnapostoAperto?.getElement()?.focus();
+  });
   // Inquadra tutti i segnaposto (con margine). Uno solo: zoom fisso, se no Leaflet ingrandirebbe al massimo
   if (fattiSullaMappa.length === 1) mappa.setView(partenza(fattiSullaMappa[0]), 10);
   else if (fattiSullaMappa.length > 1) mappa.fitBounds(livello.getBounds(), { padding: [40, 40], maxZoom: 12 });

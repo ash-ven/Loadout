@@ -95,6 +95,13 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     return true;
   }
 
+  // 5/11 (accessibilità): il nome che legge il lettore di schermo sulla puntina, es. «Tappa 2: Rifugio Vajolet».
+  // Leaflet le dà già role="button" e tabindex (si raggiunge con Tab), ma non un nome
+  function etichettaPuntina(puntina, ruolo) {
+    const el = puntina.getElement();
+    if (el) el.setAttribute("aria-label", puntina.nomeTappa ? `${ruolo}: ${puntina.nomeTappa}` : ruolo);
+  }
+
   // nome: il nome che dai al punto nell'elenco (4/11), viaggia con la puntina anche quando cambi l'ordine
   function nuovaPuntina(latlng, nome = "") {
     const puntina = L.marker(latlng, { draggable: true, icon: icona("tappa"), riseOnHover: true }).addTo(mappa);
@@ -295,6 +302,9 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
         b.disabled = disattivo;
         return b;
       };
+      // 5/11 (accessibilità, WCAG 4.1.2): la puntina sulla mappa si raggiunge con Tab: le diamo lo stesso nome della riga
+      // («Partenza», «Tappa 2: Rifugio Vajolet»…). Qui perché aggiornaElenco() gira dopo ogni setIcon, che ricrea l'elemento
+      etichettaPuntina(p, nome.textContent);
       riga.append(nome, campoNome, dove,
         bottone("su", "↑", "Sposta prima", i === 0),
         bottone("giu", "↓", "Sposta dopo", i === punti.length - 1),
@@ -308,7 +318,10 @@ export function attivaDisegnoMappa({ contenitore, conteggio, stato, interruttore
     const campo = e.target.closest(".tappa-nome-campo");
     if (!campo) return;
     const puntina = punti[Number(campo.dataset.indice)];
-    if (puntina) { puntina.nomeTappa = campo.value.trim(); suModifica(); }
+    if (puntina) {
+      puntina.nomeTappa = campo.value.trim(); suModifica();
+      etichettaPuntina(puntina, campo.closest("li").querySelector(".tappa-nome").textContent);
+    }
   });
   elencoTappe?.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-azione]");

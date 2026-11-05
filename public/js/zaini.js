@@ -41,7 +41,8 @@ function vocePreparare(v, giorni) {
   // La larghezza della barra la mette il JavaScript dopo (data-percento): la CSP non permette style="" scritti nell'HTML
   return `<div class="preparare-voce">${testa}
     <div class="barra barra-grande" role="progressbar" aria-label="Oggetti già nello zaino"
-         aria-valuemin="0" aria-valuemax="${v.n_oggetti}" aria-valuenow="${v.n_inseriti}"><div data-percento="${percento}"></div></div>
+         aria-valuemin="0" aria-valuemax="${v.n_oggetti}" aria-valuenow="${v.n_inseriti}"
+         aria-valuetext="${v.n_inseriti} su ${v.n_oggetti} oggetti nello zaino"><div data-percento="${percento}"></div></div>
     <p class="preparare-stato muto">${pronto ? "<strong>Zaino pronto</strong>" : `${v.n_inseriti} su ${v.n_oggetti} nello zaino`} · ${num2(v.peso_totale_kg)} kg</p>
   </div>`;
 }

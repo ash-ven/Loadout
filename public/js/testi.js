@@ -15,3 +15,9 @@ export const ore = (n) => (Number(n) === 0.5 ? "mezz'ora" : plurale(n, "ora", "o
 
 // Singolare o plurale per le parole che si accordano con le ore: "1 ora stimata", "mezz'ora stimata", "2 ore stimate"
 export const unaSola = (n) => Number(n) === 1 || Number(n) === 0.5;
+
+// 5/11 (accessibilità): «D+» e «D−» si vedono così, ma un lettore di schermo li leggerebbe «D più» e «D meno».
+// La sigla è nascosta ai lettori (aria-hidden) e al suo posto leggono le parole (solo-lettori: invisibile sullo schermo).
+// Solo per HTML (innerHTML): dove si usa textContent i tag si vedrebbero come testo
+export const D_PIU = '<span aria-hidden="true">D+</span><span class="solo-lettori">dislivello positivo</span>';
+export const D_MENO = '<span aria-hidden="true">D−</span><span class="solo-lettori">dislivello negativo</span>';

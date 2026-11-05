@@ -38,7 +38,9 @@ export function creaMappa(elemento, chiave, { centro = [44.1380, 10.5960], zoom 
   // A9 (revisione UX 2): sui dispositivi touch (telefono, tablet) un dito fa scorrere la PAGINA, non la mappa:
   // la mappa si sposta e si ingrandisce con due dita (il "pizzico" di Leaflet, touchZoom). Un tocco aggiunge ancora la tappa.
   const touch = window.matchMedia("(pointer: coarse)").matches;
-  const mappa = L.map(elemento, { dragging: !touch, ...opzioni }).setView(centro, zoom);
+  // 5/11 (accessibilità, WCAG 3.1.2): i pulsanti + e − in italiano (quelli di serie di Leaflet dicono «Zoom in» / «Zoom out»)
+  const mappa = L.map(elemento, { dragging: !touch, ...opzioni, zoomControl: false }).setView(centro, zoom);
+  if (opzioni.zoomControl !== false) L.control.zoom({ zoomInTitle: "Ingrandisci", zoomOutTitle: "Rimpicciolisci" }).addTo(mappa);
   gestiComodi(elemento, toccoUnDito);
   (sfondi[sfondoIniziale] ?? sfondi["Outdoor"]).addTo(mappa);
   // A8 (revisione UX 2, scelta di Asiha): il selettore degli sfondi parte SEMPRE chiuso (icona a strati),
@@ -87,8 +89,10 @@ const DISEGNI = {
 
 export function icona(tipo) {
   if (tipo === "tappa") {
-    return L.divIcon({ className: "puntina", iconSize: [16, 16], iconAnchor: [8, 8],
-      html: '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" fill="#f6efdf" stroke="#31503f" stroke-width="3"/></svg>' });
+    // 5/11 (accessibilità, WCAG 2.5.8 – prova di Asiha): la zona da toccare è 24×24 px, il cerchio disegnato resta
+    // quello di prima (16 px): il viewBox è più grande e il cerchio sta al centro, con un bordo trasparente intorno
+    return L.divIcon({ className: "puntina", iconSize: [24, 24], iconAnchor: [12, 12],
+      html: '<svg width="24" height="24" viewBox="-4 -4 24 24"><circle cx="8" cy="8" r="5.5" fill="#f6efdf" stroke="#31503f" stroke-width="3"/></svg>' });
   }
   return L.divIcon({ className: "puntina", iconSize: [30, 40], iconAnchor: [15, 39],
     html: `<svg width="30" height="40" viewBox="0 0 30 40">${DISEGNI[tipo]}</svg>` });

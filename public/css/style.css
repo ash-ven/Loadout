@@ -387,7 +387,7 @@ button.su-scuro:hover { background: rgba(246, 239, 223, .12); }
 .riga:last-child { border-bottom: 0; }
 .riga:hover { background: var(--salvia-chiaro); }
 .riga:hover .riquadro-icona { background: var(--lana-chiara); }
-.riga:focus-visible { outline: 3px solid var(--salvia); outline-offset: -3px; }
+.riga:focus-visible { outline: 3px solid var(--senape); outline-offset: -3px; }   /* 5/11: senape come l'anello di tutta l'app */
 .riquadro-icona { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0;
                   border-radius: var(--raggio-piccolo); background: var(--crema); }
 .riquadro-icona img { display: block; }
@@ -560,7 +560,7 @@ fieldset.scelte legend .muto { font-size: .8rem; }
                                      font-size: .84rem; font-weight: 600; color: var(--muschio); transition: background .15s; }
 .leaflet-control-layers-base label:hover { background: var(--salvia-chiaro); }
 .leaflet-control-layers-base label:has(input:checked) { background: var(--muschio); color: #f6efdf; }
-.leaflet-control-layers-base label:has(input:focus-visible) { outline: 3px solid var(--salvia); outline-offset: 1px; }
+.leaflet-control-layers-base label:has(input:focus-visible) { outline: 3px solid var(--senape); outline-offset: 1px; }
 /* Il pallino del radio non serve (si vede la pillola scura): nascosto ma usabile da tastiera */
 .leaflet-control-layers-base input { position: absolute; opacity: 0; pointer-events: none; }
 /* Selettore chiuso (telefono): icona "livelli" a linee nel muschio dell'app al posto dell'immagine di Leaflet */
@@ -839,7 +839,7 @@ button.aggiungi-testata { display: none; }
 .profilo-altimetrico { margin-top: 1rem; }
 .profilo-altimetrico h3 { margin: 0 0 .4rem; font-size: 1rem; }
 .profilo-grafico { position: relative; width: 100%; touch-action: pan-y; cursor: crosshair; } /* il dito in orizzontale guarda il profilo, in verticale scorre la pagina */
-.profilo-grafico svg { display: block; }
+.profilo-grafico svg { display: block; max-width: 100%; height: auto; }   /* 5/11: mai più largo del suo spazio, così quando gira il telefono il contenitore si stringe e il profilo si ridisegna */
 .profilo-colore-alto { stop-color: var(--muschio); stop-opacity: .9; }   /* scelta di Asiha: verdi scuri */
 .profilo-colore-basso { stop-color: var(--salvia); stop-opacity: .55; }
 .profilo-griglia { stroke: var(--bordo); stroke-width: 1; stroke-dasharray: 3 4; }
@@ -910,7 +910,7 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
 .scarponi input { position: absolute; opacity: 0; pointer-events: none; }        /* il pallino non si vede: si vede lo scarpone */
 .scarponi label { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--raggio-piccolo); cursor: pointer; }
 .scarponi label:hover { background: var(--salvia-chiaro); }
-.scarponi input:focus-visible + label { outline: 3px solid var(--salvia); outline-offset: 1px; }
+.scarponi input:focus-visible + label { outline: 3px solid var(--senape); outline-offset: 1px; }
 .scarponcini { display: inline-flex; gap: 1px; vertical-align: -.25em; }       /* il voto piccolo, nel fumetto della Home */
 .fumetto-nota { display: block; margin-top: .2rem; font-style: italic; }
 
@@ -943,6 +943,7 @@ button.tappa-bottone[data-azione="togli"] { color: var(--rosso); }
                       font-size: .82rem; line-height: 1.4; box-shadow: var(--ombra);
                       opacity: 0; visibility: hidden; transition: opacity .15s; pointer-events: none; }
 .con-suggerimento:hover .suggerimento-bolla, .con-suggerimento:focus-within .suggerimento-bolla { opacity: 1; visibility: visible; }
+.con-suggerimento.chiuso .suggerimento-bolla { opacity: 0; visibility: hidden; }   /* 5/11: chiuso con Esc (mappa.js) */
 /* I tratti difficili sul profilo altimetrico, come sulla mappa */
 .profilo-tratto { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .profilo-tratto.attenzione { stroke: var(--senape); }
@@ -1048,3 +1049,12 @@ button.etichetta-piu { min-height: 44px; }
 /* 5/11 (accessibilità, WCAG 2.4.11 «focus non coperto»): sul telefono il menu è fisso in basso. Quando il browser fa scorrere
    la pagina fino al campo attivo (Tab, tastiera esterna, sensori), lascia libera la fascia del menu. Non cambia l'aspetto */
 @media (max-width: 760px) { html { scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom)); } }
+
+/* 5/11 (accessibilità, WCAG 2.4.7 – scelta di Asiha): l'anello di focus. :focus-visible = solo quando si usa la TASTIERA
+   (con il mouse o il dito il browser non lo mostra). Senape, 3 px, staccato di 2 px: si vede sulla crema e sul verde.
+   I campi di testo tengono il loro bordo verde (input:focus, più specifico); caselle e scelte prendono l'anello */
+:focus-visible { outline: 3px solid var(--senape); outline-offset: 2px; }
+input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { outline: 3px solid var(--senape); outline-offset: 2px; }
+/* 5/11 (accessibilità, WCAG 1.4.3 – scelta di Asiha): il testo di esempio nei campi vuoti, grigio-terra come le note
+   (il grigio di serie del browser aveva contrasto 4,28:1; questo 5,4:1). opacity: 1 perché Firefox lo schiarisce */
+::placeholder { color: var(--terra); opacity: 1; }

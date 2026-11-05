@@ -1,7 +1,7 @@
 import { api, esc, formattaData } from "./api.js";
 import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
-import { plurale, ore } from "./testi.js"; // B3: numeri e parole accordati
+import { plurale, ore, D_PIU, D_MENO } from "./testi.js"; // B3: numeri e parole accordati
 import { attivaFormUscita } from "./form-uscita.js"; // B12: la finestra di modifica si apre qui, senza cambiare pagina
 import { discesaDellaTraccia } from "./navigazione-calcoli.js"; // D− anche per le mappe salvate prima che esistesse
 import { mostraAvvisi } from "./avvisi-percorso.js";
@@ -240,11 +240,12 @@ function renderCollegamenti() {
   if (viaggio.traccia) {
     const parti = [];
     if (viaggio.distanza_km != null) parti.push(`${num(viaggio.distanza_km)} km`);
-    if (viaggio.dislivello_m != null) parti.push(`D+ ${num(viaggio.dislivello_m)} m`);
+    if (viaggio.dislivello_m != null) parti.push(`${D_PIU} ${num(viaggio.dislivello_m)} m`);
     const discesaMappa = discesaDellaTraccia(viaggio.traccia, viaggio.dislivello_m);
-    if (discesaMappa != null) parti.push(`D− ${num(discesaMappa)} m`);
+    if (discesaMappa != null) parti.push(`${D_MENO} ${num(discesaMappa)} m`);
     testo("#titolo-mappa", "La mappa");
-    testo("#riepilogo-mappa", parti.join(" · ") || "Il percorso sui sentieri");
+    // 5/11: innerHTML per le sigle D+ / D− (testi.js); dentro ci sono solo numeri formattati da noi, niente testo dell'utente
+    document.querySelector("#riepilogo-mappa").innerHTML = parti.join(" · ") || "Il percorso sui sentieri";
   } else {
     testo("#titolo-mappa", "Disegna la mappa");
     testo("#riepilogo-mappa", "Tocca partenza e tappe: il percorso segue i sentieri.");

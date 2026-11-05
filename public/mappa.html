@@ -51,7 +51,7 @@
       <p class="errore" id="errore-naviga" hidden></p>
       <!-- Senza rete: si vedono le tessere già guardate, la traccia e la tua posizione (sw.js) -->
       <p class="avviso" id="senza-rete" hidden><span><strong>Sei senza rete:</strong> vedi il percorso e la tua posizione. Le modifiche si salvano solo con la rete.</span></p>
-      <div class="mappa-cornice"><div class="mappa" id="mappa"></div></div>
+      <div class="mappa-cornice"><div class="mappa" id="mappa" role="region" aria-label="Mappa del percorso"></div></div> <!-- 5/11: un nome per chi arriva con Tab -->
       <!-- Il pannello della navigazione: compare solo mentre navighi -->
       <div class="pannello-navigazione" id="pannello-navigazione" hidden>
         <p class="avviso" id="fuori-percorso" hidden><span id="testo-fuori-percorso"></span></p>

@@ -33,6 +33,8 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     const tappeM = (traccia.tappe ?? []).map(([lat, lon]) => aggancia(prep, [lat, lon]).metri_fatti);
     dati = { prep, quote, tappeM, min: Math.min(...quote), max: Math.max(...quote), avvisi: traccia.avvisi_percorso?.avvisi ?? [] };
     scalaKm = kmCampo > 0 && prep.totale > 0 ? (kmCampo * 1000) / prep.totale : 1;
+    cursoreM = 0;
+    contenitore.setAttribute("aria-valuemax", ((prep.totale * scalaKm) / 1000).toFixed(1));
     sezione.hidden = false;
     disegna();
     scriviRiepilogo();
@@ -90,6 +92,7 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
         <g class="profilo-io" visibility="hidden"><circle r="6" class="profilo-io-punto"/></g>
       </svg>`;
     segnaIo();
+    if (document.activeElement === contenitore) mostraCursore(cursoreM); // ridisegnato mentre lo usi da tastiera
   }
 
   // D+ e D− qui NON li ricalcoliamo: sono già nelle caselle sopra (calcolati da BRouter, che filtra i piccoli saliscendi);
@@ -116,13 +119,44 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     return [a[0] + f * (b[0] - a[0]), a[1] + f * (b[1] - a[1])];
   }
 
+  // 5/11 (accessibilità, WCAG 2.1.1): il profilo si usa anche da tastiera. È un "cursore scorrevole" (role="slider"):
+  // si raggiunge con Tab, le frecce ← → spostano il punto lungo il percorso (Pag↑/Pag↓ 5 passi, Inizio/Fine),
+  // e il lettore di schermo legge km e quota (aria-valuetext). Mouse e dito funzionano come prima
+  contenitore.tabIndex = 0;
+  contenitore.setAttribute("role", "slider");
+  contenitore.setAttribute("aria-label", "Profilo altimetrico: usa le frecce per scorrerlo");
+  contenitore.setAttribute("aria-valuemin", "0");
+  if (riepilogo.id) contenitore.setAttribute("aria-describedby", riepilogo.id);
+  let cursoreM = 0; // dove sta il cursore, in metri dalla partenza (per la tastiera)
+  contenitore.addEventListener("keydown", (e) => {
+    if (!dati) return;
+    const passo = dati.prep.totale / 50;
+    const nuovo = { ArrowRight: cursoreM + passo, ArrowUp: cursoreM + passo, ArrowLeft: cursoreM - passo, ArrowDown: cursoreM - passo,
+                    PageUp: cursoreM + 5 * passo, PageDown: cursoreM - 5 * passo, Home: 0, End: dati.prep.totale }[e.key];
+    if (nuovo === undefined) return;
+    e.preventDefault(); // le frecce non devono far scorrere la pagina
+    mostraCursore(Math.min(dati.prep.totale, Math.max(0, nuovo)));
+  });
+  contenitore.addEventListener("focus", () => { if (dati) mostraCursore(cursoreM); });
+  contenitore.addEventListener("blur", nascondiCursore);
+
   // Dito o mouse sul profilo: cursore con km e quota, e il punto acceso sulla mappa
   contenitore.addEventListener("pointermove", (e) => {
     if (!dati) return;
     const svg = contenitore.querySelector("svg");
     const largo = svg.width.baseVal.value;
     const px = Math.min(largo, Math.max(0, e.clientX - svg.getBoundingClientRect().left));
-    const metri = (px / largo) * dati.prep.totale;
+    mostraCursore((px / largo) * dati.prep.totale);
+  });
+  contenitore.addEventListener("pointerleave", () => { if (document.activeElement !== contenitore) nascondiCursore(); });
+
+  // Disegna il cursore a "metri" dalla partenza: linea, pallino, km e quota; accende il punto sulla mappa
+  function mostraCursore(metri) {
+    cursoreM = metri;
+    const svg = contenitore.querySelector("svg");
+    if (!svg) return;
+    const largo = svg.width.baseVal.value;
+    const px = (metri / dati.prep.totale) * largo;
     const q = quotaA(metri);
     const { y } = scala(largo);
     const cursore = svg.querySelector(".profilo-cursore");
@@ -135,12 +169,14 @@ export function attivaProfilo({ contenitore, riepilogo, sezione, suPunto = () =>
     testo.textContent = `${kmTesto(metri * scalaKm)} · ${nf(q)} m`;
     testo.setAttribute("x", px);
     testo.setAttribute("text-anchor", px < largo * 0.15 ? "start" : px > largo * 0.85 ? "end" : "middle");
+    contenitore.setAttribute("aria-valuenow", ((metri * scalaKm) / 1000).toFixed(1));
+    contenitore.setAttribute("aria-valuetext", `${kmTesto(metri * scalaKm)}, quota ${nf(q)} metri`);
     suPunto(puntoA(metri));
-  });
-  contenitore.addEventListener("pointerleave", () => {
+  }
+  function nascondiCursore() {
     contenitore.querySelector(".profilo-cursore")?.setAttribute("visibility", "hidden");
     suPunto(null);
-  });
+  }
 
   function scala(largo) {
     const { prep, min, max } = dati;

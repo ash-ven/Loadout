@@ -1,4 +1,5 @@
-import { api } from "./api.js";
+import { api, esc } from "./api.js";
+import { D_PIU, D_MENO } from "./testi.js"; // 5/11: D+ e D− letti a parole
 import "./menu.js";
 import { attivaDisegnoMappa } from "./mappa-disegno.js";
 import { staccaPostItScrivendo } from "./post-it.js";
@@ -304,8 +305,9 @@ fileGpx.addEventListener("change", async () => {
     const anello = importo.anello === eraAnello ? ""
       : importo.anello ? " La traccia torna alla partenza: ho acceso «Percorso ad anello»."
       : " La traccia del file non è un anello: ho spento «Percorso ad anello».";
-    messaggioGpx.textContent = `Traccia importata${nome ? ` («${nome}»)` : ""}: ${d.distanza_km.toLocaleString("it-IT")} km` +
-      (d.dislivello_m != null ? `, D+ ${d.dislivello_m} m, D− ${d.discesa_m} m` : ", senza quote nel file") +
+    // 5/11: innerHTML per le sigle D+ / D−; il nome della traccia viene dal file, quindi passa da esc() (niente XSS)
+    messaggioGpx.innerHTML = `Traccia importata${nome ? ` («${esc(nome)}»)` : ""}: ${d.distanza_km.toLocaleString("it-IT")} km` +
+      (d.dislivello_m != null ? `, ${D_PIU} ${d.dislivello_m} m, ${D_MENO} ${d.discesa_m} m` : ", senza quote nel file") +
       `.${anello} Controlla e premi «Salva il percorso».`;
   } catch (err) {
     messaggioGpx.textContent = err.message;
@@ -323,6 +325,12 @@ aggiornaRete();
 // --- Scarica GPX: il percorso che vedi sulla mappa (anche se non l'hai ancora salvato) ---
 let nomeViaggio = "percorso";
 const erroreGpx = document.querySelector("#errore-gpx");
+// 5/11 (accessibilità, WCAG 1.4.13): il riquadrino che compare su «Scarica GPX» si chiude con Esc;
+// torna la prossima volta che ci passi sopra o ci arrivi con Tab
+const conSuggerimento = document.querySelector(".con-suggerimento");
+conSuggerimento.addEventListener("keydown", (e) => { if (e.key === "Escape") conSuggerimento.classList.add("chiuso"); });
+for (const evento of ["focusout", "mouseleave"]) conSuggerimento.addEventListener(evento, () => conSuggerimento.classList.remove("chiuso"));
+
 document.querySelector("#scarica-gpx").addEventListener("click", () => {
   const traccia = disegno.traccia();
   erroreGpx.hidden = Boolean(traccia);

@@ -3,6 +3,7 @@ import "./menu.js";
 import { ATTIVITA } from "./categorie.js";
 import { gruppiPerData, htmlGruppi } from "./elenco-uscite.js";
 import { discesaDellaTraccia } from "./navigazione-calcoli.js";
+import { D_PIU, D_MENO } from "./testi.js"; // 5/11: D+ e D− letti a parole
 
 // Pagina Mappe: le uscite che hanno una mappa (ha_mappa arriva da GET /api/viaggi).
 // La mappa si disegna nel form dell'uscita, in «Percorso e coordinate».
@@ -15,15 +16,15 @@ function rigaMappa(v) {
   // B4 (revisione UX 2): qui contano i numeri del percorso; l'attività si vede aprendo l'uscita
   const parti = [];
   if (v.distanza_km != null) parti.push(`${num(v.distanza_km)} km`);
-  if (v.dislivello_m != null) parti.push(`D+ ${num(v.dislivello_m)} m`);
+  if (v.dislivello_m != null) parti.push(`${D_PIU} ${num(v.dislivello_m)} m`);
   const discesa = discesaDellaTraccia(v.traccia, v.dislivello_m); // collaudo 3/11, C6: D− anche qui, come nella scheda
-  if (discesa != null) parti.push(`D− ${num(discesa)} m`);
+  if (discesa != null) parti.push(`${D_MENO} ${num(discesa)} m`);
   return `
     <a class="riga" href="/mappa.html?id=${v.id}">
       <span class="riquadro-icona"><img src="/img/icone/mappe.svg" alt="" width="22" height="22"></span>
       <span class="riga-testo">
         <span class="riga-nome">${esc(v.nome)}</span>
-        <span class="riga-nota">${esc(parti.join(" · ") || (ATTIVITA[v.attivita] ?? v.attivita))}</span>
+        <span class="riga-nota">${parti.length ? parti.join(" · ") : esc(ATTIVITA[v.attivita] ?? v.attivita)}</span>
       </span>
       <span class="riga-valore">${v.data_partenza ? formattaData(v.data_partenza) : "—"}</span>
     </a>`;
