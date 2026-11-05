@@ -9,7 +9,8 @@ Errori: sempre `{ "error": "CODICE", "message": "testo leggibile" }`.
 ## Servizio
 | Metodo | URL | Body | Risposta | Status |
 | --- | --- | --- | --- | --- |
-| GET | /api/health | — | `{ status, time, db }` | 200, 500 |
+| GET | /api/health | — | `{ status, time }` (5/11: senza database, per Render e il monitoraggio) | 200 |
+| GET | /api/health/db | — | `{ status, time, db }` (controlla anche il database) | 200, 500 |
 
 ## Autenticazione
 Dopo il login il server imposta il cookie `token` (JWT firmato, `HttpOnly`, `SameSite=Lax`, `Secure` in produzione, durata 8 ore).

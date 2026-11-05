@@ -59,3 +59,11 @@ test("dopo 10 login sbagliati, l'11° risponde 429 Troppi tentativi", async () =
   assert.equal(undicesimo.status, 429);
   assert.equal(undicesimo.body.error, "TOO_MANY_REQUESTS");
 });
+
+// 5/11: il controllo di Render e del monitoraggio non deve svegliare il database (Neon: ore di calcolo gratuite limitate)
+test("/api/health risponde senza interrogare il database", async () => {
+  const risposta = await request(app).get("/api/health");
+  assert.equal(risposta.status, 200);
+  assert.equal(risposta.body.status, "ok");
+  assert.equal("db" in risposta.body, false);
+});

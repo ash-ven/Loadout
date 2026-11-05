@@ -80,7 +80,13 @@ app.get("/sw.js", (req, res, next) => {
 app.use(express.static(cartellaPublic));  // file del frontend (HTML, CSS, JS)
 
 // === 3. ROTTE ===
-app.get("/api/health", async (req, res) => {
+// 5/11: /api/health dice solo che il server risponde, SENZA toccare il database. Render lo chiama ogni pochi secondi
+// (health check) e il monitoraggio ogni 5 minuti: se interrogasse il database, Neon non si addormenterebbe mai e
+// consumerebbe in pochi giorni le ore di calcolo gratuite del mese. Il database si controlla a parte, su richiesta
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
+});
+app.get("/api/health/db", async (req, res) => {
   const { rows } = await query("SELECT 1 AS ok");
   res.json({ status: "ok", time: new Date().toISOString(), db: rows[0].ok === 1 });
 });
